@@ -51,6 +51,8 @@ audit/               Audit log and record activity, written automatically for @A
 project/             Projects, and the project template of each service (stages, schedule, planning a project
                      from it); see project-templates.md
 fieldops/            Field jobs and site visits: scheduling, the technician workflow, sign-off; see field-operations.md
+finance/             Invoices, payments and their allocation, credit and debit notes, refunds, ageing; append-only
+                     records, gapless numbering and idempotent requests; see finance.md
 lead/                Leads, their activity log, qualification questions and the scoring engine; see leads.md
 customer/            Customers with contacts, addresses, tags, notes and interactions; duplicate detection;
                      the Customer 360 (timeline, health, summary); see customers.md

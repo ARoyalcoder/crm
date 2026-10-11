@@ -136,7 +136,12 @@ function PaymentForm({ today, methods, presetCustomer, presetInvoice, cancelTo }
       form.setError('reference', { message: `A reference is required for ${method.name}` })
       return
     }
-    const open = invoices.data ?? []
+    if (!invoices.data) {
+      // Saving now would drop whatever is about to be shown against the invoices.
+      setFormError('What the customer owes is still loading. Try again in a moment.')
+      return
+    }
+    const open = invoices.data
     if (!allocationProblems(open, typed, typedPaise(values.amount)).valid) {
       setFormError('Check the amounts against the invoices below.')
       return

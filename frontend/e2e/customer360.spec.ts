@@ -413,8 +413,8 @@ test('business information, contacts and the sections not built yet', async ({ p
   expect(newContact).toEqual({ name: 'Ravi Kumar', designation: null, phone: '9000000001', email: null, primaryContact: false })
 
   // Sections whose module is not built say so. They show no figures, not even zeros.
-  // (Project history is no longer a placeholder: it lists the customer's projects.)
-  for (const section of ['Sales history', 'Financial summary', 'Service history', 'AMC / Warranty', 'Documents']) {
+  // (Project history and Financial summary are no longer placeholders: their modules fill them.)
+  for (const section of ['Sales history', 'Service history', 'AMC / Warranty', 'Documents']) {
     await page.getByRole('tab', { name: section }).click()
     await expect(panel.getByRole('heading', { name: `${section} is not available yet` })).toBeVisible()
     await expect(panel).not.toContainText('₹')

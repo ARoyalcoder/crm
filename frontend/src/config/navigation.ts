@@ -1,6 +1,10 @@
 import {
+  Banknote,
   Building2,
+  CreditCard,
   HardHat,
+  Hourglass,
+  ReceiptText,
   Truck,
   ChartNoAxesColumn,
   CalendarCheck,
@@ -52,6 +56,14 @@ export const navigation: NavSection[] = [
     ],
   },
   {
+    title: 'Finance',
+    items: [
+      { label: 'Invoices', to: '/invoices', icon: ReceiptText, permission: 'FINANCE_VIEW' },
+      { label: 'Payments', to: '/payments', icon: Banknote, permission: 'FINANCE_VIEW' },
+      { label: 'Ageing', to: '/finance/ageing', icon: Hourglass, permission: 'FINANCE_VIEW' },
+    ],
+  },
+  {
     title: 'Configuration',
     items: [
       { label: 'Services', to: '/admin/services', icon: Wrench, permission: 'CATALOG_VIEW' },
@@ -65,6 +77,7 @@ export const navigation: NavSection[] = [
         icon: ListChecks,
         permission: 'LEAD_CONFIGURE',
       },
+      { label: 'Payment methods', to: '/admin/payment-methods', icon: CreditCard, permission: 'FINANCE_VIEW' },
     ],
   },
   {

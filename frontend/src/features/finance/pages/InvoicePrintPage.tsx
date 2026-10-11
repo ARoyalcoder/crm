@@ -54,7 +54,7 @@ function Sheet({ detail }: { detail: InvoiceDetail }) {
 
       <header className="flex flex-wrap items-start justify-between gap-6">
         <div className="grid gap-0.5">
-          <span className="text-lg font-semibold">{seller?.name ?? 'Pawan Putra'}</span>
+          {seller ? <span className="text-lg font-semibold">{seller.name}</span> : null}
           {seller?.address ? <span className="whitespace-pre-line text-black/70">{seller.address}</span> : null}
           {seller?.taxId ? <span className="text-black/70">GSTIN {seller.taxId}</span> : null}
           {seller?.phone || seller?.email ? (

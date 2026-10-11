@@ -6,6 +6,7 @@ import { ContactsTab } from '@/features/customers/profile/ContactsTab'
 import { NotBuiltYetTab } from '@/features/customers/profile/NotBuiltYetTab'
 import { SummaryTab } from '@/features/customers/profile/SummaryTab'
 import { TimelineTab } from '@/features/customers/profile/TimelineTab'
+import { CustomerFinanceTab } from '@/features/finance/components/CustomerFinanceTab'
 
 import { CustomerProjectsTab } from '@/features/customers/profile/CustomerProjectsTab'
 
@@ -40,7 +41,7 @@ export const customerTabs: CustomerTab[] = [
   { key: 'contacts', label: 'Contacts', count: (customer) => customer.contactCount, component: ContactsTab },
   notBuilt('sales', 'Sales history', 'Leads, opportunities, quotations and orders'),
   { key: 'projects', label: 'Project history', component: CustomerProjectsTab },
-  notBuilt('financials', 'Financial summary', 'Invoices, payments and the outstanding balance'),
+  { key: 'financials', label: 'Financial summary', component: CustomerFinanceTab },
   notBuilt('service', 'Service history', 'Support tickets and service visits'),
   notBuilt('amc', 'AMC / Warranty', 'Maintenance contracts and warranties'),
   notBuilt('documents', 'Documents', 'Files'),

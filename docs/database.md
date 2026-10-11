@@ -25,6 +25,8 @@ Location: `backend/src/main/resources/db/migration`
 | 20 | `V20__project_stages_and_feedback.sql` | `project_stage_states`, `project_stage_history`, `project_feedback` |
 | 21 | `V21__project_health_and_profitability.sql` | Cost columns on `projects` (added outside these documents) |
 | 22 | `V22__field_operations.sql` | `field_jobs`, `field_job_checklist_items`, `field_job_materials`, `field_job_photos`, `field_job_notes`; the `FIELD_JOB_*` permissions |
+| 23 | `V23__finance_core.sql` | `invoices`, `invoice_items`, `payments`, `payment_allocations`, `refunds`, `credit_notes`, `debit_notes`, `payment_methods`, `finance_document_sequences`, `finance_idempotency_keys`; the triggers that keep financial records from being changed or deleted; `FINANCE_MANAGE`, `FINANCE_CONFIGURE` |
+| 24 | `V24__proof_of_work.sql` | The proof-of-work tables (added outside these documents) |
 | 8 | `V8__audit_and_activity.sql` | `audit_logs` (append-only, enforced by trigger), `entity_activity_logs`, the `AUDIT_VIEW` permission |
 | 7 | `V7__organization_and_catalog_configuration.sql` | Branch city/state required and indexed; verticals editable (`version`, `updated_by`); service configuration columns (`billing_type`, `unit_label`, `base_price`, `requires_site_visit`, `estimated_duration_days`) |
 
@@ -77,6 +79,14 @@ service_verticals ──< service_categories ──< services
 | `project_feedback` | project | no | none | The client's rating of a project, 1 to 5 (checked); one per project |
 | `field_jobs` | fieldops | yes | `status` (the workflow, checked) | A job or site visit at a customer's site: customer and site details copied in, schedule, technician, the time of each step, completion notes and the customer's sign-off. See [field-operations.md](field-operations.md) |
 | `field_job_checklist_items`, `field_job_materials`, `field_job_photos`, `field_job_notes` | fieldops | no | none | What the technician records on a job; deleted with it. Photos hold the storage key, never the bytes |
+| `invoices` | finance | drafts only | `status` (checked; `OVERDUE` is never stored) | What a customer is billed, with the customer as billed copied in, the totals, and running totals of what has been settled. Frozen by trigger once issued; never deleted. See [finance.md](finance.md) |
+| `invoice_items` | finance | no | none | The lines of an invoice, with their worked-out amounts. Frozen with the invoice |
+| `payments` | finance | no | `status` (`RECEIVED`, `REVERSED`) | Money received. What was received never changes (trigger); only the running totals of what is allocated and refunded move. Never deleted. A gateway payment is unique per gateway |
+| `payment_allocations` | finance | no | none | How much of a payment settles which invoice. Append-only (trigger): a release is a second row that negates the first |
+| `refunds`, `credit_notes`, `debit_notes` | finance | no | none | Money returned out of a payment; corrections to what is owed on an invoice. Append-only (trigger) |
+| `payment_methods` | finance | yes | `active` | How money arrives or is returned; configured per organization |
+| `finance_document_sequences` | finance | no | none | The last number used per organization, kind of document and fiscal year. Advanced inside the transaction that uses the number, so numbering has no gaps |
+| `finance_idempotency_keys` | finance | no | none | One row per request that must take effect once, with what it created; written in the same transaction as the work |
 | `customer_tags`, `customer_tag_assignments` | customer | no | none | Tag names unique per organization, ignoring case |
 | `audit_logs` | audit | no | none | Append-only: the database refuses `UPDATE` and `DELETE`. No foreign keys, by design. See [audit.md](audit.md) |
 | `entity_activity_logs` | audit | no | none | Per-record timeline; links to its `audit_logs` row |

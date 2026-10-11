@@ -67,6 +67,7 @@ docker-compose.yml, .env.example
 | [docs/configuration.md](docs/configuration.md) | You are working with branches, verticals, categories or services |
 | [docs/project-analytics.md](docs/project-analytics.md) | You want to know how a dashboard figure is worked out, or how pipeline stages are configured |
 | [docs/field-operations.md](docs/field-operations.md) | You are working with field jobs, the technician screens or customer sign-off |
+| [docs/finance.md](docs/finance.md) | You are working with invoices, payments, credit or debit notes, refunds, ageing or a payment gateway |
 | [docs/project-templates.md](docs/project-templates.md) | You are defining how a service's projects run, or planning a project from that |
 | [docs/leads.md](docs/leads.md) | You are working with leads, their score and why, or the qualification questions |
 | [docs/custom-fields.md](docs/custom-fields.md) | You are configuring what a service asks on a lead, or building a form that asks it |

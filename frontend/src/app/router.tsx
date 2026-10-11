@@ -20,6 +20,15 @@ import { FieldJobFormPage } from '@/features/field-jobs/pages/FieldJobFormPage'
 import { FieldJobPage } from '@/features/field-jobs/pages/FieldJobPage'
 import { FieldJobsPage } from '@/features/field-jobs/pages/FieldJobsPage'
 import { MyJobsPage } from '@/features/field-jobs/pages/MyJobsPage'
+import { AgeingPage } from '@/features/finance/pages/AgeingPage'
+import { InvoiceFormPage } from '@/features/finance/pages/InvoiceFormPage'
+import { InvoicePage } from '@/features/finance/pages/InvoicePage'
+import { InvoicePrintPage } from '@/features/finance/pages/InvoicePrintPage'
+import { InvoicesPage } from '@/features/finance/pages/InvoicesPage'
+import { PaymentFormPage } from '@/features/finance/pages/PaymentFormPage'
+import { PaymentMethodsPage } from '@/features/finance/pages/PaymentMethodsPage'
+import { PaymentPage } from '@/features/finance/pages/PaymentPage'
+import { PaymentsPage } from '@/features/finance/pages/PaymentsPage'
 import { ProjectAnalyticsPage } from '@/features/project-analytics/pages/ProjectAnalyticsPage'
 import { ProjectTemplateFormPage } from '@/features/project-templates/pages/ProjectTemplateFormPage'
 import { ProjectTemplatePage } from '@/features/project-templates/pages/ProjectTemplatePage'
@@ -60,6 +69,8 @@ export const router = createBrowserRouter([
   {
     element: <RequireAuth />,
     children: [
+      // The invoice as a document: outside the shell, so nothing of the application prints with it.
+      { path: '/invoices/:id/print', element: needs('FINANCE_VIEW', <InvoicePrintPage />) },
       {
         path: '/',
         element: <AppShell />,
@@ -96,6 +107,17 @@ export const router = createBrowserRouter([
           { path: 'field-jobs/new', element: needs('FIELD_JOB_MANAGE', <FieldJobFormPage />) },
           { path: 'field-jobs/:id', element: needsAny(['FIELD_JOB_WORK', 'FIELD_JOB_VIEW', 'FIELD_JOB_MANAGE'], <FieldJobPage />) },
           { path: 'field-jobs/:id/edit', element: needs('FIELD_JOB_MANAGE', <FieldJobFormPage />) },
+
+          { path: 'invoices', element: needs('FINANCE_VIEW', <InvoicesPage />) },
+          { path: 'invoices/new', element: needs('FINANCE_MANAGE', <InvoiceFormPage />) },
+          { path: 'invoices/:id', element: needs('FINANCE_VIEW', <InvoicePage />) },
+          { path: 'invoices/:id/edit', element: needs('FINANCE_MANAGE', <InvoiceFormPage />) },
+          { path: 'payments', element: needs('FINANCE_VIEW', <PaymentsPage />) },
+          { path: 'payments/new', element: needs('FINANCE_MANAGE', <PaymentFormPage />) },
+          { path: 'payments/:id', element: needs('FINANCE_VIEW', <PaymentPage />) },
+          { path: 'finance/ageing', element: needs('FINANCE_VIEW', <AgeingPage />) },
+          { path: 'admin/payment-methods', element: needs('FINANCE_VIEW', <PaymentMethodsPage />) },
+
           { path: 'project-analytics', element: needs('PROJECT_VIEW', <ProjectAnalyticsPage />) },
           { path: 'admin/project-templates', element: needs('PROJECT_VIEW', <ProjectTemplatesPage />) },
           { path: 'admin/project-templates/new', element: needs('PROJECT_CONFIGURE', <ProjectTemplateFormPage />) },

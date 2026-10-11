@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ErrorState } from '@/components/feedback/ErrorState'
@@ -241,7 +241,7 @@ function PaymentView({ detail, back }: { detail: PaymentDetail; back: { to: stri
   )
 }
 
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid gap-0.5">
       <dt className="text-xs text-muted-foreground">{label}</dt>
