@@ -24,7 +24,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate # Flyway owns the schema; Hibernate only verifies it.
+      ddl-auto: ${HIBERNATE_DDL_AUTO:none} # Flyway owns and validates the schema; avoiding duplicate remote queries at startup.
     properties:
       hibernate:
         jdbc:

@@ -8,4 +8,4 @@ logging:
 server:
   tomcat:
     threads:
-      max: 200
+      max: ${TOMCAT_MAX_THREADS:30}
