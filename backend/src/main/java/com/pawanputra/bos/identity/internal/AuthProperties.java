@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
  * @param maxFailedLogins       consecutive wrong passwords before the account is locked
  * @param lockDuration          how long that lock lasts
  * @param cookieSecure          send the refresh cookie over HTTPS only (off only for local http)
+ * @param cookieSameSite        SameSite policy for the refresh cookie: "None", "Lax", or "Strict"
  */
 @Validated
 @ConfigurationProperties("app.security.auth")
@@ -23,15 +25,11 @@ public record AuthProperties(
         @Min(1) int maxFailedLogins,
         @NotNull Duration lockDuration,
         boolean cookieSecure,
-        String cookieSameSite) {
+        @DefaultValue("None") String cookieSameSite) {
 
-    public AuthProperties(
-            Duration refreshTokenTtl,
-            Duration sessionMaxLifetime,
-            Duration passwordResetTokenTtl,
-            int maxFailedLogins,
-            Duration lockDuration,
-            boolean cookieSecure) {
-        this(refreshTokenTtl, sessionMaxLifetime, passwordResetTokenTtl, maxFailedLogins, lockDuration, cookieSecure, null);
+    public AuthProperties {
+        if (cookieSameSite == null || cookieSameSite.isBlank()) {
+            cookieSameSite = cookieSecure ? "None" : "Strict";
+        }
     }
 }
