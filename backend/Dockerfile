@@ -24,5 +24,5 @@ COPY --from=build --chown=bos:bos /workspace/target/business-os.jar /app/busines
 
 USER bos
 EXPOSE 8080
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65.0 -XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=128m -Dspring.jmx.enabled=false -XX:+ExitOnOutOfMemoryError"
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50.0 -XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=256m -XX:TieredStopAtLevel=1 -Dspring.jmx.enabled=false -XX:+ExitOnOutOfMemoryError"
 ENTRYPOINT ["java", "-jar", "/app/business-os.jar"]
