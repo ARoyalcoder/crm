@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record CorsProperties(List<String> allowedOrigins) {
 
     public CorsProperties {
-        allowedOrigins = allowedOrigins == null ? List.of() : List.copyOf(allowedOrigins);
+        List<String> cleaned = allowedOrigins == null ? List.of() : allowedOrigins.stream().filter(s -> s != null && !s.isBlank()).toList();
+        allowedOrigins = cleaned.isEmpty() ? List.of("*") : cleaned;
     }
 }
