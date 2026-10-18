@@ -120,8 +120,8 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
     return await fetch(normalizedPath, {
       method,
       signal,
-      // Sends the refresh cookie to the /auth endpoints. The API is same-origin (proxied), so 'same-origin' is enough.
-      credentials: 'same-origin',
+      // Sends the refresh cookie to /auth endpoints. Uses 'include' for cross-origin or 'same-origin' when proxied.
+      credentials: env.apiBaseUrl.startsWith('http') ? 'include' : 'same-origin',
       headers: {
         Accept: 'application/json, application/problem+json, text/csv, image/*',
         // For a file upload the browser sets the multipart Content-Type (with its boundary) itself.
