@@ -27,7 +27,7 @@ export type AskResponse = z.infer<typeof askResponseSchema>
 export type AskRecord = z.infer<typeof askRecordSchema>
 
 export function ask(question: string): Promise<AskResponse> {
-  return apiRequest('/api/v1/ask/', askResponseSchema, { method: 'POST', body: { question } })
+  return apiRequest('/ask', askResponseSchema, { method: 'POST', body: { question } })
 }
 
 const suggestionSchema = z.object({ tool: z.string(), question: z.string() })
@@ -37,5 +37,5 @@ export type AskSuggestion = z.infer<typeof suggestionSchema>
 export const askSuggestionsQuery = queryOptions({
   queryKey: ['ask', 'suggestions'],
   staleTime: 10 * 60 * 1000,
-  queryFn: ({ signal }) => apiRequest('/api/v1/ask/suggestions', z.array(suggestionSchema), { signal }),
+  queryFn: ({ signal }) => apiRequest('/ask/suggestions', z.array(suggestionSchema), { signal }),
 })

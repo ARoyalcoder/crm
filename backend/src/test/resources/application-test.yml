@@ -22,6 +22,7 @@ app:
       secret: test-only-jwt-signing-key-0123456789-abcdefghij
     auth:
       cookie-secure: false
+      cookie-same-site: Strict
   scheduling:
     enabled: false
   storage:

@@ -22,5 +22,16 @@ public record AuthProperties(
         @NotNull Duration passwordResetTokenTtl,
         @Min(1) int maxFailedLogins,
         @NotNull Duration lockDuration,
-        boolean cookieSecure) {
+        boolean cookieSecure,
+        String cookieSameSite) {
+
+    public AuthProperties(
+            Duration refreshTokenTtl,
+            Duration sessionMaxLifetime,
+            Duration passwordResetTokenTtl,
+            int maxFailedLogins,
+            Duration lockDuration,
+            boolean cookieSecure) {
+        this(refreshTokenTtl, sessionMaxLifetime, passwordResetTokenTtl, maxFailedLogins, lockDuration, cookieSecure, null);
+    }
 }

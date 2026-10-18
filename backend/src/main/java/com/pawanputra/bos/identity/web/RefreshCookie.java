@@ -42,10 +42,13 @@ class RefreshCookie {
     }
 
     private ResponseCookie build(String value, Duration maxAge) {
+        String sameSite = properties.cookieSameSite() != null && !properties.cookieSameSite().isBlank()
+                ? properties.cookieSameSite()
+                : (properties.cookieSecure() ? "None" : "Strict");
         return ResponseCookie.from(NAME, value)
                 .httpOnly(true)
                 .secure(properties.cookieSecure())
-                .sameSite("Strict")
+                .sameSite(sameSite)
                 .path(PATH)
                 .maxAge(maxAge.isNegative() ? Duration.ZERO : maxAge)
                 .build();
