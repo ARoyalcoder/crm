@@ -357,7 +357,7 @@ test('the server\'s objection to a field definition is shown on the form', async
   await editor.getByLabel('Label', { exact: true }).fill('Roof area')
   await editor.getByLabel('Key').fill('Roof Area')
   await editor.getByRole('button', { name: 'Add field' }).click()
-  await expect(editor.getByText('Lower-case letters, digits and underscores, starting with a letter')).toBeVisible()
+  await expect(editor.getByText('Lower-case letters, digits and underscores; start with a letter')).toBeVisible()
   await editor.getByLabel('Key').fill('roof_area')
   await editor.getByRole('button', { name: 'Add field' }).click()
   await expect(editor.getByRole('alert')).toContainText("already has a field with the key 'roof_area'")

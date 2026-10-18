@@ -7,11 +7,11 @@ import { ageingQuery, formatDay, formatMoney, type AgeingReport } from '@/featur
 import { Section, StatTile } from '@/features/finance/components/FinanceParts'
 
 // One hue, darker as the debt gets older; money that is not due yet is left neutral.
-const AGE_SHADES = ['bg-violet-300', 'bg-violet-500', 'bg-violet-700', 'bg-violet-900']
+const AGE_SHADES = ['bg-primary/30', 'bg-primary', 'bg-primary', 'bg-primary']
 
 function shade(index: number, bands: number) {
   if (index === 0) {
-    return 'bg-slate-300'
+    return 'bg-border'
   }
   // Spread the shades over however many bands are configured; the oldest band is always the darkest.
   const step = bands <= 1 ? AGE_SHADES.length - 1 : Math.round(((index - 1) * (AGE_SHADES.length - 1)) / (bands - 1))
@@ -23,13 +23,13 @@ export function AgeingPage() {
   const ageing = useQuery(ageingQuery)
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Ageing"
         description={
           ageing.data
             ? `What customers owe as of ${formatDay(ageing.data.asOf)}, by how long it has been due.`
-            : 'What customers owe, by how long it has been due.'
+            : 'What customers owe, by age past due.'
         }
       />
       {ageing.isPending ? (
@@ -82,7 +82,7 @@ function Report({ report }: { report: AgeingReport }) {
         {report.customers.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nobody owes anything.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div data-slot="table-container" className="overflow-x-auto table-scrollbar rounded-xl border border-border/80 dark:border-slate-800 bg-card/90 shadow-soft p-1">
             <table className="w-full min-w-[44rem] text-sm">
               <caption className="sr-only">What each customer owes, by age</caption>
               <thead className="text-left text-xs text-muted-foreground">

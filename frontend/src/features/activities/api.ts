@@ -10,7 +10,7 @@ export const ACTIVITY_TYPES = [
   { value: 'MEETING', label: 'Meeting' },
   { value: 'WHATSAPP', label: 'WhatsApp' },
   { value: 'EMAIL', label: 'Email' },
-  { value: 'SITE_VISIT', label: 'Site Visit' },
+  { value: 'SITE_VISIT', label: 'Site visit' },
   { value: 'FOLLOW_UP', label: 'Follow-up' },
   { value: 'NOTE', label: 'Note' },
   { value: 'TASK', label: 'Task' },
@@ -33,8 +33,8 @@ export const TASK_PRIORITIES = [
 ] as const
 
 export const TASK_STATUSES = [
-  { value: 'PENDING', label: 'To Do' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'PENDING', label: 'To do' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
   { value: 'COMPLETED', label: 'Completed' },
   { value: 'CANCELLED', label: 'Cancelled' },
 ] as const
@@ -42,7 +42,7 @@ export const TASK_STATUSES = [
 export const RECURRENCE_PATTERNS = [
   { value: 'DAILY', label: 'Daily' },
   { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'BIWEEKLY', label: 'Every 2 Weeks' },
+  { value: 'BIWEEKLY', label: 'Every 2 weeks' },
   { value: 'MONTHLY', label: 'Monthly' },
   { value: 'YEARLY', label: 'Yearly' },
 ] as const

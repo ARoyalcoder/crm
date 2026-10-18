@@ -1,213 +1,162 @@
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
+import { useFieldArray, useFormContext, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { FormField } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { servicesQuery } from '@/features/catalog/api'
-import { useQuery } from '@tanstack/react-query'
-import type { ItemInput } from '../api'
+import { formatRupees } from '@/lib/format'
+import { blankItem, lineAmounts, type ItemsForm } from '../quotation-form'
 
-interface QuotationItemsEditorProps {
-  items: ItemInput[]
-  onChange: (items: ItemInput[]) => void
-  disabled?: boolean
+const COLUMNS = 'md:grid-cols-[minmax(0,1fr)_5rem_7rem_5rem_5rem_7rem_2.25rem]'
+
+/** A cell with a small label that only shows on narrow screens, where the column headings are not. */
+function Cell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid gap-1">
+      <span className="text-xs text-muted-foreground md:hidden">{label}</span>
+      {children}
+    </div>
+  )
 }
 
-export function QuotationItemsEditor({ items, onChange, disabled = false }: QuotationItemsEditorProps) {
-  const servicesList = useQuery(servicesQuery({}))
+/**
+ * The lines of a quotation: what is sold, how many, at what price, with its own discount and GST. Lines can start from a
+ * catalog service (which fills in its name and price) or be typed freely. It must sit inside a form that has an `items` list.
+ */
+export function QuotationItemsEditor({ disabled = false }: { disabled?: boolean }) {
+  const { control, setValue, formState } = useFormContext<ItemsForm>()
+  const { fields, append, remove } = useFieldArray({ control, name: 'items' })
+  const items = useWatch({ control, name: 'items' })
+  const services = useQuery(servicesQuery({ active: 'true', size: 100 }))
 
-  function addItem() {
-    onChange([
-      ...items,
-      {
-        serviceId: null,
-        serviceName: '',
-        description: '',
-        quantity: 1,
-        unitPrice: 0,
-        discountPercentage: 0,
-        taxPercentage: 18,
-      },
-    ])
+  const fromCatalog = (index: number, serviceId: string) => {
+    const service = services.data?.items.find((candidate) => candidate.id === serviceId)
+    if (!service) return
+    setValue(`items.${index}.serviceId`, service.id, { shouldDirty: true })
+    setValue(`items.${index}.serviceName`, service.name, { shouldDirty: true, shouldValidate: true })
+    if (service.basePrice != null) setValue(`items.${index}.unitPrice`, String(service.basePrice), { shouldDirty: true, shouldValidate: true })
   }
 
-  function removeItem(index: number) {
-    const updated = items.filter((_, i) => i !== index)
-    onChange(updated)
-  }
-
-  function updateItem(index: number, patch: Partial<ItemInput>) {
-    const updated = items.map((itm, i) => (i === index ? { ...itm, ...patch } : itm))
-    onChange(updated)
-  }
-
-  function calculateItemRow(item: ItemInput) {
-    const sub = (item.quantity || 0) * (item.unitPrice || 0)
-    const disc = sub * ((item.discountPercentage || 0) / 100)
-    const afterDisc = Math.max(0, sub - disc)
-    const tax = afterDisc * ((item.taxPercentage || 0) / 100)
-    return {
-      subtotal: sub,
-      discount: disc,
-      tax,
-      total: afterDisc + tax,
-    }
-  }
+  const listError = formState.errors.items?.root?.message ?? formState.errors.items?.message
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-semibold">Quotation Line Items</Label>
-        {!disabled && (
-          <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 text-xs">
-            <Plus className="mr-1 h-3.5 w-3.5" />
-            Add Item
+    <section aria-labelledby="quotation-lines" className="grid gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h3 id="quotation-lines" className="text-sm font-semibold">
+          Lines
+        </h3>
+        {disabled ? null : (
+          <Button type="button" variant="outline" size="sm" onClick={() => append(blankItem())}>
+            <Plus aria-hidden="true" />
+            Add a line
           </Button>
         )}
       </div>
 
-      <div className="space-y-2">
-        {items.map((item, idx) => {
-          const rowCalc = calculateItemRow(item)
+      <div aria-hidden="true" className={`hidden gap-2 px-1 text-xs font-medium text-muted-foreground md:grid ${COLUMNS}`}>
+        <span>Item</span>
+        <span>Qty</span>
+        <span>Unit price (₹)</span>
+        <span>Discount %</span>
+        <span>GST %</span>
+        <span className="text-right">Line total</span>
+        <span />
+      </div>
 
+      <ul className="grid gap-3">
+        {fields.map((field, index) => {
+          const row = items?.[index]
+          const total = row ? lineAmounts(row).total : 0
           return (
-            <div
-              key={idx}
-              className="rounded-lg border bg-card p-3 shadow-sm space-y-2 text-xs"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-semibold text-muted-foreground">Item #{idx + 1}</span>
-                {!disabled && items.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeItem(idx)}
-                    className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div>
-                  <Label className="text-[11px]">Service Offering</Label>
+            <li key={field.id} className={`grid gap-2 rounded-xl border bg-muted/30 p-3 md:items-start ${COLUMNS} md:border-0 md:bg-transparent md:p-0`}>
+              <div className="grid gap-1.5">
+                <span className="text-xs text-muted-foreground md:hidden">Item {index + 1}</span>
+                <FormField
+                  control={control}
+                  name={`items.${index}.serviceName`}
+                  render={({ field: name, fieldState }) => (
+                    <div className="grid gap-1">
+                      <Input aria-label={`Line ${index + 1}: item`} placeholder="What is being sold" disabled={disabled} aria-invalid={fieldState.error ? true : undefined} {...name} />
+                      {fieldState.error ? <p className="text-xs text-destructive">{fieldState.error.message}</p> : null}
+                    </div>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name={`items.${index}.description`}
+                  render={({ field: description }) => (
+                    <Input aria-label={`Line ${index + 1}: notes`} placeholder="Model, size or other detail (optional)" disabled={disabled} className="h-8 text-xs md:h-8" {...description} />
+                  )}
+                />
+                {disabled || !services.data?.items.length ? null : (
                   <Select
-                    value={item.serviceId ?? ''}
-                    disabled={disabled}
-                    onChange={(e) => {
-                      const sid = e.target.value
-                      const s = servicesList.data?.items.find((serv) => serv.id === sid)
-                      updateItem(idx, {
-                        serviceId: sid || null,
-                        serviceName: s ? s.name : item.serviceName,
-                      })
-                    }}
-                    className="h-8 text-xs"
+                    aria-label={`Line ${index + 1}: fill from the catalog`}
+                    value=""
+                    onChange={(event) => fromCatalog(index, event.target.value)}
+                    className="h-8 text-xs md:h-8"
                   >
-                    <option value="">Custom Service Item</option>
-                    {servicesList.data?.items.map((serv) => (
-                      <option key={serv.id} value={serv.id}>
-                        {serv.name}
+                    <option value="">Fill from the service catalog…</option>
+                    {services.data.items.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                        {service.basePrice != null ? ` — ₹${service.basePrice}` : ''}
                       </option>
                     ))}
                   </Select>
-                </div>
-
-                <div>
-                  <Label className="text-[11px]">Item Name / Title *</Label>
-                  <Input
-                    required
-                    disabled={disabled}
-                    placeholder="e.g. 5kW Inverter System"
-                    value={item.serviceName}
-                    onChange={(e) => updateItem(idx, { serviceName: e.target.value })}
-                    className="h-8 text-xs"
-                  />
-                </div>
+                )}
               </div>
 
-              <div>
-                <Label className="text-[11px]">Specifications / Description</Label>
-                <Input
-                  disabled={disabled}
-                  placeholder="Optional line notes or model numbers..."
-                  value={item.description ?? ''}
-                  onChange={(e) => updateItem(idx, { description: e.target.value })}
-                  className="h-8 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <div>
-                  <Label className="text-[11px]">Qty</Label>
-                  <Input
-                    type="number"
-                    min="0.01"
-                    step="any"
-                    disabled={disabled}
-                    value={item.quantity}
-                    onChange={(e) => updateItem(idx, { quantity: parseFloat(e.target.value) || 0 })}
-                    className="h-8 text-xs"
+              {(
+                [
+                  ['quantity', 'Qty', 'quantity', 'any', '0'],
+                  ['unitPrice', 'Unit price (₹)', 'unit price', 'any', '0'],
+                  ['discountPercentage', 'Discount %', 'discount percentage', 'any', '0'],
+                  ['taxPercentage', 'GST %', 'GST percentage', 'any', '0'],
+                ] as const
+              ).map(([name, label, spoken, step, min]) => (
+                <Cell key={name} label={label}>
+                  <FormField
+                    control={control}
+                    name={`items.${index}.${name}`}
+                    render={({ field: input, fieldState }) => (
+                      <div className="grid gap-1">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          min={min}
+                          step={step}
+                          disabled={disabled}
+                          aria-label={`Line ${index + 1}: ${spoken}`}
+                          aria-invalid={fieldState.error ? true : undefined}
+                          className="tabular md:text-right"
+                          {...input}
+                        />
+                        {fieldState.error ? <p className="text-xs text-destructive">{fieldState.error.message}</p> : null}
+                      </div>
+                    )}
                   />
-                </div>
+                </Cell>
+              ))}
 
-                <div>
-                  <Label className="text-[11px]">Unit Price (₹)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="any"
-                    disabled={disabled}
-                    value={item.unitPrice}
-                    onChange={(e) => updateItem(idx, { unitPrice: parseFloat(e.target.value) || 0 })}
-                    className="h-8 text-xs"
-                  />
-                </div>
+              <Cell label="Line total">
+                <p className="flex h-10 items-center text-sm font-medium tabular md:h-9 md:justify-end">{formatRupees(total, { exact: true })}</p>
+              </Cell>
 
-                <div>
-                  <Label className="text-[11px]">Discount (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    disabled={disabled}
-                    value={item.discountPercentage ?? 0}
-                    onChange={(e) =>
-                      updateItem(idx, { discountPercentage: parseFloat(e.target.value) || 0 })
-                    }
-                    className="h-8 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[11px]">GST / Tax (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    disabled={disabled}
-                    value={item.taxPercentage ?? 18}
-                    onChange={(e) =>
-                      updateItem(idx, { taxPercentage: parseFloat(e.target.value) || 0 })
-                    }
-                    className="h-8 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Row Total Summary */}
-              <div className="flex justify-end pt-1 text-[11px] text-muted-foreground border-t border-dashed">
-                <span>
-                  Subtotal: ₹{rowCalc.subtotal.toFixed(2)} | Tax: ₹{rowCalc.tax.toFixed(2)} |{' '}
-                  <strong className="text-foreground">Line Total: ₹{rowCalc.total.toFixed(2)}</strong>
-                </span>
-              </div>
-            </div>
+              {disabled || fields.length <= 1 ? (
+                <span />
+              ) : (
+                <Button type="button" variant="ghost" size="icon" aria-label={`Remove line ${index + 1}`} onClick={() => remove(index)}>
+                  <Trash2 aria-hidden="true" />
+                </Button>
+              )}
+            </li>
           )
         })}
-      </div>
-    </div>
+      </ul>
+
+      {listError ? <p role="alert" className="text-sm text-destructive">{String(listError)}</p> : null}
+    </section>
   )
 }

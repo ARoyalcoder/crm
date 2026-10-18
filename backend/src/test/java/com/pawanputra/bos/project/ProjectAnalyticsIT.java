@@ -59,7 +59,7 @@ class ProjectAnalyticsIT extends AbstractIntegrationTest {
         adminAccount = accounts.activeUser(RoleCodes.ADMIN);
         admin = tokenFor(adminAccount);
         service = service();
-        today = LocalDate.now();
+        today = LocalDate.now(java.time.ZoneId.of("Asia/Kolkata"));
     }
 
     // ------------------------------------------------------------------ dashboard cards

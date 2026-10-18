@@ -1,5 +1,6 @@
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Eye } from 'lucide-react'
 import { dataTableColumns } from '@/components/data-table/DataTable'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { AdminList } from '@/components/list/AdminList'
@@ -16,57 +17,21 @@ import {
   type AuditEntry,
 } from '@/features/audit/api'
 import { ActionBadge } from '@/features/audit/components/ActionBadge'
+import { AuditDetailDrawer } from '@/features/audit/components/AuditDetailDrawer'
 import { useListParams } from '@/lib/use-list-params'
 
 const column = dataTableColumns<AuditEntry>()
 
-const columns = column.columns([
-  column.accessor('occurredAt', {
-    header: 'When',
-    cell: ({ getValue }) => <span className="whitespace-nowrap tabular-nums">{formatDateTime(getValue())}</span>,
-  }),
-  column.accessor('actorLabel', { header: 'User' }),
-  column.accessor('action', { header: 'Action', cell: ({ getValue }) => <ActionBadge action={getValue()} /> }),
-  column.accessor('module', { header: 'Module', cell: ({ getValue }) => <span className="capitalize">{getValue()}</span> }),
-  column.accessor('summary', {
-    header: 'What happened',
-    cell: ({ row }) => (
-      <div className="grid">
-        <span>{row.original.summary}</span>
-        {row.original.entityType ? (
-          <span className="text-xs text-muted-foreground">
-            {row.original.entityType}
-            {row.original.entityId ? <span className="font-mono"> · {row.original.entityId}</span> : null}
-          </span>
-        ) : null}
-      </div>
-    ),
-  }),
-  column.accessor('ipAddress', {
-    header: 'IP',
-    cell: ({ getValue }) => <span className="font-mono text-xs text-muted-foreground">{getValue() ?? '—'}</span>,
-  }),
-  column.display({
-    id: 'actions',
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => (
-      <div className="flex justify-end">
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/admin/audit/${row.original.id}`} aria-label={`View details: ${row.original.summary}`}>
-            Details
-          </Link>
-        </Button>
-      </div>
-    ),
-  }),
-])
-
-/** Who did what, when. Read-only: audit events are written by the system and cannot be edited. */
+/**
+ * Audit log page: high-density, neat list with minimal text on rows.
+ * Clicking a row or the "Detail" button opens a slide-over sheet showing every data point.
+ */
 export function AuditLogPage() {
   const params = useListParams()
   const facets = useQuery(auditFacetsQuery)
   const fromDate = params.get('from')
   const toDate = params.get('to')
+  const [selectedId, setSelectedId] = useState<string | null>(params.get('selected') || null)
 
   const logs = useQuery(
     auditLogsQuery({
@@ -82,21 +47,102 @@ export function AuditLogPage() {
     }),
   )
 
+  const columns = useMemo(
+    () => [
+      column.accessor('occurredAt', {
+        header: 'Time',
+        cell: ({ getValue }) => (
+          <span className="whitespace-nowrap tabular-nums text-xs font-medium text-muted-foreground">
+            {formatDateTime(getValue())}
+          </span>
+        ),
+      }),
+      column.accessor('actorLabel', {
+        header: 'User',
+        cell: ({ getValue }) => {
+          const name = getValue() || 'System'
+          const initial = name.charAt(0).toUpperCase()
+          return (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                {initial}
+              </span>
+              <span className="truncate text-xs font-medium text-foreground max-w-[120px]">
+                {name}
+              </span>
+            </div>
+          )
+        },
+      }),
+      column.accessor('action', {
+        header: 'Action',
+        cell: ({ getValue }) => <ActionBadge action={getValue()} />,
+      }),
+      column.display({
+        id: 'target',
+        header: 'Target',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1 text-xs">
+            <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-muted font-medium capitalize text-foreground text-[11px]">
+              {row.original.module}
+            </span>
+            {row.original.entityType && (
+              <span className="text-muted-foreground text-[11px] truncate max-w-[110px]">
+                / {row.original.entityType}
+              </span>
+            )}
+          </div>
+        ),
+      }),
+      column.accessor('summary', {
+        header: 'Summary',
+        cell: ({ row }) => (
+          <span
+            className="block max-w-[260px] truncate text-xs text-foreground/85 lg:max-w-[420px]"
+            title={row.original.summary}
+          >
+            {row.original.summary}
+          </span>
+        ),
+      }),
+      column.display({
+        id: 'actions',
+        header: () => <span className="sr-only">Details</span>,
+        cell: ({ row }) => (
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/50 shadow-2xs"
+              onClick={() => setSelectedId(row.original.id)}
+            >
+              <Eye className="size-3.5" />
+              Detail
+            </Button>
+          </div>
+        ),
+      }),
+    ],
+    [],
+  )
+
   const filtersActive = ['search', 'actorId', 'module', 'action', 'entityType', 'entityId', 'from', 'to'].some(
     (key) => params.get(key) !== '',
   )
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
-        title="Audit log"
-        description="Every change, sign-in and sensitive action in your organization, newest first."
+        title="Audit Log"
+        description="Every change, sign-in and sensitive action, newest first."
       />
+
       <AdminList
         noun="events"
         singular="event"
         query={logs}
         columns={columns}
+        onRowClick={(row) => setSelectedId(row.id)}
         onPageChange={params.setPage}
         toolbar={
           <ListToolbar>
@@ -133,7 +179,6 @@ export function AuditLogPage() {
               label="Entity"
               allLabel="All entities"
               value={params.get('entityType')}
-              // A record id only makes sense together with the kind of record it belongs to.
               onChange={(value) => params.setMany({ entityType: value, entityId: '' })}
               options={(facets.data?.entityTypes ?? []).map((type) => ({ value: type, label: type }))}
             />
@@ -142,7 +187,7 @@ export function AuditLogPage() {
               <Input
                 type="date"
                 aria-label="From date"
-                className="sm:w-40"
+                className="sm:w-36"
                 value={fromDate}
                 max={toDate || undefined}
                 onChange={(event) => params.set('from', event.target.value)}
@@ -153,7 +198,7 @@ export function AuditLogPage() {
               <Input
                 type="date"
                 aria-label="To date"
-                className="sm:w-40"
+                className="sm:w-36"
                 value={toDate}
                 min={fromDate || undefined}
                 onChange={(event) => params.set('to', event.target.value)}
@@ -184,6 +229,13 @@ export function AuditLogPage() {
             ) : null}
           </ListToolbar>
         }
+      />
+
+      {/* Slide-over Inspector Drawer for Full Data View */}
+      <AuditDetailDrawer
+        id={selectedId}
+        open={selectedId !== null}
+        onOpenChange={(open) => !open && setSelectedId(null)}
       />
     </div>
   )

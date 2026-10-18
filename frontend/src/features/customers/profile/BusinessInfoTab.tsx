@@ -10,7 +10,7 @@ import type { CustomerTabProps } from '@/features/customers/profile/tabs'
 export function BusinessInfoTab({ customer }: CustomerTabProps) {
   const business = customer.type === 'BUSINESS'
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2">
       <Card className="h-fit">
         <CardHeader>
           <CardTitle>Business information</CardTitle>

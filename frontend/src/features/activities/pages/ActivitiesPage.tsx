@@ -18,6 +18,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -139,25 +140,25 @@ export function ActivitiesPage() {
   }
 
   const viewTabs: { id: ViewMode; label: string; count: number; icon: typeof CalendarCheck; badgeClass?: string }[] = [
-    { id: 'todays-work', label: "Today's Work", count: counts.todaysWorkCount, icon: CalendarCheck },
-    { id: 'my-tasks', label: 'My Tasks', count: counts.myTasksCount, icon: User },
+    { id: 'todays-work', label: "Today's work", count: counts.todaysWorkCount, icon: CalendarCheck },
+    { id: 'my-tasks', label: 'My tasks', count: counts.myTasksCount, icon: User },
     {
       id: 'overdue',
-      label: 'Overdue Tasks',
+      label: 'Overdue tasks',
       count: counts.overdueCount,
       icon: AlertCircle,
       badgeClass: counts.overdueCount > 0 ? 'bg-destructive text-white' : undefined,
     },
-    { id: 'upcoming', label: 'Upcoming Tasks', count: counts.upcomingCount, icon: Clock },
-    { id: 'completed', label: 'Completed Tasks', count: counts.completedCount, icon: CheckCircle2 },
-    { id: 'all', label: 'All Activities', count: counts.totalOpenCount, icon: ListTodo },
+    { id: 'upcoming', label: 'Upcoming tasks', count: counts.upcomingCount, icon: Clock },
+    { id: 'completed', label: 'Completed tasks', count: counts.completedCount, icon: CheckCircle2 },
+    { id: 'all', label: 'All activities', count: counts.totalOpenCount, icon: ListTodo },
   ]
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Activities & Follow-ups"
-        description="Manage calls, meetings, follow-ups, and tasks across customers, leads, opportunities, and projects."
+        title="Activities & follow-ups"
+        description="Calls, meetings, follow-ups and tasks across customers, leads, opportunities and projects."
         action={
           canCreate ? (
             <div className="flex gap-2">
@@ -170,7 +171,7 @@ export function ActivitiesPage() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Log Activity
+                Log activity
               </Button>
               <Button
                 size="sm"
@@ -180,7 +181,7 @@ export function ActivitiesPage() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                New Task
+                New task
               </Button>
             </div>
           ) : undefined
@@ -228,7 +229,7 @@ export function ActivitiesPage() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search activities, tasks, entities, outcomes..."
+                placeholder="Search activities, tasks, outcomes…"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -246,7 +247,7 @@ export function ActivitiesPage() {
               }}
               className="w-[140px]"
             >
-              <option value="">All Types</option>
+              <option value="">All types</option>
               {ACTIVITY_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
@@ -262,7 +263,7 @@ export function ActivitiesPage() {
               }}
               className="w-[150px]"
             >
-              <option value="">All Entities</option>
+              <option value="">All entities</option>
               {ENTITY_TYPES.map((e) => (
                 <option key={e.value} value={e.value}>
                   {e.label}
@@ -278,7 +279,7 @@ export function ActivitiesPage() {
               }}
               className="w-[130px]"
             >
-              <option value="">All Priorities</option>
+              <option value="">All priorities</option>
               {TASK_PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
@@ -294,7 +295,7 @@ export function ActivitiesPage() {
               }}
               className="w-[130px]"
             >
-              <option value="">All Statuses</option>
+              <option value="">All statuses</option>
               {TASK_STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
                   {s.label}
@@ -307,9 +308,9 @@ export function ActivitiesPage() {
               onChange={(e) => setSort(e.target.value)}
               className="w-[160px]"
             >
-              <option value="dueDate,asc">Due Date (Earliest)</option>
-              <option value="dueDate,desc">Due Date (Latest)</option>
-              <option value="occurredAt,desc">Recently Created</option>
+              <option value="dueDate,asc">Due date (earliest)</option>
+              <option value="dueDate,desc">Due date (latest)</option>
+              <option value="occurredAt,desc">Recently created</option>
               <option value="priority,desc">Priority</option>
               <option value="title,asc">Title (A-Z)</option>
             </Select>
@@ -328,14 +329,14 @@ export function ActivitiesPage() {
             </div>
           ) : listQuery.isError ? (
             <div className="p-6">
-              <ErrorState title="Failed to load activities" error={listQuery.error} onRetry={() => void listQuery.refetch()} />
+              <ErrorState title="Could not load activities" error={listQuery.error} onRetry={() => void listQuery.refetch()} />
             </div>
           ) : listQuery.data.items.length === 0 ? (
             <div className="py-12 text-center">
               <Clock className="mx-auto h-10 w-10 text-muted-foreground/60" />
               <h3 className="mt-2 text-sm font-semibold">No activities found</h3>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
-                There are no activities or tasks matching the current view and filters. Log an interaction or schedule a follow-up.
+                Nothing matches this view. Log an interaction or schedule a follow-up.
               </p>
               {canCreate ? (
                 <Button
@@ -347,7 +348,7 @@ export function ActivitiesPage() {
                   }}
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  Create First Activity
+                  Create first activity
                 </Button>
               ) : null}
             </div>
@@ -357,10 +358,10 @@ export function ActivitiesPage() {
                 <TableRow>
                   <TableHead className="w-[40px]"></TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Title & Details</TableHead>
-                  <TableHead>Related Entity</TableHead>
+                  <TableHead>Title & details</TableHead>
+                  <TableHead>Related entity</TableHead>
                   <TableHead>Priority</TableHead>
-                  <TableHead>Due Date</TableHead>
+                  <TableHead>Due date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Owner</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -376,8 +377,7 @@ export function ActivitiesPage() {
                     <TableRow key={item.id} className={isDone ? 'opacity-70 bg-muted/20' : undefined}>
                       <TableCell>
                         {canUpdate ? (
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={isDone}
                             disabled={isDone || completeMut.isPending}
                             onChange={() => {
@@ -385,7 +385,6 @@ export function ActivitiesPage() {
                                 setCompletingActivity(item)
                               }
                             }}
-                            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                             aria-label={`Mark ${item.title} as completed`}
                           />
                         ) : null}
@@ -404,7 +403,7 @@ export function ActivitiesPage() {
                             <span className="text-xs text-muted-foreground line-clamp-1">{item.description}</span>
                           ) : null}
                           {item.outcome ? (
-                            <span className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
+                            <span className="text-xs text-success mt-0.5">
                               ✓ {item.outcome}
                             </span>
                           ) : null}
@@ -423,7 +422,7 @@ export function ActivitiesPage() {
                                     dismissReminderMut.mutate(item.id)
                                   }
                                 }}
-                                className="gap-1 text-[10px] text-amber-600 border-amber-300 cursor-pointer hover:bg-amber-50"
+                                className="gap-1 text-[10px] text-warning border-warning/30 cursor-pointer hover:bg-warning-soft"
                               >
                                 <Bell className="h-2.5 w-2.5" />
                                 <span>Reminder (Dismiss)</span>
@@ -475,7 +474,7 @@ export function ActivitiesPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setCompletingActivity(item)}
-                                className="h-7 text-xs px-2 text-emerald-600 hover:text-emerald-700"
+                                className="h-7 text-xs px-2 text-success hover:text-success"
                               >
                                 Done
                               </Button>

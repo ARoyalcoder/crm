@@ -29,14 +29,14 @@ import type { CustomerTabProps } from '@/features/customers/profile/tabs'
 import { applyServerErrors, blankToNull } from '@/lib/forms'
 
 const schema = z.object({
-  type: z.string().min(1, 'Choose what kind of activity this was'),
+  type: z.string().min(1, 'Choose the activity type'),
   direction: z.string(),
   occurredAt: z
     .string()
     .refine((value) => value === '' || !Number.isNaN(new Date(value).getTime()), 'Enter a date and time')
     // Activities record what has happened. (A minute of grace for clocks that disagree.)
     .refine((value) => value === '' || new Date(value).getTime() <= Date.now() + 60_000, 'This cannot be in the future'),
-  subject: z.string().trim().min(1, 'Say briefly what it was about').max(200, 'At most 200 characters'),
+  subject: z.string().trim().min(1, 'Add a short subject').max(200, 'At most 200 characters'),
   details: z.string().trim().max(4000, 'At most 4000 characters'),
   outcome: z.string().trim().max(500, 'At most 500 characters'),
 })
@@ -58,7 +58,6 @@ export function ActivitiesTab({ customer }: CustomerTabProps) {
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div className="grid gap-1">
           <CardTitle>Activities</CardTitle>
-          <CardDescription>Calls, meetings, emails and visits with this customer, newest first.</CardDescription>
         </div>
         {canEdit && !logging ? (
           <Button size="sm" onClick={() => setLogging(true)}>
@@ -90,7 +89,7 @@ export function ActivitiesTab({ customer }: CustomerTabProps) {
           />
         ) : interactions.data.items.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No activities logged yet. Log each call, meeting and visit so the whole team can see where things stand.
+            No activities yet. Log each call, meeting and visit so the team can see where things stand.
           </p>
         ) : (
           <ul className="grid gap-3" aria-label="Activities">

@@ -30,6 +30,48 @@ public class UserAccountController {
         this.accounts = accounts;
     }
 
+    @org.springframework.web.bind.annotation.GetMapping
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('" + Permissions.USER_VIEW + "')")
+    @Operation(summary = "List users for the current organization. Requires USER_VIEW.")
+    public java.util.List<AuthDtos.UserSummaryResponse> list() {
+        return accounts.list(CurrentUser.require()).stream()
+                .map(AuthDtos.UserSummaryResponse::from)
+                .toList();
+    }
+
+    @PostMapping
+    @Transactional
+    @PreAuthorize("hasAuthority('" + Permissions.USER_CREATE + "') or hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @Operation(summary = "Create a new user account with role and password. Requires USER_CREATE, SUPER_ADMIN or ADMIN.")
+    public org.springframework.http.ResponseEntity<AuthDtos.UserSummaryResponse> create(
+            @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody AuthDtos.CreateUserRequest request) {
+        com.pawanputra.bos.identity.internal.User created = accounts.create(
+                request.email(),
+                request.fullName(),
+                request.password(),
+                request.roleCode(),
+                CurrentUser.require());
+        return org.springframework.http.ResponseEntity
+                .status(org.springframework.http.HttpStatus.CREATED)
+                .body(AuthDtos.UserSummaryResponse.from(created));
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/{userId}")
+    @Transactional
+    @PreAuthorize("hasAuthority('" + Permissions.USER_UPDATE + "') or hasAuthority('" + Permissions.ROLE_UPDATE + "') or hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @Operation(summary = "Update an existing user's details and role. Requires USER_UPDATE, ROLE_UPDATE, SUPER_ADMIN or ADMIN.")
+    public AuthDtos.UserSummaryResponse update(
+            @PathVariable UUID userId,
+            @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody AuthDtos.UpdateUserRequest request) {
+        com.pawanputra.bos.identity.internal.User updated = accounts.update(
+                userId,
+                request.roleCode(),
+                request.fullName(),
+                CurrentUser.require());
+        return AuthDtos.UserSummaryResponse.from(updated);
+    }
+
     @PostMapping("/{userId}/activate")
     @Transactional
     @PreAuthorize("hasAuthority('" + Permissions.USER_UPDATE + "')")

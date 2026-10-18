@@ -7,9 +7,11 @@ import { z } from 'zod'
 import { FormError } from '@/components/forms/FormParts'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { StatusSelect, type StatusOption } from '@/components/ui/status-select'
 import { Textarea } from '@/components/ui/textarea'
 import {
   ACTIVITY_TYPES,
@@ -23,6 +25,13 @@ import {
 } from '@/features/activities/api'
 import { assigneesQuery } from '@/features/customers/api'
 import { blankToNull } from '@/lib/forms'
+
+const ACTIVITY_STATUS_OPTIONS: StatusOption[] = [
+  { value: 'PENDING', label: 'To do', color: 'bg-primary' },
+  { value: 'IN_PROGRESS', label: 'In progress', color: 'bg-violet-500' },
+  { value: 'COMPLETED', label: 'Completed', color: 'bg-emerald-500' },
+  { value: 'CANCELLED', label: 'Cancelled', color: 'bg-amber-500' },
+]
 
 const schema = z.object({
   type: z.string().min(1, 'Select an activity type'),
@@ -128,7 +137,7 @@ export function ActivityModal({
       if (err instanceof Error) {
         setFormError(err.message)
       } else {
-        setFormError('Failed to save activity')
+        setFormError('Could not save activity')
       }
     }
   }
@@ -138,9 +147,9 @@ export function ActivityModal({
       <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6 shadow-xl">
         <div className="flex items-center justify-between pb-4 border-b">
           <div>
-            <h2 className="text-lg font-semibold">{initial ? 'Edit Activity / Task' : 'New Activity or Task'}</h2>
+            <h2 className="text-lg font-semibold">{initial ? 'Edit activity' : 'New activity'}</h2>
             <p className="text-xs text-muted-foreground">
-              Log client touchpoints, assign tasks, schedule follow-ups, and set reminders
+              Log touchpoints, assign tasks, schedule follow-ups, set reminders
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
@@ -158,7 +167,7 @@ export function ActivityModal({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Activity Type *</FormLabel>
+                    <FormLabel>Type *</FormLabel>
                     <FormControl>
                       <Select {...field}>
                         {ACTIVITY_TYPES.map((t) => (
@@ -199,7 +208,7 @@ export function ActivityModal({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title / Subject *</FormLabel>
+                  <FormLabel>Subject *</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Call regarding solar rooftop proposal" {...field} />
                   </FormControl>
@@ -213,9 +222,9 @@ export function ActivityModal({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description / Details</FormLabel>
+                  <FormLabel>Details</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional context or agenda..." rows={3} {...field} />
+                    <Textarea placeholder="Context or agenda…" rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -228,7 +237,7 @@ export function ActivityModal({
                 name="entityType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Related Entity *</FormLabel>
+                    <FormLabel>Related to *</FormLabel>
                     <FormControl>
                       <Select {...field}>
                         {ENTITY_TYPES.map((e) => (
@@ -248,7 +257,7 @@ export function ActivityModal({
                 name="entityName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Entity Name / Label</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. Aditya Singh or Project Solar Phase 1" {...field} />
                     </FormControl>
@@ -264,7 +273,7 @@ export function ActivityModal({
                 name="ownerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assigned Owner</FormLabel>
+                    <FormLabel>Owner</FormLabel>
                     <FormControl>
                       <Select {...field}>
                         <option value="">Current user (Default)</option>
@@ -287,13 +296,13 @@ export function ActivityModal({
                   <FormItem>
                     <FormLabel>Status</FormLabel>
                     <FormControl>
-                      <Select {...field}>
-                        {TASK_STATUSES.map((s) => (
-                          <option key={s.value} value={s.value}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </Select>
+                      <StatusSelect
+                        statuses={ACTIVITY_STATUS_OPTIONS}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        className="w-full"
+                        triggerClassName="h-8.5 sm:h-9 w-full text-xs sm:text-sm"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -309,7 +318,7 @@ export function ActivityModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                      Due Date & Time
+                      Due date & time
                     </FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
@@ -326,7 +335,7 @@ export function ActivityModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-1.5">
                       <Bell className="h-3.5 w-3.5 text-muted-foreground" />
-                      Reminder Date & Time
+                      Reminder
                     </FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
@@ -363,10 +372,8 @@ export function ActivityModal({
             {/* Recurring Task Configuration */}
             <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="isRecurring"
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   {...form.register('isRecurring')}
                 />
                 <label htmlFor="isRecurring" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
@@ -416,7 +423,7 @@ export function ActivityModal({
                     name="recurrenceEndAt"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date (Optional)</FormLabel>
+                        <FormLabel>End date (optional)</FormLabel>
                         <FormControl>
                           <Input type="datetime-local" {...field} />
                         </FormControl>
@@ -433,7 +440,7 @@ export function ActivityModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Saving…' : initial ? 'Update Activity' : 'Create Activity'}
+                {form.formState.isSubmitting ? 'Saving…' : initial ? 'Update activity' : 'Create activity'}
               </Button>
             </div>
           </form>

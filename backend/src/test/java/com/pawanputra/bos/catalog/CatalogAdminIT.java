@@ -92,12 +92,12 @@ class CatalogAdminIT extends AbstractIntegrationTest {
                         "CCTV_SECURITY", "DIGITAL_MARKETING", "INTERIOR_DESIGN",
                         "ARCHITECTURE_TECH", "SOLAR", "IT_SUPPORT"));
 
-        as(admin).body(Map.of("code", "REAL_ESTATE", "name", "Real Estate", "displayOrder", 7))
+        as(admin).body(Map.of("code", "NONEXISTENT_CODE", "name", "Nonexistent", "displayOrder", 7))
                 .post(BASE + "/verticals").then().statusCode(405);
         as(admin).delete(BASE + "/verticals/SOLAR").then().statusCode(405);
-        as(admin).get(BASE + "/verticals/REAL_ESTATE").then().statusCode(404);
-        as(admin).body(Map.of("name", "Real Estate", "displayOrder", 7, "version", 0))
-                .put(BASE + "/verticals/REAL_ESTATE").then().statusCode(404);
+        as(admin).get(BASE + "/verticals/NONEXISTENT_CODE").then().statusCode(404);
+        as(admin).body(Map.of("name", "Nonexistent", "displayOrder", 7, "version", 0))
+                .put(BASE + "/verticals/NONEXISTENT_CODE").then().statusCode(404);
     }
 
     @Test
@@ -193,8 +193,8 @@ class CatalogAdminIT extends AbstractIntegrationTest {
 
     @Test
     void categoryMustBelongToOneOfTheSixVerticals() {
-        createCategory("REAL_ESTATE", "PLOTS_" + tag, "Plots " + tag)
-                .then().statusCode(404).body("detail", containsString("REAL_ESTATE"));
+        createCategory("NONEXISTENT_CODE", "PLOTS_" + tag, "Plots " + tag)
+                .then().statusCode(404).body("detail", containsString("NONEXISTENT_CODE"));
     }
 
     @Test
@@ -238,7 +238,7 @@ class CatalogAdminIT extends AbstractIntegrationTest {
                 .then().body("items.name", containsInAnyOrder("Alpha " + tag, "Beta " + tag));
         as(admin).queryParam("search", tag).queryParam("active", false).get(BASE + "/categories")
                 .then().body("items.name", contains("Beta " + tag));
-        as(admin).queryParam("vertical", "REAL_ESTATE").get(BASE + "/categories")
+        as(admin).queryParam("vertical", "NONEXISTENT_CODE").get(BASE + "/categories")
                 .then().statusCode(400).body("code", equalTo("MALFORMED_REQUEST"));
     }
 

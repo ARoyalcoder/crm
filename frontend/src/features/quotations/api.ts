@@ -7,7 +7,7 @@ const noContent = z.undefined()
 
 export const QUOTATION_STATUSES = [
   { value: 'DRAFT', label: 'Draft' },
-  { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
+  { value: 'PENDING_APPROVAL', label: 'Pending approval' },
   { value: 'APPROVED', label: 'Approved' },
   { value: 'SENT', label: 'Sent' },
   { value: 'VIEWED', label: 'Viewed' },

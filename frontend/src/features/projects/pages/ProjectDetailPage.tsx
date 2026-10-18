@@ -1,387 +1,290 @@
 import { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  ArrowLeft,
-  User,
-  ShoppingBag,
-  Wrench,
-  Layers,
-  ListTodo,
-  Clock,
-  FileText,
-  Users,
-  Trash2,
-  Activity,
-  Camera,
-} from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Activity, Camera, CalendarCheck, CalendarClock, FileText, FolderOpen, Gauge, HeartPulse, IndianRupee, Layers, ListTodo, Clock, Trash2, Users, Wallet } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
+import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
+import { StatCard } from '@/components/shared/StatCard'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { ProjectStatusBadge, PriorityBadge } from '../components/ProjectStatusBadge'
+import { Progress } from '@/components/ui/progress'
+import { Select } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { kpiGrid } from '@/features/analytics/lib'
+import { DocumentList } from '@/features/documents/components/DocumentList'
+import { useHasPermission } from '@/features/auth/auth-context'
+import { daysUntil, formatDate, formatRupees } from '@/lib/format'
+import { useListParams } from '@/lib/use-list-params'
+import type { Tone } from '@/lib/status'
+import { cn } from '@/lib/utils'
+import { ProjectDeliverablesTab } from '../components/ProjectDeliverablesTab'
+import { ProjectHealthTab } from '../components/ProjectHealthTab'
+import { ProjectMembersTab } from '../components/ProjectMembersTab'
 import { ProjectMilestonesTab } from '../components/ProjectMilestonesTab'
+import { ProjectProofTab } from '../components/ProjectProofTab'
+import { PriorityBadge, ProjectStatusBadge } from '../components/ProjectStatusBadge'
 import { ProjectTasksTab } from '../components/ProjectTasksTab'
 import { ProjectTimelineTab } from '../components/ProjectTimelineTab'
-import { ProjectDeliverablesTab } from '../components/ProjectDeliverablesTab'
-import { ProjectMembersTab } from '../components/ProjectMembersTab'
-import { ProjectHealthTab } from '../components/ProjectHealthTab'
-import { ProjectProofTab } from '../components/ProjectProofTab'
 import { projectsApi } from '../api'
+import { isClosedProject } from '../lib'
+import { optimisticProject } from '../optimistic'
 
-type TabKey = 'health' | 'proof' | 'milestones' | 'tasks' | 'timeline' | 'deliverables' | 'team'
+const TABS = ['health', 'proof', 'milestones', 'tasks', 'timeline', 'deliverables', 'documents', 'team'] as const
+type TabKey = (typeof TABS)[number]
 
+function healthTone(score: number): Tone {
+  return score >= 80 ? 'success' : score >= 60 ? 'warning' : 'danger'
+}
+
+/** One project: where it stands, what it costs, and its milestones, tasks, deliverables, team and health. */
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<TabKey>('milestones')
+  const params = useListParams()
+  const canUpdate = useHasPermission('PROJECT_UPDATE')
+  const canDelete = useHasPermission('PROJECT_DELETE')
+  const canSeeDocuments = useHasPermission('DOCUMENT_VIEW')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  const { data: project, isLoading } = useQuery(projectsApi.detailQuery(id!))
-  const { data: statuses } = useQuery(projectsApi.statusesQuery())
+  const query = useQuery(projectsApi.detailQuery(id!))
+  const statuses = useQuery(projectsApi.statusesQuery())
 
-  const statusMutation = useMutation({
-    mutationFn: (newStatus: string) => projectsApi.updateStatus(id!, newStatus),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', id] })
-    },
+  // The new status shows at once; the server confirms in the background (and the lists and board refresh too).
+  const optimistic = optimisticProject(queryClient, id!)
+  const changeStatus = useMutation({
+    mutationFn: (status: string) => projectsApi.updateStatus(id!, status),
+    onMutate: (status) => optimistic.apply((project) => ({ ...project, status })),
+    onError: (_error, _status, context) => optimistic.rollback(context),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   })
-
-  const deleteMutation = useMutation({
+  const remove = useMutation({
     mutationFn: () => projectsApi.deleteProject(id!),
     onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['projects', id] })
+      void queryClient.invalidateQueries({ queryKey: ['projects'] })
       navigate('/projects')
     },
+    onError: () => setConfirmingDelete(false),
   })
 
-  if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground text-sm">Loading project details...</div>
-  }
-
-  if (!project) {
-    return (
-      <div className="p-8 text-center space-y-3">
-        <p className="text-muted-foreground">Project not found.</p>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/projects">Back to Projects</Link>
-        </Button>
-      </div>
-    )
+  const project = query.data
+  if (query.isPending) return <SkeletonLoader variant="page" label="Loading the project" />
+  if (query.isError || !project) {
+    return <ErrorState title="Could not load this project" error={query.error} onRetry={() => void query.refetch()} />
   }
 
   const milestones = project.milestones ?? []
   const tasks = project.tasks ?? []
   const deliverables = project.deliverables ?? []
   const members = project.members ?? []
+  const health = project.health
+  const measurable = milestones.length + tasks.length + deliverables.length > 0
+  const closed = isClosedProject(project.status, statuses.data)
+  const daysToTarget = daysUntil(project.expectedCompletionDate)
+  const late = !closed && daysToTarget < 0
+  const doneMilestones = milestones.filter((milestone) => milestone.completedDate || milestone.status === 'COMPLETED').length
+  const doneTasks = tasks.filter((task) => task.status === 'DONE' || task.status === 'COMPLETED').length
+
+  const requested = params.get('tab')
+  const tab: TabKey = (TABS as readonly string[]).includes(requested) ? (requested as TabKey) : 'milestones'
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Navigation & Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" asChild>
-            <Link to="/projects">
-              <ArrowLeft className="h-4 w-4" />
-              Projects
-            </Link>
-          </Button>
-          <span className="text-muted-foreground text-xs">/</span>
-          <span className="text-xs font-mono font-medium text-muted-foreground">
-            {project.projectNumber}
+    <div className="grid gap-4">
+      <PageHeader
+        title={project.title}
+        back={{ to: '/projects', label: 'Projects' }}
+        meta={
+          <span className="flex flex-wrap items-center gap-2">
+            <ProjectStatusBadge status={project.status} />
+            <PriorityBadge priority={project.priority} />
           </span>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 bg-card p-5 rounded-xl border">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl font-bold tracking-tight">{project.title}</h1>
-              <ProjectStatusBadge status={project.status} />
-              <PriorityBadge priority={project.priority} />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              <Link
-                to={`/customers/${project.customerId}`}
-                className="hover:text-primary transition-colors font-medium text-foreground"
-              >
-                Customer: {project.customerName}
+        }
+        description={
+          <span className="grid gap-1">
+            <span>
+              <span className="font-mono">{project.projectNumber}</span> ·{' '}
+              <Link to={`/customers/${project.customerId}`} className="font-medium text-foreground underline-offset-2 hover:underline">
+                {project.customerName}
               </Link>
-              {project.orderNumber && (
-                <span className="flex items-center gap-1">
-                  <ShoppingBag className="h-3.5 w-3.5" />
-                  Order: {project.orderNumber}
-                </span>
-              )}
-              {project.serviceName && (
-                <span className="flex items-center gap-1">
-                  <Wrench className="h-3.5 w-3.5" />
-                  Service: {project.serviceName}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
-                PM: {project.projectManagerName}
-              </span>
-            </div>
-
-            {project.description && (
-              <p className="text-xs text-muted-foreground max-w-2xl pt-1">
-                {project.description}
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Status change select */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Status:</span>
-              <select
+              {project.orderNumber ? (
+                <>
+                  {' '}
+                  · Order{' '}
+                  {project.orderId ? (
+                    <Link to={`/orders/${project.orderId}`} className="underline-offset-2 hover:underline">
+                      {project.orderNumber}
+                    </Link>
+                  ) : (
+                    project.orderNumber
+                  )}
+                </>
+              ) : null}
+              {project.serviceName ? ` · ${project.serviceName}` : ''} · Managed by {project.projectManagerName}
+            </span>
+            {project.description ? <span>{project.description}</span> : null}
+          </span>
+        }
+        action={
+          <>
+            {canUpdate ? (
+              <Select
+                aria-label="Project status"
                 value={project.status}
-                onChange={(e) => statusMutation.mutate(e.target.value)}
-                className="h-8 text-xs bg-background border rounded px-2 font-medium"
+                disabled={changeStatus.isPending}
+                onChange={(event) => changeStatus.mutate(event.target.value)}
+                className="w-44"
               >
-                {statuses?.map((s) => (
-                  <option key={s.code} value={s.code}>
-                    {s.name}
+                {statuses.data?.map((status) => (
+                  <option key={status.code} value={status.code}>
+                    {status.name}
                   </option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            ) : null}
+            {canDelete ? (
+              <Button variant="outline" onClick={() => setConfirmingDelete(true)}>
+                <Trash2 aria-hidden="true" />
+                Delete
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:bg-destructive/10 h-8 text-xs"
-              onClick={() => {
-                if (confirm('Are you sure you want to delete / archive this project?')) {
-                  deleteMutation.mutate()
-                }
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              Delete
-            </Button>
-          </div>
-        </div>
+      {changeStatus.isError ? <ErrorState title="The status could not be changed" error={changeStatus.error} variant="compact" /> : null}
+      {remove.isError ? <ErrorState title="The project could not be deleted" error={remove.error} variant="compact" /> : null}
+
+      <div className={kpiGrid(6)}>
+        <StatCard
+          label="Progress"
+          icon={Gauge}
+          tone="info"
+          value={`${Math.round(project.progressPercentage)}%`}
+          hint={
+            <span className="grid gap-1.5">
+              <Progress value={project.progressPercentage} label="Overall progress" className="h-1.5" />
+              <span>
+                {doneMilestones} of {milestones.length} milestones · {doneTasks} of {tasks.length} tasks
+              </span>
+            </span>
+          }
+        />
+        <StatCard
+          label="Health"
+          icon={HeartPulse}
+          tone={health && measurable ? healthTone(health.overallScore) : 'neutral'}
+          value={health && measurable ? `${Math.round(health.overallScore)}%` : 'Not scored'}
+          hint={
+            health && measurable
+              ? health.riskAlerts.length > 0
+                ? `${health.riskAlerts.length} risk alert${health.riskAlerts.length === 1 ? '' : 's'}`
+                : 'No risk alerts'
+              : 'Appears once there is work to measure'
+          }
+        />
+        <StatCard label="Budget" icon={Wallet} value={formatRupees(project.budget)} />
+        <StatCard label="Revenue" icon={IndianRupee} value={formatRupees(project.revenue)} />
+        <StatCard label="Started" icon={CalendarCheck} value={formatDate(project.startDate)} />
+        <StatCard
+          label={project.actualCompletionDate ? 'Completed' : 'Target completion'}
+          icon={CalendarClock}
+          tone={late ? 'danger' : 'neutral'}
+          value={formatDate(project.actualCompletionDate ?? project.expectedCompletionDate)}
+          hint={
+            project.actualCompletionDate
+              ? `Target was ${formatDate(project.expectedCompletionDate)}`
+              : closed
+                ? undefined
+                : late
+                  ? `${-daysToTarget} day${daysToTarget === -1 ? '' : 's'} late`
+                  : daysToTarget === 0
+                    ? 'Due today'
+                    : `${daysToTarget} day${daysToTarget === 1 ? '' : 's'} to go`
+          }
+        />
       </div>
 
-      {/* Progress & Metrics Ribbon */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-        <Card className="shadow-sm">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex justify-between items-center text-xs text-muted-foreground font-medium">
-              <span>Overall Progress</span>
-              <span>{project.progressPercentage}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all"
-                style={{ width: `${Math.min(100, Math.max(0, project.progressPercentage))}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs variant="line" value={tab} onValueChange={(next) => params.set('tab', next === 'milestones' ? '' : next)}>
+        <TabsList aria-label="Project sections">
+          <TabsTrigger value="health">
+            <Activity aria-hidden="true" />
+            Health &amp; profitability
+            {health && health.riskAlerts.length > 0 ? (
+              <span className={cn('rounded-full bg-destructive-soft px-1.5 text-xs font-semibold text-destructive')}>{health.riskAlerts.length}</span>
+            ) : null}
+          </TabsTrigger>
+          <TabsTrigger value="proof">
+            <Camera aria-hidden="true" />
+            Proof of work
+          </TabsTrigger>
+          <TabsTrigger value="milestones">
+            <Layers aria-hidden="true" />
+            Milestones{milestones.length > 0 ? ` (${milestones.length})` : ''}
+          </TabsTrigger>
+          <TabsTrigger value="tasks">
+            <ListTodo aria-hidden="true" />
+            Tasks{tasks.length > 0 ? ` (${tasks.length})` : ''}
+          </TabsTrigger>
+          <TabsTrigger value="timeline">
+            <Clock aria-hidden="true" />
+            Timeline
+          </TabsTrigger>
+          <TabsTrigger value="deliverables">
+            <FileText aria-hidden="true" />
+            Deliverables{deliverables.length > 0 ? ` (${deliverables.length})` : ''}
+          </TabsTrigger>
+          {canSeeDocuments ? (
+            <TabsTrigger value="documents">
+              <FolderOpen aria-hidden="true" />
+              Documents
+            </TabsTrigger>
+          ) : null}
+          <TabsTrigger value="team">
+            <Users aria-hidden="true" />
+            Team{members.length > 0 ? ` (${members.length})` : ''}
+          </TabsTrigger>
+        </TabsList>
 
-        <Card className="shadow-sm">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex justify-between items-center text-xs text-muted-foreground font-medium">
-              <span>Health Score</span>
-              <span className={`font-bold ${
-                (project.health?.overallScore ?? 100) >= 80
-                  ? 'text-emerald-600'
-                  : (project.health?.overallScore ?? 100) >= 60
-                  ? 'text-amber-600'
-                  : 'text-rose-600'
-              }`}>
-                {project.health?.overallScore ?? 100}%
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  (project.health?.overallScore ?? 100) >= 80
-                    ? 'bg-emerald-500'
-                    : (project.health?.overallScore ?? 100) >= 60
-                    ? 'bg-amber-500'
-                    : 'bg-rose-500'
-                }`}
-                style={{ width: `${Math.min(100, Math.max(0, project.health?.overallScore ?? 100))}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="health">
+          <ProjectHealthTab projectId={project.id} health={health} measurable={measurable} />
+        </TabsContent>
+        <TabsContent value="proof">
+          <ProjectProofTab projectId={project.id} />
+        </TabsContent>
+        <TabsContent value="milestones">
+          <ProjectMilestonesTab projectId={project.id} milestones={milestones} />
+        </TabsContent>
+        <TabsContent value="tasks">
+          <ProjectTasksTab projectId={project.id} tasks={tasks} milestones={milestones} members={members} />
+        </TabsContent>
+        <TabsContent value="timeline">
+          <ProjectTimelineTab projectId={project.id} />
+        </TabsContent>
+        <TabsContent value="deliverables">
+          <ProjectDeliverablesTab projectId={project.id} deliverables={deliverables} milestones={milestones} />
+        </TabsContent>
+        {canSeeDocuments ? (
+          <TabsContent value="documents">
+            <DocumentList entityType="PROJECT" entityId={project.id} />
+          </TabsContent>
+        ) : null}
+        <TabsContent value="team">
+          <ProjectMembersTab projectId={project.id} members={members} projectManagerId={project.projectManagerId} />
+        </TabsContent>
+      </Tabs>
 
-        <Card className="shadow-sm">
-          <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Budget</span>
-            <p className="text-base font-bold">₹{project.budget.toLocaleString('en-IN')}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Revenue</span>
-            <p className="text-base font-bold">₹{project.revenue.toLocaleString('en-IN')}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Start Date</span>
-            <p className="text-base font-semibold">
-              {new Date(project.startDate).toLocaleDateString()}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Target Completion</span>
-            <p className="text-base font-semibold">
-              {new Date(project.expectedCompletionDate).toLocaleDateString()}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <div className="space-y-4">
-        <div className="border-b flex gap-4 text-sm overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('health')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'health'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Activity className="h-4 w-4" />
-            Health & Profitability
-            {project.health && (
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
-                project.health.overallScore >= 80
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                  : project.health.overallScore >= 60
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                  : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
-              }`}>
-                {project.health.overallScore}%
-              </span>
-            )}
-            {project.health?.riskAlerts && project.health.riskAlerts.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-bold">
-                {project.health.riskAlerts.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('proof')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'proof'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Camera className="h-4 w-4" />
-            Proof of Work
-          </button>
-          <button
-            onClick={() => setActiveTab('milestones')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'milestones'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Layers className="h-4 w-4" />
-            Milestones ({milestones.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('tasks')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'tasks'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <ListTodo className="h-4 w-4" />
-            Tasks ({tasks.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('timeline')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'timeline'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Clock className="h-4 w-4" />
-            Timeline & Roadmap
-          </button>
-          <button
-            onClick={() => setActiveTab('deliverables')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'deliverables'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Deliverables ({deliverables.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('team')}
-            className={`pb-2.5 font-medium border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              activeTab === 'team'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Team ({members.length})
-          </button>
-        </div>
-
-        {/* Tab Content Display */}
-        <div className="pt-2">
-          {activeTab === 'health' && (
-            <ProjectHealthTab projectId={project.id} health={project.health} />
-          )}
-
-          {activeTab === 'proof' && (
-            <ProjectProofTab projectId={project.id} />
-          )}
-
-          {activeTab === 'milestones' && (
-            <ProjectMilestonesTab projectId={project.id} milestones={milestones} />
-          )}
-
-          {activeTab === 'tasks' && (
-            <ProjectTasksTab
-              projectId={project.id}
-              tasks={tasks}
-              milestones={milestones}
-              members={members}
-            />
-          )}
-
-          {activeTab === 'timeline' && <ProjectTimelineTab projectId={project.id} />}
-
-          {activeTab === 'deliverables' && (
-            <ProjectDeliverablesTab
-              projectId={project.id}
-              deliverables={deliverables}
-              milestones={milestones}
-            />
-          )}
-
-          {activeTab === 'team' && (
-            <ProjectMembersTab
-              projectId={project.id}
-              members={members}
-              projectManagerId={project.projectManagerId}
-            />
-          )}
-        </div>
-      </div>
+      <ConfirmationDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this project?"
+        description={`“${project.title}” will leave lists and dashboards. Its tasks and records are kept.`}
+        confirmLabel="Delete project"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => remove.mutate()}
+      />
     </div>
   )
 }

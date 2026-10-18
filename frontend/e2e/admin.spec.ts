@@ -256,7 +256,7 @@ test('verticals can be edited but there is no way to add one', async ({ page }) 
   expect(updated).toEqual({ name: 'Solar Energy', description: null, displayOrder: 5, version: 0 })
 
   // A made-up vertical code has no edit page.
-  await page.goto('/admin/verticals/REAL_ESTATE/edit')
+  await page.goto('/admin/verticals/NONEXISTENT_CODE/edit')
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
 })
 

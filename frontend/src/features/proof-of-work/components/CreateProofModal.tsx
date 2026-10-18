@@ -65,9 +65,9 @@ export function CreateProofModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-card w-full max-w-lg rounded-xl border p-6 shadow-xl space-y-4">
+      <div className="bg-card w-full max-w-lg rounded-xl border p-4 shadow-xl space-y-4">
         <div className="flex items-center justify-between pb-3 border-b">
-          <h2 className="text-lg font-semibold">Record Proof of Work</h2>
+          <h2 className="text-lg font-semibold">Record proof of work</h2>
           <Button variant="ghost" size="sm" onClick={onClose} disabled={isSubmitting}>
             <X className="h-4 w-4" />
           </Button>
@@ -75,7 +75,7 @@ export function CreateProofModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Record Title *</label>
+            <label className="text-xs font-medium">Title *</label>
             <Input
               required
               placeholder="e.g. Inverter Installation & Safety Inspection"
@@ -86,7 +86,7 @@ export function CreateProofModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Proof Category *</label>
+            <label className="text-xs font-medium">Category *</label>
             <Select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -101,10 +101,10 @@ export function CreateProofModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Technician Notes & Observations</label>
+            <label className="text-xs font-medium">Technician notes</label>
             <Textarea
               rows={3}
-              placeholder="Detail site conditions, technical measurements, safety precautions taken..."
+              placeholder="Site conditions, measurements, safety precautions…"
               value={technicianNotes}
               onChange={(e) => setTechnicianNotes(e.target.value)}
               disabled={isSubmitting}
@@ -113,7 +113,7 @@ export function CreateProofModal({
 
           <div className="space-y-2 pt-2 border-t">
             <label className="text-xs font-medium flex items-center justify-between">
-              <span>Checklist Items for Verification</span>
+              <span>Verification checklist</span>
               <span className="text-muted-foreground font-normal">{checklistItems.length} items</span>
             </label>
 
@@ -169,7 +169,7 @@ export function CreateProofModal({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !title.trim()}>
-              {isSubmitting ? 'Creating...' : 'Create Record'}
+              {isSubmitting ? 'Creating…' : 'Create record'}
             </Button>
           </div>
         </form>

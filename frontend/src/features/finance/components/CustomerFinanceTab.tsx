@@ -24,8 +24,8 @@ export function CustomerFinanceTab({ customer }: { customer: CustomerDetail }) {
 
   if (!canView) {
     return (
-      <p className="rounded-2xl bg-card p-6 text-sm text-muted-foreground shadow-soft">
-        Invoices and payments are visible to people who work with finance.
+      <p className="rounded-xl bg-card p-4 text-sm text-muted-foreground shadow-soft">
+        Invoices and payments are visible to finance users.
       </p>
     )
   }
@@ -79,7 +79,7 @@ export function CustomerFinanceTab({ customer }: { customer: CustomerDetail }) {
         }
       >
         {invoices.data.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing has been invoiced to this customer.</p>
+          <p className="text-sm text-muted-foreground">Nothing invoiced to this customer.</p>
         ) : (
           <ul className="grid gap-2 text-sm">
             {invoices.data.items.map((invoice) => (
@@ -114,7 +114,7 @@ export function CustomerFinanceTab({ customer }: { customer: CustomerDetail }) {
         }
       >
         {payments.data.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No payment has been received from this customer.</p>
+          <p className="text-sm text-muted-foreground">No payments from this customer.</p>
         ) : (
           <ul className="grid gap-2 text-sm">
             {payments.data.items.map((payment) => (

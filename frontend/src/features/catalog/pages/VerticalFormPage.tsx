@@ -38,7 +38,7 @@ export function VerticalFormPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title="Edit vertical" back={{ to: LIST, label: 'Verticals' }} />
       {vertical ? (
         <VerticalForm key={vertical.version} vertical={vertical} />
@@ -96,7 +96,7 @@ function VerticalForm({ vertical }: { vertical: Vertical }) {
           <div className="grid gap-1 text-sm">
             <span className="font-medium">Code</span>
             <span className="font-mono text-muted-foreground">{vertical.code}</span>
-            <span className="text-muted-foreground">The code identifies the vertical and cannot be changed.</span>
+            <span className="text-muted-foreground">The code identifies the vertical; fixed once saved.</span>
           </div>
 
           <FormField
@@ -136,7 +136,7 @@ function VerticalForm({ vertical }: { vertical: Vertical }) {
                 <FormControl>
                   <Input inputMode="numeric" {...field} />
                 </FormControl>
-                <FormDescription>Each vertical needs its own number; lower is listed first.</FormDescription>
+                <FormDescription>A unique number; lower is listed first.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

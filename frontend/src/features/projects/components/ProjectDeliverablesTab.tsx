@@ -1,266 +1,300 @@
 import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, ExternalLink, X } from 'lucide-react'
+import { ExternalLink, FileText, Plus, Trash2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { FormDialog } from '@/components/shared/FormDialog'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
+import { Select } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { useHasPermission } from '@/features/auth/auth-context'
+import { formatDate } from '@/lib/format'
 import { projectsApi, type Deliverable, type ProjectMilestone } from '../api'
+import { optimisticProject } from '../optimistic'
 
-interface ProjectDeliverablesTabProps {
+const DELIVERABLE_STATUSES = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'SUBMITTED', label: 'Submitted' },
+  { value: 'ACCEPTED', label: 'Accepted' },
+  { value: 'REJECTED', label: 'Rejected' },
+] as const
+
+const schema = z.object({
+  title: z.string().trim().min(1, 'Name the deliverable').max(250, 'Keep it under 250 characters'),
+  description: z.string(),
+  milestoneId: z.string(),
+  dueDate: z.string(),
+  acceptanceCriteria: z.string(),
+  fileUrl: z
+    .string()
+    .trim()
+    .refine((value) => value === '' || /^https?:\/\//i.test(value), 'Use a link that starts with http:// or https://'),
+})
+type FormValues = z.infer<typeof schema>
+
+type ProjectDeliverablesTabProps = {
   projectId: string
   deliverables: Deliverable[]
   milestones: ProjectMilestone[]
 }
 
+/** What the customer is owed on a project, and where each item stands: pending, submitted, accepted or rejected. */
 export function ProjectDeliverablesTab({ projectId, deliverables, milestones }: ProjectDeliverablesTabProps) {
   const queryClient = useQueryClient()
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [milestoneId, setMilestoneId] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [acceptanceCriteria, setAcceptanceCriteria] = useState('')
-  const [fileUrl, setFileUrl] = useState('')
+  const canUpdate = useHasPermission('PROJECT_UPDATE')
+  const [adding, setAdding] = useState(false)
+  const [removing, setRemoving] = useState<Deliverable | null>(null)
 
-  const addMutation = useMutation({
-    mutationFn: (data: Parameters<typeof projectsApi.addDeliverable>[1]) =>
-      projectsApi.addDeliverable(projectId, data),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { title: '', description: '', milestoneId: '', dueDate: '', acceptanceCriteria: '', fileUrl: '' },
+  })
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
+
+  const add = useMutation({
+    mutationFn: (values: FormValues) =>
+      projectsApi.addDeliverable(projectId, {
+        title: values.title.trim(),
+        description: values.description.trim() || undefined,
+        milestoneId: values.milestoneId || undefined,
+        dueDate: values.dueDate || undefined,
+        acceptanceCriteria: values.acceptanceCriteria.trim() || undefined,
+        fileUrl: values.fileUrl.trim() || undefined,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-      setIsAddOpen(false)
-      resetForm()
+      void refresh()
+      setAdding(false)
+      form.reset()
     },
   })
-
-  const statusMutation = useMutation({
-    mutationFn: ({ delivId, status }: { delivId: string; status: string }) =>
-      projectsApi.updateDeliverableStatus(projectId, delivId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-    },
+  const optimistic = optimisticProject(queryClient, projectId)
+  // A new status or a removal shows at once; the server confirms in the background.
+  const changeStatus = useMutation({
+    mutationFn: ({ deliverable, status }: { deliverable: Deliverable; status: string }) =>
+      projectsApi.updateDeliverableStatus(projectId, deliverable.id, status),
+    onMutate: ({ deliverable, status }) =>
+      optimistic.apply((project) => ({
+        ...project,
+        deliverables: project.deliverables.map((item) => (item.id === deliverable.id ? { ...item, status } : item)),
+      })),
+    onError: (_error, _variables, context) => optimistic.rollback(context),
+    onSettled: optimistic.settle,
   })
-
-  const deleteMutation = useMutation({
-    mutationFn: (delivId: string) => projectsApi.deleteDeliverable(projectId, delivId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
+  const remove = useMutation({
+    mutationFn: (deliverable: Deliverable) => projectsApi.deleteDeliverable(projectId, deliverable.id),
+    onMutate: (deliverable) => {
+      setRemoving(null)
+      return optimistic.apply((project) => ({ ...project, deliverables: project.deliverables.filter((item) => item.id !== deliverable.id) }))
     },
+    onError: (_error, _deliverable, context) => optimistic.rollback(context),
+    onSettled: optimistic.settle,
   })
-
-  const resetForm = () => {
-    setTitle('')
-    setDescription('')
-    setMilestoneId('')
-    setDueDate('')
-    setAcceptanceCriteria('')
-    setFileUrl('')
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) return
-
-    addMutation.mutate({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      milestoneId: milestoneId || undefined,
-      dueDate: dueDate || undefined,
-      acceptanceCriteria: acceptanceCriteria.trim() || undefined,
-      fileUrl: fileUrl.trim() || undefined,
-    })
-  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Deliverables ({deliverables.length})</h3>
-        <Button size="sm" onClick={() => setIsAddOpen(true)}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Add Deliverable
-        </Button>
-      </div>
+    <section aria-labelledby="deliverables-heading" className="grid gap-4">
+      <h2 id="deliverables-heading" className="sr-only">
+        Deliverables
+      </h2>
+      {canUpdate ? (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus aria-hidden="true" />
+            Add deliverable
+          </Button>
+        </div>
+      ) : null}
+
+      {changeStatus.isError ? <ErrorState title="The deliverable could not be updated" error={changeStatus.error} variant="compact" /> : null}
+      {remove.isError ? <ErrorState title="The deliverable could not be deleted" error={remove.error} variant="compact" /> : null}
 
       {deliverables.length === 0 ? (
-        <div className="text-center py-12 border border-dashed rounded-lg bg-muted/20 text-muted-foreground">
-          No deliverables recorded yet. Click "Add Deliverable" to track client artifacts and sign-offs.
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No deliverables yet"
+          description={canUpdate ? 'Track drawings, reports and hand-over items for customer sign-off.' : 'Nothing recorded for this project.'}
+        />
       ) : (
-        <div className="space-y-3">
-          {deliverables.map((deliv) => {
-            const isAccepted = deliv.status === 'ACCEPTED'
-            return (
-              <div
-                key={deliv.id}
-                className="p-4 rounded-xl border bg-card hover:border-primary/50 transition-colors space-y-2"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold">{deliv.title}</h4>
-                      {deliv.milestoneTitle && (
-                        <span className="text-[11px] bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                          {deliv.milestoneTitle}
-                        </span>
-                      )}
-                      <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                          isAccepted
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                            : deliv.status === 'REJECTED'
-                            ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                            : deliv.status === 'SUBMITTED'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                            : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
-                        }`}
-                      >
-                        {deliv.status}
-                      </span>
-                    </div>
-
-                    {deliv.description && <p className="text-xs text-muted-foreground">{deliv.description}</p>}
-                    {deliv.acceptanceCriteria && (
-                      <p className="text-xs text-muted-foreground">
-                        <strong className="text-foreground">Acceptance:</strong> {deliv.acceptanceCriteria}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
-                      {deliv.dueDate && <span>Due: {new Date(deliv.dueDate).toLocaleDateString()}</span>}
-                      {deliv.deliveredDate && (
-                        <span>Submitted: {new Date(deliv.deliveredDate).toLocaleDateString()}</span>
-                      )}
-                      {deliv.reviewedBy && <span>Reviewed by: {deliv.reviewedBy}</span>}
-                      {deliv.fileUrl && (
-                        <a
-                          href={deliv.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1 text-primary hover:underline"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          View File
-                        </a>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={deliv.status}
-                      onChange={(e) =>
-                        statusMutation.mutate({ delivId: deliv.id, status: e.target.value })
-                      }
-                      className="h-7 text-xs bg-background border rounded px-2"
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="SUBMITTED">SUBMITTED</option>
-                      <option value="ACCEPTED">ACCEPTED</option>
-                      <option value="REJECTED">REJECTED</option>
-                    </select>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
-                      onClick={() => {
-                        if (confirm('Delete this deliverable?')) {
-                          deleteMutation.mutate(deliv.id)
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+        <ul className="grid gap-3">
+          {deliverables.map((deliverable) => (
+            <li key={deliverable.id} className="flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-card p-3 shadow-soft">
+              <div className="grid min-w-0 gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold">{deliverable.title}</h3>
+                  {deliverable.milestoneTitle ? <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">{deliverable.milestoneTitle}</span> : null}
+                  <StatusBadge status={deliverable.status} />
                 </div>
+                {deliverable.description ? <p className="text-sm text-muted-foreground">{deliverable.description}</p> : null}
+                {deliverable.acceptanceCriteria ? (
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Accepted when:</span> {deliverable.acceptanceCriteria}
+                  </p>
+                ) : null}
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  {deliverable.dueDate ? <span>Due {formatDate(deliverable.dueDate)}</span> : null}
+                  {deliverable.deliveredDate ? <span>Submitted {formatDate(deliverable.deliveredDate)}</span> : null}
+                  {deliverable.reviewedBy ? <span>Reviewed by {deliverable.reviewedBy}</span> : null}
+                  {deliverable.fileUrl ? (
+                    <a
+                      href={deliverable.fileUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="flex items-center gap-1 font-medium text-primary underline-offset-2 hover:underline"
+                    >
+                      <ExternalLink className="size-3.5" aria-hidden="true" />
+                      Open the file
+                    </a>
+                  ) : null}
+                </p>
               </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Add Deliverable Dialog */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="max-w-md w-full p-6 shadow-xl bg-card max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b mb-4">
-              <h3 className="font-semibold text-base">Add Deliverable</h3>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setIsAddOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="text-xs font-medium block mb-1">Deliverable Title *</label>
-                <Input
-                  placeholder="e.g. As-built CAD drawing"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1">Description</label>
-                <Input
-                  placeholder="Description of item"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium block mb-1">Milestone</label>
-                  <select
-                    value={milestoneId}
-                    onChange={(e) => setMilestoneId(e.target.value)}
-                    className="w-full h-9 text-xs bg-background border rounded px-2"
+              {canUpdate ? (
+                <div className="flex shrink-0 items-center gap-1">
+                  <Select
+                    aria-label={`Status of ${deliverable.title}`}
+                    value={deliverable.status}
+                    onChange={(event) => changeStatus.mutate({ deliverable, status: event.target.value })}
+                    className="h-8 w-36 text-xs md:h-8"
                   >
-                    <option value="">(No Milestone)</option>
-                    {milestones.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.title}
+                    {DELIVERABLE_STATUSES.map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
+                  <Button variant="ghost" size="icon" aria-label={`Delete ${deliverable.title}`} onClick={() => setRemoving(deliverable)}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1">Due Date</label>
-                  <Input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1">Acceptance Criteria</label>
-                <Input
-                  placeholder="e.g. Signed by structural engineer"
-                  value={acceptanceCriteria}
-                  onChange={(e) => setAcceptanceCriteria(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1">Artifact / Document URL</label>
-                <Input
-                  placeholder="https://..."
-                  value={fileUrl}
-                  onChange={(e) => setFileUrl(e.target.value)}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={addMutation.isPending}>
-                  {addMutation.isPending ? 'Saving...' : 'Add Deliverable'}
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+
+      {adding ? (
+        <Form {...form}>
+          <FormDialog
+            open
+            onOpenChange={(open) => {
+              if (!open) {
+                setAdding(false)
+                form.reset()
+              }
+            }}
+            title="Add a deliverable"
+            description="Something owed to the customer, and how acceptance is shown."
+            submitLabel="Add deliverable"
+            onSubmit={form.handleSubmit((values) => add.mutate(values))}
+            submitting={add.isPending}
+            error={add.error}
+          >
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Deliverable</FormLabel>
+                  <FormControl>
+                    <Input placeholder="As-built drawings" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Details</FormLabel>
+                  <FormControl>
+                    <Textarea rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="milestoneId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Milestone</FormLabel>
+                    <FormControl>
+                      <Select {...field}>
+                        <option value="">None</option>
+                        {milestones.map((milestone) => (
+                          <option key={milestone.id} value={milestone.id}>
+                            {milestone.title}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="acceptanceCriteria"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Accepted when</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Signed off by the structural engineer" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="fileUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link to the file</FormLabel>
+                  <FormControl>
+                    <Input type="url" inputMode="url" placeholder="https://" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormDialog>
+        </Form>
+      ) : null}
+
+      <ConfirmationDialog
+        open={removing !== null}
+        onOpenChange={(open) => (open ? undefined : setRemoving(null))}
+        title="Delete this deliverable?"
+        description={removing ? `“${removing.title}” will be removed from the project.` : undefined}
+        confirmLabel="Delete deliverable"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => removing && remove.mutate(removing)}
+      />
+    </section>
   )
 }

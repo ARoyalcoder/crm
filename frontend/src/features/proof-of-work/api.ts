@@ -2,21 +2,21 @@ import { z } from 'zod'
 import { apiRequest } from '@/lib/api/client'
 
 export const PROOF_CATEGORIES = [
-  { value: 'BEFORE_PHOTO', label: 'Before Photo' },
-  { value: 'DURING_PHOTO', label: 'During Photo' },
-  { value: 'AFTER_PHOTO', label: 'After Photo' },
-  { value: 'DOCUMENT', label: 'Document / Report' },
-  { value: 'CHECKLIST', label: 'Checklist Item' },
-  { value: 'TECHNICIAN_NOTE', label: 'Technician Note' },
-  { value: 'CUSTOMER_CONFIRMATION', label: 'Customer Confirmation' },
-  { value: 'GENERAL', label: 'General Proof' },
+  { value: 'BEFORE_PHOTO', label: 'Before photo' },
+  { value: 'DURING_PHOTO', label: 'During photo' },
+  { value: 'AFTER_PHOTO', label: 'After photo' },
+  { value: 'DOCUMENT', label: 'Document / report' },
+  { value: 'CHECKLIST', label: 'Checklist item' },
+  { value: 'TECHNICIAN_NOTE', label: 'Technician note' },
+  { value: 'CUSTOMER_CONFIRMATION', label: 'Customer confirmation' },
+  { value: 'GENERAL', label: 'General proof' },
 ] as const
 
 export const ATTACHMENT_TYPES = [
-  { value: 'BEFORE_PHOTO', label: 'Before Photo' },
-  { value: 'DURING_PHOTO', label: 'During Photo' },
-  { value: 'AFTER_PHOTO', label: 'After Photo' },
-  { value: 'DOCUMENT', label: 'Technical Document' },
+  { value: 'BEFORE_PHOTO', label: 'Before photo' },
+  { value: 'DURING_PHOTO', label: 'During photo' },
+  { value: 'AFTER_PHOTO', label: 'After photo' },
+  { value: 'DOCUMENT', label: 'Technical document' },
 ] as const
 
 export const attachmentViewSchema = z.object({

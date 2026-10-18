@@ -86,6 +86,8 @@ test('API calls carry the access token, and an expired one is renewed once and t
     const token = refreshCalls === 1 ? ACCESS_TOKEN : 'renewed-access-token'
     return route.fulfill({ json: { ...TOKEN_RESPONSE, accessToken: token } })
   })
+  // Keep the notification bell quiet so the only 401 comes from the call under test.
+  await page.route('**/api/v1/notifications/unread-count', (route) => route.fulfill({ json: { count: 0 } }))
   const authorizationHeaders: (string | undefined)[] = []
   await page.route('**/api/v1/service-verticals', (route) => {
     const authorization = route.request().headers()['authorization']
@@ -133,7 +135,8 @@ test('signing out calls the server and returns to the login page', async ({ page
   })
 
   await page.goto('/')
-  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.getByRole('button', { name: 'Account menu' }).click()
+  await page.getByRole('menuitem', { name: 'Sign out' }).click()
 
   await expect(page).toHaveURL('/login')
   expect(logoutCalls).toBe(1)

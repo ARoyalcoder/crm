@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,7 +44,7 @@ const schema = z.object({
     .trim()
     .min(1, 'Enter a key')
     .max(60, 'At most 60 characters')
-    .regex(/^[a-z][a-z0-9_]*$/, 'Lower-case letters, digits and underscores, starting with a letter'),
+    .regex(/^[a-z][a-z0-9_]*$/, 'Lower-case letters, digits and underscores; start with a letter'),
   helpText: z.string().trim().max(300, 'At most 300 characters'),
   required: z.boolean(),
   options: z.array(optionSchema).min(2, 'Give at least 2 answers to choose from').max(20, 'At most 20 answers'),
@@ -82,10 +83,10 @@ export function QualificationQuestionsPage() {
   const remove = useMutation({ mutationFn: (id: string) => deleteQuestion(id), onSuccess: refresh })
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Qualification questions"
-        description="What to find out about every lead, and how much each answer adds to or takes from its score."
+        description="What to find out about every lead, and how each answer changes its score."
         action={
           editing === null ? (
             <Button onClick={() => setEditing('new')}>
@@ -112,7 +113,7 @@ export function QualificationQuestionsPage() {
         <CardHeader>
           <CardTitle>Questions</CardTitle>
           <CardDescription>
-            In the order they are asked. Changing a question rescores every open lead straight away.
+            Asked in this order. Changing a question rescores every open lead immediately.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -125,8 +126,7 @@ export function QualificationQuestionsPage() {
             <ErrorState title="Could not load the questions" error={questions.error} onRetry={() => void questions.refetch()} />
           ) : questions.data.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No questions yet. Until there are some, a lead's score comes only from its value, its contact details and
-              how recently it was worked.
+              No questions yet. Until there are, a lead's score uses only its value, contact details and recency.
             </p>
           ) : (
             <ul className="grid gap-3" aria-label="Questions">
@@ -143,7 +143,7 @@ export function QualificationQuestionsPage() {
                       {question.options.map((option) => (
                         <li key={option.value}>
                           {option.label} <span className="font-mono tabular-nums text-muted-foreground">{signed(option.points)}</span>
-                          {option.disqualifies ? <span className="text-red-700"> · rules the lead out</span> : null}
+                          {option.disqualifies ? <span className="text-destructive"> · rules the lead out</span> : null}
                         </li>
                       ))}
                     </ul>
@@ -307,7 +307,7 @@ function QuestionEditor({ existing, onDone, onCancel }: EditorProps) {
             <fieldset className="grid gap-3">
               <legend className="mb-2 text-sm font-medium">Answers</legend>
               <p className="text-sm text-muted-foreground">
-                Points are added to the score of a lead that gives the answer; a negative number takes points away.
+                Added to the score when a lead gives this answer; negative values subtract.
               </p>
               {options.fields.map((row, index) => (
                 <div key={row.id} className="flex flex-wrap items-start gap-3" role="group" aria-label={`Answer ${index + 1}`}>
@@ -343,9 +343,7 @@ function QuestionEditor({ existing, onDone, onCancel }: EditorProps) {
                     render={({ field }) => (
                       <FormItem className="flex h-9 items-center gap-2">
                         <FormControl>
-                          <input
-                            type="checkbox"
-                            className="size-4 accent-primary"
+                          <Checkbox
                             checked={field.value}
                             onChange={(event) => field.onChange(event.target.checked)}
                             onBlur={field.onBlur}
@@ -391,9 +389,7 @@ function QuestionEditor({ existing, onDone, onCancel }: EditorProps) {
               render={({ field }) => (
                 <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
+                    <Checkbox
                       checked={field.value}
                       onChange={(event) => field.onChange(event.target.checked)}
                       onBlur={field.onBlur}

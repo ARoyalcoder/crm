@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/auth-context'
+import Loader from '@/components/ui/Loader'
 
 /** Route guard: signed-out visitors go to the login page and come back to where they were headed. */
 export function RequireAuth() {
@@ -8,8 +9,8 @@ export function RequireAuth() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-svh items-center justify-center text-sm text-muted-foreground" role="status">
-        Loading…
+      <div className="flex min-h-svh items-center justify-center bg-background" role="status">
+        <Loader />
       </div>
     )
   }

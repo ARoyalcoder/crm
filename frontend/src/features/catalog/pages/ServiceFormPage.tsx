@@ -8,6 +8,7 @@ import { FormActions, FormCard, FormError, RecordLoadState } from '@/components/
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ActivityTimeline } from '@/features/audit/components/ActivityTimeline'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -63,7 +64,7 @@ export function ServiceFormPage() {
   const existing = useQuery({ ...serviceQuery(id ?? ''), enabled: id !== undefined })
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title={id ? 'Edit service' : 'New service'}
         description={id ? undefined : 'Add something the company sells.'}
@@ -179,8 +180,8 @@ function ServiceForm({ service }: { service?: Service }) {
                 </FormControl>
                 <FormDescription>
                   {service
-                    ? 'The code identifies the service everywhere and cannot be changed.'
-                    : 'A short identifier such as SOLAR_ROOFTOP_3KW. It cannot be changed later.'}
+                    ? 'The code identifies the service everywhere; fixed once saved.'
+                    : 'Short identifier, e.g. SOLAR_ROOFTOP_3KW. Fixed once saved.'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -208,7 +209,7 @@ function ServiceForm({ service }: { service?: Service }) {
                     ))}
                   </Select>
                 </FormControl>
-                <FormDescription>The category decides which vertical the service belongs to.</FormDescription>
+                <FormDescription>The category sets the service's vertical.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -310,9 +311,7 @@ function ServiceForm({ service }: { service?: Service }) {
             render={({ field }) => (
               <FormItem className="flex items-center gap-2">
                 <FormControl>
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-primary"
+                  <Checkbox
                     checked={field.value}
                     onChange={(event) => field.onChange(event.target.checked)}
                     onBlur={field.onBlur}

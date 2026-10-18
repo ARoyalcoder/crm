@@ -47,6 +47,28 @@ export function formatSchedule(start: string, end?: string | null) {
   return end ? `${text} to ${timeFormat.format(new Date(end))}` : text
 }
 
+/** Compact schedule: "17 Oct, 8:30 PM" or "17 Oct, 8:30–11:30 PM" */
+export function formatCompactSchedule(start: string, end?: string | null) {
+  if (!start) return '—'
+  const from = new Date(start)
+  const dayMonth = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(from)
+  const startTime = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).format(from)
+  if (!end) return `${dayMonth}, ${startTime}`
+  const to = new Date(end)
+  const endTime = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).format(to)
+  return `${dayMonth}, ${startTime}–${endTime}`
+}
+
+/** Short city/area from address to prevent multi-line clutter */
+export function formatShortLocation(address: string | null | undefined): string {
+  if (!address) return '—'
+  const parts = address.split(',').map((p) => p.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    return parts.slice(-2).join(', ')
+  }
+  return address
+}
+
 const summarySchema = z.object({
   id: z.string(),
   jobNumber: z.string(),
@@ -106,10 +128,10 @@ export const jobKeys = {
 }
 
 export const BUCKETS = [
-  { value: 'TODAY', label: "Today's Jobs", count: 'today' },
-  { value: 'UPCOMING', label: 'Upcoming Jobs', count: 'upcoming' },
-  { value: 'DELAYED', label: 'Delayed Jobs', count: 'delayed' },
-  { value: 'COMPLETED', label: 'Completed Jobs', count: 'completed' },
+  { value: 'TODAY', label: "Today's jobs", count: 'today' },
+  { value: 'UPCOMING', label: 'Upcoming jobs', count: 'upcoming' },
+  { value: 'DELAYED', label: 'Delayed jobs', count: 'delayed' },
+  { value: 'COMPLETED', label: 'Completed jobs', count: 'completed' },
 ] as const
 export type Bucket = (typeof BUCKETS)[number]['value']
 

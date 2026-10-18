@@ -39,7 +39,7 @@ export function InvoicePage() {
 
   if (!invoice.data) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <PageHeader title="Invoice" back={back} />
         <RecordLoadState noun="invoice" isPending={invoice.isPending} error={invoice.error} onRetry={() => void invoice.refetch()} />
       </div>
@@ -111,12 +111,12 @@ function InvoiceView({ detail, back }: { detail: InvoiceDetail; back: { to: stri
       />
 
       {draft ? (
-        <p className="rounded-2xl bg-card p-4 text-sm text-muted-foreground shadow-soft">
-          This is a draft. It has no number and is not owed until it is issued; once issued it can no longer be changed.
+        <p className="rounded-xl bg-card p-3 text-sm text-muted-foreground shadow-soft">
+          Draft: no number and nothing owed. Once issued, it cannot be changed.
         </p>
       ) : null}
       {invoice.status === 'CANCELLED' ? (
-        <p className="rounded-2xl bg-card p-4 text-sm shadow-soft">
+        <p className="rounded-xl bg-card p-3 text-sm shadow-soft">
           Cancelled{detail.cancelledAt ? ` on ${formatDay(detail.cancelledAt.slice(0, 10))}` : ''}: {detail.cancellationReason}
         </p>
       ) : null}
@@ -204,7 +204,7 @@ function InvoiceView({ detail, back }: { detail: InvoiceDetail; back: { to: stri
           }
         >
           {detail.payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No payment has been put against this invoice.</p>
+            <p className="text-sm text-muted-foreground">No payments against this invoice.</p>
           ) : (
             <ul className="grid gap-2 text-sm">
               {detail.payments.map((payment) => (
@@ -289,7 +289,7 @@ function InvoiceView({ detail, back }: { detail: InvoiceDetail; back: { to: stri
           {panel === 'debit' ? (
             <NoteForm
               title="Debit note"
-              explanation="Adds to what is owed on this invoice: extra work, an under-billed quantity."
+              explanation="Increases what is owed: extra work, an under-billed quantity."
               submitLabel="Record debit note"
               busy={act.isPending}
               failed={act.error}
@@ -299,7 +299,7 @@ function InvoiceView({ detail, back }: { detail: InvoiceDetail; back: { to: stri
           {panel === 'cancel' ? (
             <ReasonForm
               title="Cancel invoice"
-              explanation="The invoice keeps its number and stays on record, marked cancelled. Nothing will be owed on it. This cannot be undone."
+              explanation="The invoice keeps its number and stays on record, marked cancelled. Nothing will be owed. This cannot be undone."
               submitLabel="Cancel this invoice"
               busy={act.isPending}
               onSubmit={(reason) => act.mutate(() => cancelInvoice(id, reason))}
@@ -307,7 +307,7 @@ function InvoiceView({ detail, back }: { detail: InvoiceDetail; back: { to: stri
           ) : null}
           {panel === 'discard' ? (
             <div className="grid gap-3 rounded-xl border p-3">
-              <p className="text-sm">Discard this draft? It has no number and nothing is owed on it, so nothing is lost from the books.</p>
+              <p className="text-sm">Discard this draft? It has no number and nothing is owed on it.</p>
               <div className="flex gap-2">
                 <Button variant="destructive" disabled={discard.isPending} onClick={() => discard.mutate()}>
                   {discard.isPending ? 'Discarding…' : 'Discard draft'}
@@ -370,7 +370,7 @@ function IssueForm({ today, termsDays, total, busy, onIssue }: IssueFormProps) {
   // The due date follows the issue date until someone sets it by hand.
   const [dueDate, setDueDate] = useState<string | null>(null)
   const due = dueDate ?? addDays(issueDate, termsDays)
-  const problem = issueDate > today ? 'The issue date cannot be in the future.' : due < issueDate ? 'The due date cannot be before the issue date.' : null
+  const problem = issueDate > today ? 'The issue date cannot be in the future.' : due < issueDate ? 'Due date cannot be before issue date.' : null
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -382,8 +382,8 @@ function IssueForm({ today, termsDays, total, busy, onIssue }: IssueFormProps) {
   return (
     <form onSubmit={submit} className="grid gap-3 rounded-xl border p-3" aria-label="Issue invoice">
       <p className="text-sm">
-        Issuing gives the invoice its number and makes {formatMoney(total)} owed. After this it cannot be changed, only corrected with a
-        credit or debit note.
+        Issuing numbers the invoice and makes {formatMoney(total)} owed. It cannot be changed afterwards, only corrected with a credit
+        or debit note.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
@@ -426,11 +426,11 @@ function NoteForm({ title, explanation, submitLabel, busy, failed, onSubmit }: N
   function submit(event: FormEvent) {
     event.preventDefault()
     if (!/^\d+(\.\d{1,2})?$/.test(amount.trim()) || Number(amount) <= 0) {
-      setProblem('Enter an amount of more than zero, with at most 2 decimals.')
+      setProblem('Enter an amount above zero, up to 2 decimals.')
       return
     }
     if (reason.trim() === '') {
-      setProblem('Say why: the reason is kept with the note.')
+      setProblem('Give a reason; it is kept with the note.')
       return
     }
     setProblem(null)

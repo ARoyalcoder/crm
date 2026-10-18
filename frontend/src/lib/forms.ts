@@ -7,7 +7,7 @@ import { ApiError } from '@/lib/api/errors'
  */
 export function applyServerErrors<T extends FieldValues>(form: UseFormReturn<T>, error: unknown): string | null {
   if (!(error instanceof ApiError)) {
-    return 'Something went wrong. Please try again.'
+    return 'Something went wrong. Try again.'
   }
   const known = new Set(Object.keys(form.getValues()))
   let unplaced = false

@@ -42,7 +42,7 @@ export function LeadDetailPage() {
 
   if (!lead.data) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <PageHeader title="Lead" back={{ to: '/leads', label: 'Leads' }} />
         <RecordLoadState noun="lead" isPending={lead.isPending} error={lead.error} onRetry={() => void lead.refetch()} />
       </div>
@@ -59,7 +59,7 @@ function LeadView({ lead }: { lead: LeadDetail }) {
   const current = qualification.data
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title={lead.contactName}
         description={[lead.leadNumber, lead.companyName, lead.service.name].filter(Boolean).join(' · ')}
@@ -83,7 +83,7 @@ function LeadView({ lead }: { lead: LeadDetail }) {
         <LeadStatusBadge status={lead.status} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <ScorePanel
           qualification={qualification.data}
           isPending={qualification.isPending}
@@ -228,7 +228,7 @@ function ActivityCard({ leadId }: { leadId: string }) {
         ) : activities.isError ? (
           <ErrorState title="Could not load activity" error={activities.error} onRetry={() => void activities.refetch()} />
         ) : activities.data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing has been done about this lead yet.</p>
+          <p className="text-sm text-muted-foreground">No activity on this lead yet.</p>
         ) : (
           <ul className="grid gap-3" aria-label="Activity">
             {activities.data.map((activity) => (

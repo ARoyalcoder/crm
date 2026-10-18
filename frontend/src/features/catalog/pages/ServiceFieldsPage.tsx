@@ -21,6 +21,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -68,7 +69,7 @@ const schema = z
       .trim()
       .min(1, 'Enter a key')
       .max(60, 'At most 60 characters')
-      .regex(/^[a-z][a-z0-9_]*$/, 'Lower-case letters, digits and underscores, starting with a letter'),
+      .regex(/^[a-z][a-z0-9_]*$/, 'Lower-case letters, digits and underscores; start with a letter'),
     type: z.string().min(1, 'Choose a type'),
     helpText: z.string().trim().max(300, 'At most 300 characters'),
     required: z.boolean(),
@@ -80,7 +81,7 @@ const schema = z
     allowedFileTypes: z
       .string()
       .trim()
-      .refine((value) => value === '' || /^[A-Za-z0-9]{1,10}(\s*,\s*[A-Za-z0-9]{1,10})*$/.test(value), 'Extensions separated by commas, e.g. pdf, jpg'),
+      .refine((value) => value === '' || /^[A-Za-z0-9]{1,10}(\s*,\s*[A-Za-z0-9]{1,10})*$/.test(value), 'Comma-separated extensions, e.g. pdf, jpg'),
     maxFileSizeMb: optionalCount(1, 25),
     displayOrder: optionalCount(0, 9999),
   })
@@ -168,7 +169,7 @@ export function ServiceFieldsPage() {
 
   if (!service.data) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <PageHeader title="Lead fields" back={{ to: '/admin/services', label: 'Services' }} />
         <RecordLoadState
           noun="service"
@@ -183,7 +184,7 @@ export function ServiceFieldsPage() {
   const active = (fields.data ?? []).filter((field) => field.field.active).map((field) => field.field)
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title={`Lead fields: ${service.data.name}`}
         description={`${service.data.vertical.name} · ${service.data.category.name}. What to ask when someone enquires about this service.`}
@@ -214,7 +215,7 @@ export function ServiceFieldsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Fields</CardTitle>
-          <CardDescription>In the order they are asked. A field that is switched off is not asked.</CardDescription>
+          <CardDescription>Asked in this order. Switched-off fields are skipped.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           {toggle.error || remove.error ? (
@@ -425,7 +426,7 @@ function FieldEditor({ serviceId, existing, onDone, onCancel }: FieldEditorProps
                       />
                     </FormControl>
                     <FormDescription>
-                      {existing ? 'The key cannot be changed.' : 'Identifies the answer in reports and the API. It cannot be changed later.'}
+                      {existing ? 'The key cannot be changed.' : 'Identifies the answer in reports and the API. Fixed once saved.'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -453,7 +454,7 @@ function FieldEditor({ serviceId, existing, onDone, onCancel }: FieldEditorProps
                   </FormItem>
                 )}
               />
-              {text('displayOrder', 'Position', 'Lower numbers come first. Leave empty to put a new field last.')}
+              {text('displayOrder', 'Position', 'Lower numbers come first. Empty puts it last.')}
             </div>
 
             {HAS_OPTIONS.includes(type) ? (
@@ -484,7 +485,7 @@ function FieldEditor({ serviceId, existing, onDone, onCancel }: FieldEditorProps
             ) : null}
             {type === 'FILE' ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                {text('allowedFileTypes', 'Allowed file types', 'Extensions separated by commas, e.g. pdf, jpg. Leave empty for any.')}
+                {text('allowedFileTypes', 'Allowed file types', 'Comma-separated extensions, e.g. pdf, jpg. Empty allows any.')}
                 {text('maxFileSizeMb', 'Maximum size (MB)', 'Leave empty for 10 MB.')}
               </div>
             ) : null}
@@ -496,9 +497,7 @@ function FieldEditor({ serviceId, existing, onDone, onCancel }: FieldEditorProps
               render={({ field: input }) => (
                 <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
+                    <Checkbox
                       checked={input.value}
                       onChange={(event) => input.onChange(event.target.checked)}
                       onBlur={input.onBlur}
@@ -552,7 +551,7 @@ function Preview({ serviceId, definitions, canUpload }: PreviewProps) {
       <CardHeader>
         <CardTitle>Preview</CardTitle>
         <CardDescription>
-          How these fields appear on a lead for this service. Try some answers; nothing is saved.
+          How these fields appear on a lead for this service. Try answers; nothing is saved.
         </CardDescription>
       </CardHeader>
       <CardContent>

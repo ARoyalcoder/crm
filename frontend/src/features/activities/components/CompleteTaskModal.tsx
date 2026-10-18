@@ -24,7 +24,7 @@ export function CompleteTaskModal({ activity, onClose, onComplete }: CompleteTas
       await onComplete(outcome)
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to complete task')
+      setError(err instanceof Error ? err.message : 'Could not complete task')
     } finally {
       setSubmitting(false)
     }
@@ -32,11 +32,11 @@ export function CompleteTaskModal({ activity, onClose, onComplete }: CompleteTas
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-md p-6 shadow-xl">
+      <Card className="w-full max-w-md p-4 shadow-xl">
         <div className="flex items-center justify-between pb-3 border-b">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            <h2 className="text-base font-semibold">Complete Activity / Task</h2>
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            <h2 className="text-base font-semibold">Complete activity</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
@@ -50,16 +50,16 @@ export function CompleteTaskModal({ activity, onClose, onComplete }: CompleteTas
               <p className="text-xs text-muted-foreground">Related to: {activity.entityName}</p>
             ) : null}
             {activity.isRecurring ? (
-              <p className="text-xs text-emerald-600 font-medium mt-1">
-                ✓ Recurring task: Completing this will automatically schedule the next occurrence.
+              <p className="text-xs text-success font-medium mt-1">
+                ✓ Recurring task: completing it schedules the next occurrence.
               </p>
             ) : null}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Outcome / Completion Notes (Optional)</label>
+            <label className="text-xs font-medium">Outcome (optional)</label>
             <Textarea
-              placeholder="e.g. Call was successful, customer requested formal quote by Monday..."
+              placeholder="e.g. Customer wants a formal quote by Monday…"
               rows={3}
               value={outcome}
               onChange={(e) => setOutcome(e.target.value)}

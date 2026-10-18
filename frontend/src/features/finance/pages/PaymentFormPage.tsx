@@ -31,8 +31,8 @@ const schema = z.object({
   amount: z
     .string()
     .trim()
-    .refine((text) => /^\d+(\.\d{1,2})?$/.test(text) && Number(text) > 0, 'Enter the amount received, with at most 2 decimals'),
-  receivedOn: z.string().refine((text) => /^\d{4}-\d{2}-\d{2}$/.test(text), 'Choose the date the money was received'),
+    .refine((text) => /^\d+(\.\d{1,2})?$/.test(text) && Number(text) > 0, 'Enter the amount received, up to 2 decimals'),
+  receivedOn: z.string().refine((text) => /^\d{4}-\d{2}-\d{2}$/.test(text), 'Choose the date received'),
   methodId: z.string().min(1, 'Choose how it was paid'),
   reference: z.string().trim().max(100, 'At most 100 characters'),
   notes: z.string().trim().max(1000, 'At most 1000 characters'),
@@ -63,13 +63,13 @@ export function PaymentFormPage() {
           : null
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title="Record payment" back={back} />
       {waitingFor ? (
         <RecordLoadState noun="form" isPending={waitingFor.isPending} error={waitingFor.error} onRetry={() => void waitingFor.refetch()} />
       ) : (methods.data ?? []).length === 0 ? (
-        <p role="alert" className="max-w-2xl rounded-2xl bg-card p-6 text-sm shadow-soft">
-          No payment method is set up, so a payment cannot be recorded yet.{' '}
+        <p role="alert" className="max-w-2xl rounded-xl bg-card p-4 text-sm shadow-soft">
+          No payment method is set up, so payments cannot be recorded yet.{' '}
           <Link to="/admin/payment-methods" className="text-primary underline-offset-2 hover:underline">
             Set up payment methods
           </Link>
@@ -138,7 +138,7 @@ function PaymentForm({ today, methods, presetCustomer, presetInvoice, cancelTo }
     }
     if (!invoices.data) {
       // Saving now would drop whatever is about to be shown against the invoices.
-      setFormError('What the customer owes is still loading. Try again in a moment.')
+      setFormError('Still loading what the customer owes. Try again shortly.')
       return
     }
     const open = invoices.data
@@ -277,12 +277,12 @@ function PaymentForm({ today, methods, presetCustomer, presetInvoice, cancelTo }
             <AllocationEditor invoices={invoices.data} availablePaise={amountPaise} value={typed} onChange={setTyped} />
           )}
           <p className="text-sm text-muted-foreground">
-            Whatever is not put against an invoice stays with the payment as an advance. It can be allocated or refunded later.
+            Any amount not allocated to an invoice stays as an advance, to allocate or refund later.
           </p>
         </Section>
 
         <p className="text-sm text-muted-foreground">
-          A recorded payment cannot be edited or deleted. If it turns out to be wrong, it is reversed, and the reversal stays on record.
+          A recorded payment cannot be edited or deleted. If wrong, it is reversed and the reversal stays on record.
         </p>
         <FormActions submitLabel="Record payment" submitting={form.formState.isSubmitting} cancelTo={cancelTo} />
       </form>

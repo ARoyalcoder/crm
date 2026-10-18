@@ -56,15 +56,15 @@ class ServiceVerticalControllerTest {
 
     @Test
     void unknownCodeReturnsTheStandardNotFoundBody() throws Exception {
-        when(service.getByCode("REAL_ESTATE"))
-                .thenThrow(new ResourceNotFoundException("Service vertical", "REAL_ESTATE"));
+        when(service.getByCode("NONEXISTENT_CODE"))
+                .thenThrow(new ResourceNotFoundException("Service vertical", "NONEXISTENT_CODE"));
 
-        mockMvc.perform(get("/api/v1/service-verticals/REAL_ESTATE"))
+        mockMvc.perform(get("/api/v1/service-verticals/NONEXISTENT_CODE"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
-                .andExpect(jsonPath("$.detail").value("Service vertical 'REAL_ESTATE' was not found"))
-                .andExpect(jsonPath("$.instance").value("/api/v1/service-verticals/REAL_ESTATE"));
+                .andExpect(jsonPath("$.detail").value("Service vertical 'NONEXISTENT_CODE' was not found"))
+                .andExpect(jsonPath("$.instance").value("/api/v1/service-verticals/NONEXISTENT_CODE"));
     }
 
     private static ServiceVertical vertical(UUID id, ServiceVerticalCode code, String name, int order) {

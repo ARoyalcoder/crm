@@ -99,7 +99,7 @@ export function BranchesPage() {
   )
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Branches"
         description="The company's offices, by state and city."

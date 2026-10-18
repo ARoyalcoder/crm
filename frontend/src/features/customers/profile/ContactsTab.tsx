@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHasPermission } from '@/features/auth/auth-context'
@@ -83,7 +84,7 @@ export function ContactsTab({ customer }: CustomerTabProps) {
           <ErrorState title="Could not load contacts" error={contacts.error} onRetry={() => void contacts.refetch()} />
         ) : contacts.data.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No contacts yet. Add the people you deal with at this customer.
+            No contacts yet. Add the people you deal with here.
           </p>
         ) : (
           <ul className="grid gap-3" aria-label="Contacts">
@@ -196,9 +197,7 @@ function ContactForm({ customerId, contact, onDone, onCancel }: ContactFormProps
           render={({ field: input }) => (
             <FormItem className="flex items-center gap-2">
               <FormControl>
-                <input
-                  type="checkbox"
-                  className="size-4 accent-primary"
+                <Checkbox
                   checked={input.value}
                   onChange={(event) => input.onChange(event.target.checked)}
                   onBlur={input.onBlur}

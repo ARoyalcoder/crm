@@ -134,8 +134,8 @@ test('the header, health and summary show the customer at a glance', async ({ pa
 
   // The sections of the 360, in order.
   await expect(page.getByRole('tab')).toHaveText([
-    /^Summary/, /^Timeline/, /^Business information/, /^Contacts\s*1$/, /^Sales history/, /^Project history/,
-    /^Financial summary/, /^Service history/, /^AMC \/ Warranty/, /^Documents/, /^Activities/,
+    /^Summary/, /^Timeline/, /^Business info/, /^Contacts\s*1$/, /^Sales/, /^Projects/,
+    /^Finance/, /^Service/, /^AMC & warranty/, /^Documents/, /^Activities/,
   ])
   await expect(page.getByRole('tab', { name: 'Summary', exact: true })).toHaveAttribute('aria-selected', 'true')
 
@@ -179,7 +179,7 @@ test('a customer with nothing on record is not called healthy or unhealthy', asy
 
   await expect(page.getByText('Health: Not enough history').first()).toBeVisible()
   const panel = page.getByRole('tabpanel')
-  await expect(panel).toContainText('There is not enough on record yet to judge how this relationship is going.')
+  await expect(panel).toContainText('Not enough on record to judge this relationship.')
   await expect(panel).toContainText('None logged')
   await expect(panel).toContainText('Nothing has happened yet.')
 })
@@ -230,7 +230,7 @@ test('the timeline shows events from every module in order, with filters and pag
   await expect(items).toHaveCount(43)
   await expect(items.nth(25)).toContainText('Old email 13')
   await expect(page.getByRole('button', { name: 'Show older' })).toHaveCount(0)
-  await expect(page.getByText('That is everything, back to the beginning.')).toBeVisible()
+  await expect(page.getByText('That is everything.')).toBeVisible()
   expect(requests.some((url) => url.searchParams.get('cursor') === '25')).toBe(true)
   // Nothing is shown twice.
   const texts = await items.allTextContents()
@@ -265,7 +265,7 @@ test('a filter with no matching events says so', async ({ page }) => {
 
   await expect(page.getByRole('group', { name: 'Customer timeline' }).getByRole('listitem')).toHaveCount(1)
   await page.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Finance' }).click()
-  await expect(page.getByText('Nothing of this kind has happened yet.')).toBeVisible()
+  await expect(page.getByText('Nothing here yet.')).toBeVisible()
 })
 
 test('logging an activity adds it to the list, the timeline and the health', async ({ page }) => {
@@ -315,12 +315,12 @@ test('logging an activity adds it to the list, the timeline and the health', asy
   await page.getByRole('link', { name: 'Log activity' }).click()
   await expect(page.getByRole('tab', { name: 'Activities' })).toHaveAttribute('aria-selected', 'true')
   const panel = page.getByRole('tabpanel')
-  await expect(panel).toContainText('No activities logged yet.')
+  await expect(panel).toContainText('No activities yet.')
 
   await panel.getByRole('button', { name: 'Log activity' }).click()
   const form = panel.getByRole('form', { name: 'Log activity' })
   await form.getByRole('button', { name: 'Save activity' }).click()
-  await expect(form.getByText('Say briefly what it was about')).toBeVisible()
+  await expect(form.getByText('Add a short subject')).toBeVisible()
   await form.getByLabel('When (leave empty for now)').fill('2099-01-01T10:00')
   await form.getByLabel('Subject').fill('Followed up on rooftop quote')
   await form.getByRole('button', { name: 'Save activity' }).click()
@@ -352,10 +352,10 @@ test('logging an activity adds it to the list, the timeline and the health', asy
   // Removing it removes it everywhere: the timeline holds no copy.
   await page.getByRole('tab', { name: 'Activities' }).click()
   await panel.getByRole('button', { name: 'Remove Followed up on rooftop quote' }).click()
-  await expect(panel).toContainText('No activities logged yet.')
+  await expect(panel).toContainText('No activities yet.')
   await expect(page.getByText('Health: Not enough history')).toBeVisible()
   await page.getByRole('tab', { name: 'Timeline' }).click()
-  await expect(panel).toContainText('Nothing has happened with this customer yet.')
+  await expect(panel).toContainText('No activity recorded yet.')
 })
 
 test('business information, contacts and the sections not built yet', async ({ page }) => {
@@ -390,7 +390,7 @@ test('business information, contacts and the sections not built yet', async ({ p
   const panel = page.getByRole('tabpanel')
 
   // Business information: the record's facts and its addresses.
-  await expect(page.getByRole('tab', { name: 'Business information' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('tab', { name: 'Business info' })).toHaveAttribute('aria-selected', 'true')
   await expect(panel).toContainText('09ABCDE1234F1Z5')
   await expect(panel).toContainText('Referral')
   await expect(panel).toContainText('Acme Solar')
@@ -412,11 +412,16 @@ test('business information, contacts and the sections not built yet', async ({ p
   await expect(panel.getByRole('list', { name: 'Contacts' })).toContainText('Ravi Kumar')
   expect(newContact).toEqual({ name: 'Ravi Kumar', designation: null, phone: '9000000001', email: null, primaryContact: false })
 
-  // Sections whose module is not built say so. They show no figures, not even zeros.
-  // (Project history and Financial summary are no longer placeholders: their modules fill them.)
-  for (const section of ['Sales history', 'Service history', 'AMC / Warranty', 'Documents']) {
-    await page.getByRole('tab', { name: section }).click()
-    await expect(panel.getByRole('heading', { name: `${section} is not available yet` })).toBeVisible()
+  // A role that may not see a kind of record is told so, in words. It is not shown an empty list, which would read
+  // as "this customer has none".
+  for (const [section, message] of [
+    ['Sales', 'Your role cannot see quotations.'],
+    ['Service', 'Your role cannot see tickets.'],
+    ['AMC & warranty', 'Your role cannot see maintenance contracts.'],
+    ['Documents', 'Your role cannot see documents.'],
+  ] as const) {
+    await page.getByRole('tab', { name: section, exact: true }).click()
+    await expect(panel).toContainText(message)
     await expect(panel).not.toContainText('₹')
     await expect(panel.getByRole('table')).toHaveCount(0)
   }

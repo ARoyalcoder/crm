@@ -10,7 +10,7 @@ export const codeField = (max: number) =>
     .trim()
     .min(1, 'Enter a code')
     .max(max, `At most ${max} characters`)
-    .regex(/^[A-Z][A-Z0-9_]*$/, 'Use capital letters, digits and underscores, starting with a letter')
+    .regex(/^[A-Z][A-Z0-9_]*$/, 'Capital letters, digits and underscores; start with a letter')
 
 export const requiredText = (label: string, max: number) =>
   z.string().trim().min(1, `Enter ${label}`).max(max, `At most ${max} characters`)

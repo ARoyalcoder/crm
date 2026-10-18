@@ -28,12 +28,12 @@ import {
 
 /** How a category looks: the icon used when the event type has none of its own, and its colour. */
 const CATEGORY_LOOK: Record<string, { icon: LucideIcon; tone: string }> = {
-  COMMUNICATION: { icon: MessageSquare, tone: 'bg-sky-100 text-sky-800' },
-  SALES: { icon: Target, tone: 'bg-violet-100 text-violet-800' },
-  PROJECT: { icon: Hammer, tone: 'bg-orange-100 text-orange-800' },
-  FINANCE: { icon: IndianRupee, tone: 'bg-emerald-100 text-emerald-800' },
-  SERVICE: { icon: LifeBuoy, tone: 'bg-rose-100 text-rose-800' },
-  AMC: { icon: ShieldCheck, tone: 'bg-teal-100 text-teal-800' },
+  COMMUNICATION: { icon: MessageSquare, tone: 'bg-info-soft text-info' },
+  SALES: { icon: Target, tone: 'bg-accent text-accent-foreground' },
+  PROJECT: { icon: Hammer, tone: 'bg-warning-soft text-warning' },
+  FINANCE: { icon: IndianRupee, tone: 'bg-success-soft text-success' },
+  SERVICE: { icon: LifeBuoy, tone: 'bg-destructive-soft text-destructive' },
+  AMC: { icon: ShieldCheck, tone: 'bg-success-soft text-success' },
   RECORD: { icon: Pencil, tone: 'bg-muted text-muted-foreground' },
 }
 

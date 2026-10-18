@@ -15,7 +15,10 @@ spring:
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
       minimum-idle: ${DB_POOL_MIN_IDLE:2}
-      connection-timeout: 10000
+      connection-timeout: 30000
+      max-lifetime: 600000
+      keepalive-time: 60000
+      validation-timeout: 5000
       pool-name: bos-hikari
 
   jpa:
@@ -49,10 +52,13 @@ spring:
         max-page-size: 100
 
   cache:
-    type: ${CACHE_TYPE:redis}
-    redis:
-      key-prefix: "bos:cache:"
-      time-to-live: 10m
+    type: ${CACHE_TYPE:simple}
+
+  jackson:
+    deserialization:
+      # Leaving a number or a flag out of a request means 0 or false ("displayOrder": 0 puts a new item last), as the
+      # services expect. Jackson 3 would otherwise answer 400 "Failed to read request" to a client that omits one.
+      fail-on-null-for-primitives: false
 
   servlet:
     multipart:
@@ -74,6 +80,10 @@ server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
   forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024
   error:
     whitelabel:
       enabled: false
@@ -192,9 +202,37 @@ app:
       # An invoice overdue for longer than this puts the customer's health at risk.
       critical-after-days: ${FINANCE_HEALTH_CRITICAL_AFTER_DAYS:60}
   storage:
-    endpoint: ${STORAGE_ENDPOINT}
+    provider: ${STORAGE_PROVIDER:cloudinary}
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
     region: ${STORAGE_REGION:us-east-1}
-    bucket: ${STORAGE_BUCKET}
-    access-key: ${STORAGE_ACCESS_KEY}
-    secret-key: ${STORAGE_SECRET_KEY}
+    bucket: ${STORAGE_BUCKET:bos-local}
+    access-key: ${STORAGE_ACCESS_KEY:bos_minio}
+    secret-key: ${STORAGE_SECRET_KEY:bos_minio_local_dev}
     path-style-access: ${STORAGE_PATH_STYLE_ACCESS:true}
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+      api-key: ${CLOUDINARY_API_KEY:}
+      api-secret: ${CLOUDINARY_API_SECRET:}
+      folder: ${CLOUDINARY_FOLDER:instagram-news}
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-3.6-flash}
+      fallback-model: ${GEMINI_FALLBACK_MODEL:gemini-3.5-flash}
+      enabled: ${GEMINI_ENABLED:true}
+  integration:
+    sendgrid:
+      api-key: ${SENDGRID_API_KEY:}
+      from-email: ${SENDGRID_FROM_EMAIL:noreply@pawanputra.com}
+      from-name: ${SENDGRID_FROM_NAME:Pawan Putra Business OS}
+    whatsapp:
+      provider: ${WHATSAPP_PROVIDER:twilio}
+      twilio:
+        account-sid: ${TWILIO_ACCOUNT_SID:}
+        auth-token: ${TWILIO_AUTH_TOKEN:}
+        from-number: ${TWILIO_WHATSAPP_FROM:}
+      meta:
+        phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
+        access-token: ${WHATSAPP_ACCESS_TOKEN:}
+
+

@@ -13,7 +13,14 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { customFieldsQuery, servicesQuery } from '@/features/catalog/api'
 import { optionalAmount, toNumberOrNull } from '@/features/catalog/form-fields'
@@ -62,7 +69,7 @@ export function LeadFormPage() {
   const back = id ? { to: `/leads/${id}`, label: 'Lead' } : { to: '/leads', label: 'Leads' }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title={id ? 'Edit lead' : 'New lead'} back={back} />
       {id && !existing.data ? (
         <RecordLoadState noun="lead" isPending={existing.isPending} error={existing.error} onRetry={() => void existing.refetch()} />
@@ -177,7 +184,7 @@ function LeadFields({ lead, base, definitions, stored, serviceOptions, onService
   /** Puts each problem next to its input, whether it is a lead field or one of the service's own. */
   function showServerErrors(error: unknown): string | null {
     if (!(error instanceof ApiError)) {
-      return 'Something went wrong. Please try again.'
+      return 'Something went wrong. Try again.'
     }
     if (error.fieldErrors.length === 0) {
       return error.message
@@ -217,7 +224,7 @@ function LeadFields({ lead, base, definitions, stored, serviceOptions, onService
     <Card className="max-w-3xl">
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6" aria-label={lead ? 'Edit lead' : 'New lead'} noValidate>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4" aria-label={lead ? 'Edit lead' : 'New lead'} noValidate>
             <FormError message={formError} />
             <div className="grid gap-4 sm:grid-cols-2">
               {text('contactName', 'Contact name')}
@@ -227,59 +234,85 @@ function LeadFields({ lead, base, definitions, stored, serviceOptions, onService
               <FormField
                 control={form.control}
                 name="serviceId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service</FormLabel>
-                    <FormControl>
-                      <Select
-                        {...field}
-                        onChange={(event) => {
-                          // Another service asks other questions: hand what was typed so far to the
-                          // parent, which rebuilds the form around the new service's fields.
-                          const typed = form.getValues()
-                          onServiceChange({
-                            contactName: typed.contactName,
-                            companyName: typed.companyName,
-                            phone: typed.phone,
-                            email: typed.email,
-                            estimatedValue: typed.estimatedValue,
-                            status: typed.status,
-                            serviceId: event.target.value,
-                          })
-                        }}
-                      >
-                        <option value="">Choose…</option>
-                        {serviceOptions.map((service) => (
-                          <option key={service.id} value={service.id}>
-                            {service.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {text('estimatedValue', 'Estimated value (₹)', 'What the business may be worth. Leave empty if not known yet.')}
-              {lead ? (
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
+                render={({ field }) => {
+                  const serviceItems = [
+                    { label: 'Choose…', value: '' },
+                    ...serviceOptions.map((s) => ({ label: s.name, value: s.id })),
+                  ]
+                  return (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>Service</FormLabel>
                       <FormControl>
-                        <Select {...field}>
-                          {LEAD_STATUSES.map((status) => (
-                            <option key={status.value} value={status.value}>
-                              {status.label}
-                            </option>
-                          ))}
+                        <Select
+                          items={serviceItems}
+                          value={field.value}
+                          onValueChange={(val) => {
+                            field.onChange(val)
+                            const typed = form.getValues()
+                            onServiceChange({
+                              contactName: typed.contactName,
+                              companyName: typed.companyName,
+                              phone: typed.phone,
+                              email: typed.email,
+                              estimatedValue: typed.estimatedValue,
+                              status: typed.status,
+                              serviceId: val,
+                            })
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {serviceItems.map((service) => (
+                                <SelectItem key={service.value || '__choose'} value={service.value}>
+                                  {service.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
                         </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
+                  )
+                }}
+              />
+              {text('estimatedValue', 'Estimated value (₹)', 'Potential business value. Leave empty if unknown.')}
+              {lead ? (
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => {
+                    const statusItems = LEAD_STATUSES.map((s) => ({ label: s.label, value: s.value }))
+                    return (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <Select
+                            items={statusItems}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                {statusItems.map((status) => (
+                                  <SelectItem key={status.value} value={status.value}>
+                                    {status.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
                 />
               ) : null}
             </div>

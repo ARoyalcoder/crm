@@ -8,6 +8,7 @@ import { FormActions, FormCard, FormError, RecordLoadState } from '@/components/
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ActivityTimeline } from '@/features/audit/components/ActivityTimeline'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { optionalText, requiredText } from '@/features/catalog/form-fields'
 import {
@@ -29,7 +30,7 @@ const schema = z.object({
     .trim()
     .min(1, 'Enter a code')
     .max(50, 'At most 50 characters')
-    .regex(/^[A-Z][A-Z0-9_-]*$/, 'Use capital letters, digits, hyphens and underscores, starting with a letter'),
+    .regex(/^[A-Z][A-Z0-9_-]*$/, 'Capital letters, digits, hyphens and underscores; start with a letter'),
   name: requiredText('a name', 200),
   addressLine1: optionalText(200),
   addressLine2: optionalText(200),
@@ -55,7 +56,7 @@ export function BranchFormPage() {
   const existing = useQuery({ ...branchQuery(id ?? ''), enabled: id !== undefined })
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title={id ? 'Edit branch' : 'New branch'} back={{ to: LIST, label: 'Branches' }} />
       {id && !existing.data ? (
         <RecordLoadState
@@ -164,7 +165,7 @@ function BranchForm({ branch }: { branch?: Branch }) {
                   />
                 </FormControl>
                 <FormDescription>
-                  {branch ? 'The code cannot be changed.' : 'A short identifier such as LKO-HZG. It cannot be changed later.'}
+                  {branch ? 'The code cannot be changed.' : 'Short identifier, e.g. LKO-HZG. Fixed once saved.'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -226,9 +227,7 @@ function BranchForm({ branch }: { branch?: Branch }) {
               <FormItem>
                 <div className="flex items-center gap-2">
                   <FormControl>
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
+                    <Checkbox
                       checked={field.value}
                       onChange={(event) => field.onChange(event.target.checked)}
                       onBlur={field.onBlur}
@@ -239,7 +238,7 @@ function BranchForm({ branch }: { branch?: Branch }) {
                   <FormLabel>This is the head office</FormLabel>
                 </div>
                 <FormDescription>
-                  There is one head office. Ticking this moves the title from the current one.
+                  Only one head office. Ticking this moves the title here.
                 </FormDescription>
               </FormItem>
             )}

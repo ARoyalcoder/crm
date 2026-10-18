@@ -1,151 +1,188 @@
 import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Shield, X } from 'lucide-react'
+import { Plus, Shield, Trash2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { EntityPickerField } from '@/components/shared/EntityPickerField'
+import { FormDialog } from '@/components/shared/FormDialog'
+import { pickedOption } from '@/components/shared/picker-schema'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Select } from '@/components/ui/select'
+import { useHasPermission } from '@/features/auth/auth-context'
+import { EmployeePicker } from '@/features/workforce/components/EmployeePicker'
+import { humanize, initials } from '@/lib/format'
 import { projectsApi, type ProjectMember } from '../api'
 
-interface ProjectMembersTabProps {
+const ROLES = [
+  { value: 'CONTRIBUTOR', label: 'Contributor' },
+  { value: 'PROJECT_MANAGER', label: 'Project manager' },
+  { value: 'LEAD_ENGINEER', label: 'Lead engineer' },
+  { value: 'QUALITY_AUDITOR', label: 'Quality auditor' },
+  { value: 'OBSERVER', label: 'Observer' },
+] as const
+
+const schema = z.object({
+  employee: pickedOption.nullable().refine((value) => value !== null && Boolean(value.data?.userId), 'Choose who is joining the team'),
+  role: z.string().min(1),
+})
+type FormValues = z.infer<typeof schema>
+
+type ProjectMembersTabProps = {
   projectId: string
   members: ProjectMember[]
   projectManagerId: string
 }
 
+/** The people working on a project, who runs it, and (for those who may) a way to add or remove people. */
 export function ProjectMembersTab({ projectId, members, projectManagerId }: ProjectMembersTabProps) {
   const queryClient = useQueryClient()
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [userId, setUserId] = useState('')
-  const [role, setRole] = useState('CONTRIBUTOR')
+  const canUpdate = useHasPermission('PROJECT_UPDATE')
+  const [adding, setAdding] = useState(false)
+  const [removing, setRemoving] = useState<ProjectMember | null>(null)
 
-  const addMutation = useMutation({
-    mutationFn: (data: { userId: string; role: string }) =>
-      projectsApi.addMember(projectId, data.userId, data.role),
+  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { employee: null, role: 'CONTRIBUTOR' } })
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
+
+  const add = useMutation({
+    mutationFn: (values: FormValues) => projectsApi.addMember(projectId, values.employee!.data!.userId!, values.role),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-      setIsAddOpen(false)
-      setUserId('')
-      setRole('CONTRIBUTOR')
+      void refresh()
+      setAdding(false)
+      form.reset()
     },
   })
-
-  const removeMutation = useMutation({
-    mutationFn: (memberUserId: string) =>
-      projectsApi.removeMember(projectId, memberUserId),
+  const remove = useMutation({
+    mutationFn: (member: ProjectMember) => projectsApi.removeMember(projectId, member.userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
+      void refresh()
+      setRemoving(null)
     },
+    onError: () => setRemoving(null),
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!userId.trim()) return
-    addMutation.mutate({ userId: userId.trim(), role })
-  }
+  const submit = form.handleSubmit((values) => {
+    if (members.some((member) => member.userId === values.employee!.data!.userId)) {
+      form.setError('employee', { message: `${values.employee!.name} is already on this project` })
+      return
+    }
+    add.mutate(values)
+  })
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Project Team ({members.length})</h3>
-        <Button size="sm" onClick={() => setIsAddOpen(true)}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Add Member
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {members.map((member) => {
-          const isPM = member.userId === projectManagerId
-          return (
-            <div
-              key={member.id}
-              className="p-3.5 rounded-xl border bg-card flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
-                  {member.name.charAt(0)}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold">{member.name}</h4>
-                    {isPM && (
-                      <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
-                        <Shield className="h-2.5 w-2.5" /> PM
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {member.role} {member.email && `• ${member.email}`}
-                  </div>
-                </div>
-              </div>
-
-              {!isPM && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
-                  onClick={() => {
-                    if (confirm(`Remove ${member.name} from project?`)) {
-                      removeMutation.mutate(member.userId)
-                    }
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Add Member Dialog */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="max-w-md w-full p-6 shadow-xl bg-card">
-            <div className="flex items-center justify-between pb-3 border-b mb-4">
-              <h3 className="font-semibold text-base">Add Team Member</h3>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setIsAddOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="text-xs font-medium block mb-1">User ID / UUID *</label>
-                <Input
-                  placeholder="Enter user UUID"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1">Role *</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full h-9 text-xs bg-background border rounded px-2"
-                >
-                  <option value="CONTRIBUTOR">CONTRIBUTOR</option>
-                  <option value="PROJECT_MANAGER">PROJECT_MANAGER</option>
-                  <option value="LEAD_ENGINEER">LEAD_ENGINEER</option>
-                  <option value="QUALITY_AUDITOR">QUALITY_AUDITOR</option>
-                  <option value="OBSERVER">OBSERVER</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={addMutation.isPending}>
-                  {addMutation.isPending ? 'Saving...' : 'Add Member'}
-                </Button>
-              </div>
-            </form>
-          </Card>
+    <section aria-labelledby="team-heading" className="grid gap-4">
+      <h2 id="team-heading" className="sr-only">
+        Team
+      </h2>
+      {canUpdate ? (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus aria-hidden="true" />
+            Add member
+          </Button>
         </div>
+      ) : null}
+
+      {remove.isError ? <ErrorState title="That person could not be removed" error={remove.error} variant="compact" /> : null}
+
+      {members.length === 0 ? (
+        <EmptyState title="No one is on this project yet" description={canUpdate ? 'Add the people who will work on it.' : undefined} />
+      ) : (
+        <ul className="grid gap-3 md:grid-cols-2">
+          {members.map((member) => {
+            const manager = member.userId === projectManagerId
+            return (
+              <li key={member.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-3.5 shadow-soft">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+                    {initials(member.userName)}
+                  </span>
+                  <span className="grid min-w-0 gap-0.5">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-medium">{member.userName}</span>
+                      {manager ? (
+                        <Badge variant="primary">
+                          <Shield className="size-3" aria-hidden="true" />
+                          Manager
+                        </Badge>
+                      ) : null}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {humanize(member.role)}
+                      {member.userEmail ? ` · ${member.userEmail}` : ''}
+                    </span>
+                  </span>
+                </span>
+                {canUpdate && !manager ? (
+                  <Button variant="ghost" size="icon" aria-label={`Remove ${member.userName} from the project`} onClick={() => setRemoving(member)}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
       )}
-    </div>
+
+      {adding ? (
+        <Form {...form}>
+          <FormDialog
+            open
+            onOpenChange={(open) => {
+              if (!open) {
+                setAdding(false)
+                form.reset()
+              }
+            }}
+            title="Add a team member"
+            description="They see this project and can be given its tasks."
+            submitLabel="Add to project"
+            onSubmit={submit}
+            submitting={add.isPending}
+            error={add.error}
+          >
+            <EntityPickerField control={form.control} name="employee" label="Person" required>
+              {(field) => <EmployeePicker {...field} />}
+            </EntityPickerField>
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role on this project</FormLabel>
+                  <FormControl>
+                    <Select {...field}>
+                      {ROLES.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormDialog>
+        </Form>
+      ) : null}
+
+      <ConfirmationDialog
+        open={removing !== null}
+        onOpenChange={(open) => (open ? undefined : setRemoving(null))}
+        title="Remove from the project?"
+        description={removing ? `${removing.userName} will lose access to this project. Their completed work stays on record.` : undefined}
+        confirmLabel="Remove"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => removing && remove.mutate(removing)}
+      />
+    </section>
   )
 }

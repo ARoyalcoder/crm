@@ -86,10 +86,10 @@ export function VerticalsPage() {
   )
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Verticals"
-        description="The six lines of business. You can rename, reorder or switch them off; the set itself is fixed."
+        description="The six lines of business. Rename, reorder or switch them off; the set itself is fixed."
       />
       <Card>
         <CardContent className="grid gap-4">

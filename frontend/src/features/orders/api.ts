@@ -5,8 +5,8 @@ import { pageSchema, queryString } from '@/lib/api/page'
 
 export const ORDER_STATUSES = [
   { value: 'CONFIRMED', label: 'Confirmed', description: 'Order confirmed and registered' },
-  { value: 'IN_PROGRESS', label: 'In Progress', description: 'Procurement / fulfillment underway' },
-  { value: 'PARTIALLY_DELIVERED', label: 'Partially Delivered', description: 'Partial items or milestones delivered' },
+  { value: 'IN_PROGRESS', label: 'In progress', description: 'Procurement / fulfillment underway' },
+  { value: 'PARTIALLY_DELIVERED', label: 'Partially delivered', description: 'Partial items or milestones delivered' },
   { value: 'COMPLETED', label: 'Completed', description: 'Fully delivered and fulfilled' },
   { value: 'CANCELLED', label: 'Cancelled', description: 'Order cancelled' },
 ] as const

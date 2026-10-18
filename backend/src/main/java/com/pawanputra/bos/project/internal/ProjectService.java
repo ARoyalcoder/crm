@@ -519,23 +519,13 @@ public class ProjectService implements ProjectDirectory {
 
     @Transactional(readOnly = true)
     public ProjectViews.Dashboard getDashboard(UUID orgId) {
-        long total = projects.countByOrganizationId(orgId);
+        long total = projects.countLive(orgId);
         BigDecimal budget = projects.sumBudgetByOrganizationId(orgId);
         BigDecimal revenue = projects.sumRevenueByOrganizationId(orgId);
-
-        long active = projects.countByOrganizationIdAndStatus(orgId, "IN_PROGRESS")
-                + projects.countByOrganizationIdAndStatus(orgId, "PLANNING")
-                + projects.countByOrganizationIdAndStatus(orgId, "IN_REVIEW");
-
-        long completed = projects.countByOrganizationIdAndStatus(orgId, "COMPLETED");
-
-        LocalDate today = LocalDate.now(clock);
-        long delayed = projects.findAll((root, query, cb) -> cb.and(
-                cb.equal(root.get("organizationId"), orgId),
-                cb.isNull(root.get("deletedAt")),
-                cb.notEqual(root.get("status"), "COMPLETED"),
-                cb.notEqual(root.get("status"), "CANCELLED"),
-                cb.lessThan(root.get("expectedCompletionDate"), today))).size();
+        // "Active", "completed" and "delayed" follow the organization's own status configuration, like the analytics do.
+        long active = projects.countOpen(orgId);
+        long completed = projects.countDone(orgId);
+        long delayed = projects.countOverdue(orgId, LocalDate.now(clock));
 
         PageRequest recentReq = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<ProjectViews.ProjectSummary> recent = findPage(orgId, null, recentReq).getContent();

@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
 import { proofOfWorkApi, type CreateProofItemInput, type CustomerConfirmationInput } from '@/features/proof-of-work/api'
 import { ProofTimeline } from '@/features/proof-of-work/components/ProofTimeline'
 
@@ -8,7 +10,7 @@ interface ProjectProofTabProps {
 
 export function ProjectProofTab({ projectId }: ProjectProofTabProps) {
   const queryClient = useQueryClient()
-  const { data: timeline, isLoading, error } = useQuery(proofOfWorkApi.projectTimelineQuery(projectId))
+  const { data: timeline, isLoading, error, refetch } = useQuery(proofOfWorkApi.projectTimelineQuery(projectId))
 
   const createMutation = useMutation({
     mutationFn: (input: CreateProofItemInput) => proofOfWorkApi.createItem(input),
@@ -73,16 +75,10 @@ export function ProjectProofTab({ projectId }: ProjectProofTabProps) {
     },
   })
 
-  if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground text-sm">Loading Proof of Work timeline...</div>
-  }
+  if (isLoading) return <SkeletonLoader variant="list" count={3} label="Loading the proof of work" />
 
   if (error || !timeline) {
-    return (
-      <div className="p-8 text-center text-destructive text-sm">
-        Failed to load Proof of Work records.
-      </div>
-    )
+    return <ErrorState title="Could not load the proof of work" error={error} onRetry={() => void refetch()} />
   }
 
   return (

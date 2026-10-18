@@ -54,6 +54,8 @@ public abstract class AbstractIntegrationTest {
             registry.add("spring.datasource.password", () -> System.getProperty("it.db.password", ""));
             registry.add("spring.flyway.default-schema", () -> EXTERNAL_SCHEMA);
             registry.add("spring.flyway.create-schemas", () -> "true");
+            registry.add("spring.jpa.properties.hibernate.default_schema", () -> EXTERNAL_SCHEMA);
+            registry.add("spring.datasource.hikari.connection-init-sql", () -> "SET search_path TO " + EXTERNAL_SCHEMA + ", public");
         } else {
             registry.add("spring.datasource.url", () -> container().getJdbcUrl());
             registry.add("spring.datasource.username", () -> container().getUsername());

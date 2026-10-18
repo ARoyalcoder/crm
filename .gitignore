@@ -13,14 +13,18 @@ node_modules/
 frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
+frontend/all-text-report/
+frontend/e2e-text/
 *.tsbuildinfo
 
 # Logs
 *.log
+qa-test-results.json
 
-# IDE / OS
+# IDE / OS / AI Assistants
 .idea/
 .vscode/
+.claude/
 *.iml
 .DS_Store
 Thumbs.db

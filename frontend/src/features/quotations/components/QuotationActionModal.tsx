@@ -1,183 +1,109 @@
-import { useState } from 'react'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { FormDialog } from '@/components/shared/FormDialog'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
-export type QuotationActionType =
-  | 'request_approval'
-  | 'approve'
-  | 'reject_approval'
-  | 'send'
-  | 'accept'
-  | 'reject'
-  | 'cancel'
+export type QuotationActionType = 'request_approval' | 'approve' | 'reject_approval' | 'send' | 'accept' | 'reject' | 'cancel'
 
-interface QuotationActionModalProps {
+type Copy = { title: (number: string) => string; description: string; submit: string; reason?: boolean; followUp?: boolean; destructive?: boolean }
+
+const COPY: Record<QuotationActionType, Copy> = {
+  request_approval: { title: (n) => `Submit ${n} for approval`, description: 'Managers are told it is ready for review.', submit: 'Submit for approval' },
+  approve: { title: (n) => `Approve ${n}`, description: 'Once approved, sales can send it to the customer.', submit: 'Approve' },
+  reject_approval: { title: (n) => `Send ${n} back`, description: 'It returns to draft for corrections.', submit: 'Send back to draft', reason: true, destructive: true },
+  send: { title: (n) => `Send ${n} to the customer`, description: 'Record that it was sent, and when to follow up.', submit: 'Mark as sent', followUp: true },
+  accept: { title: (n) => `${n} accepted`, description: 'The customer accepted. It can now become an order.', submit: 'Mark as accepted' },
+  reject: { title: (n) => `${n} declined`, description: 'Record why the customer turned it down.', submit: 'Mark as declined', reason: true, destructive: true },
+  cancel: { title: (n) => `Cancel ${n}`, description: 'The quotation will not be pursued. This is recorded and cannot be undone.', submit: 'Cancel quotation', reason: true, destructive: true },
+}
+
+const schema = z.object({ reason: z.string(), notes: z.string(), followUp: z.string() })
+type FormValues = z.infer<typeof schema>
+
+type QuotationActionModalProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   actionType: QuotationActionType
   quotationNumber: string
   onConfirm: (data: { notes?: string; reason?: string; nextFollowUpDate?: string }) => void
   isPending?: boolean
+  /** The failure of the last attempt, shown at the top of the form. */
+  error?: unknown
 }
 
-export function QuotationActionModal({
-  open,
-  onOpenChange,
-  actionType,
-  quotationNumber,
-  onConfirm,
-  isPending = false,
-}: QuotationActionModalProps) {
-  const [notes, setNotes] = useState('')
-  const [reason, setReason] = useState('')
-  const [followUpDate, setFollowUpDate] = useState('')
+/** One step in a quotation's life: asks for what that step needs (a reason, a follow-up date) and passes it on. */
+export function QuotationActionModal({ open, onOpenChange, actionType, quotationNumber, onConfirm, isPending = false, error }: QuotationActionModalProps) {
+  const copy = COPY[actionType]
+  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { reason: '', notes: '', followUp: '' } })
 
-  if (!open) return null
-
-  let title = ''
-  let description = ''
-  let requiresReason = false
-  let showFollowUp = false
-  let confirmLabel = 'Confirm'
-  let confirmVariant: 'default' | 'destructive' = 'default'
-
-  switch (actionType) {
-    case 'request_approval':
-      title = `Submit ${quotationNumber} for Approval`
-      description = 'Notify managers and finance that this quotation is ready for review.'
-      confirmLabel = 'Submit for Approval'
-      break
-    case 'approve':
-      title = `Approve ${quotationNumber}`
-      description = 'Authorize this quotation so sales can dispatch it to the client.'
-      confirmLabel = 'Approve Quotation'
-      break
-    case 'reject_approval':
-      title = `Reject Approval for ${quotationNumber}`
-      description = 'Send this quotation back to draft with requested corrections.'
-      requiresReason = true
-      confirmLabel = 'Reject & Return to Draft'
-      confirmVariant = 'destructive'
-      break
-    case 'send':
-      title = `Send ${quotationNumber} to Client`
-      description = 'Mark quotation as officially dispatched and set a follow-up date.'
-      showFollowUp = true
-      confirmLabel = 'Mark as Sent'
-      break
-    case 'accept':
-      title = `Client Accepted ${quotationNumber}`
-      description = 'Record client acceptance to mark this quotation as won.'
-      confirmLabel = 'Mark as Accepted'
-      break
-    case 'reject':
-      title = `Client Rejected ${quotationNumber}`
-      description = 'Record the reason why the client declined this proposal.'
-      requiresReason = true
-      confirmLabel = 'Mark as Rejected'
-      confirmVariant = 'destructive'
-      break
-    case 'cancel':
-      title = `Cancel ${quotationNumber}`
-      description = 'Cancel this quotation permanently.'
-      requiresReason = true
-      confirmLabel = 'Cancel Quotation'
-      confirmVariant = 'destructive'
-      break
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    onConfirm({
-      notes: notes.trim() || undefined,
-      reason: reason.trim() || undefined,
-      nextFollowUpDate: followUpDate || undefined,
-    })
-    setNotes('')
-    setReason('')
-    setFollowUpDate('')
-  }
+  const submit = form.handleSubmit((values) => {
+    if (copy.reason && !values.reason.trim()) {
+      form.setError('reason', { message: 'Give a reason' })
+      return
+    }
+    onConfirm({ notes: values.notes.trim() || undefined, reason: values.reason.trim() || undefined, nextFollowUpDate: values.followUp || undefined })
+  })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto p-6 shadow-xl">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b">
-            <div>
-              <h2 className="text-lg font-semibold">{title}</h2>
-              <p className="text-xs text-muted-foreground">{description}</p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {showFollowUp && (
-            <div className="space-y-1.5">
-              <Label htmlFor="action-follow-up">Follow-up Date</Label>
-              <Input
-                id="action-follow-up"
-                type="date"
-                value={followUpDate}
-                onChange={(e) => setFollowUpDate(e.target.value)}
-              />
-            </div>
+    <Form {...form}>
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={copy.title(quotationNumber)}
+        description={copy.description}
+        submitLabel={copy.submit}
+        destructive={copy.destructive}
+        onSubmit={submit}
+        submitting={isPending}
+        error={error}
+      >
+        {copy.followUp ? (
+          <FormField
+            control={form.control}
+            name="followUp"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Follow up on</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
+        {copy.reason ? (
+          <FormField
+            control={form.control}
+            name="reason"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reason</FormLabel>
+                <FormControl>
+                  <Textarea rows={3} placeholder="What happened, in a sentence or two" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Note (optional)</FormLabel>
+              <FormControl>
+                <Textarea rows={2} placeholder="Anything worth keeping with this step" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-
-          {requiresReason && (
-            <div className="space-y-1.5">
-              <Label htmlFor="action-reason">Reason *</Label>
-              <Textarea
-                id="action-reason"
-                required
-                placeholder="Explain the reason for this action..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-              />
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label htmlFor="action-notes">Comments / Notes</Label>
-            <Textarea
-              id="action-notes"
-              placeholder="Additional comments (optional)..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant={confirmVariant}
-              disabled={isPending || (requiresReason && !reason.trim())}
-            >
-              {isPending ? 'Processing...' : confirmLabel}
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </div>
+        />
+      </FormDialog>
+    </Form>
   )
 }

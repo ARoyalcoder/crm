@@ -130,7 +130,7 @@ test('each service follows the stages its own template defines', async ({ page }
   await expect(page.getByRole('region', { name: 'Milestones of 3D Design' })).toContainText('3D design approved by the customer')
   const documents = page.getByRole('region', { name: 'Documents of Requirement' })
   await expect(documents.getByRole('listitem')).toHaveText([/Floor plan.*Required.*From the customer/, /Reference photos.*Optional/])
-  await expect(page.getByRole('list', { name: 'Stages' }).getByRole('listitem').filter({ hasText: '1. Lead' })).toContainText('Nothing is defined inside this stage.')
+  await expect(page.getByRole('list', { name: 'Stages' }).getByRole('listitem').filter({ hasText: '1. Lead' })).toContainText('Nothing defined in this stage.')
 
   // Solar: other data, drawn by the same screen.
   await page.goto(`/admin/project-templates/${SOLAR}`)
@@ -191,7 +191,7 @@ test('an administrator builds a template stage by stage', async ({ page }) => {
     'Nobody in particular', 'Admin', 'Designer', 'Project manager', 'Sales executive', 'Technician',
   ])
   await first.getByLabel('Responsible role').selectOption('Technician')
-  await expect(first).toContainText('This is the only stage: it starts with the project.')
+  await expect(first).toContainText('The only stage; it starts with the project.')
   await first.getByRole('button', { name: 'Add task' }).click()
   const task = first.getByRole('group', { name: 'Task 1 of Site Survey' })
   await task.getByRole('textbox', { name: 'Task', exact: true }).fill('Measure the roof')

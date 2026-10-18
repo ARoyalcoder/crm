@@ -4,12 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.pawanputra.bos.support.AbstractIntegrationTest;
+import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -23,25 +30,40 @@ class SchemaMigrationIT extends AbstractIntegrationTest {
     JdbcTemplate jdbc;
 
     @Test
-    void allMigrationsAreAppliedSuccessfully() {
-        List<String> versions = jdbc.queryForList(
+    void allMigrationsAreAppliedSuccessfully() throws IOException {
+        List<String> applied = jdbc.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL "
                         + "ORDER BY installed_rank",
                 String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-                "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23");
+        // Every versioned script that ships with the application, in version order. Reading the folder
+        // instead of keeping a copy of the list here means a new migration cannot make this test stale.
+        Pattern versioned = Pattern.compile("^V(\\d+)__.+\\.sql$");
+        Resource[] scripts = new PathMatchingResourcePatternResolver().getResources("classpath:db/migration/V*.sql");
+        List<String> shipped = Stream.of(scripts)
+                .map(Resource::getFilename)
+                .map(versioned::matcher)
+                .filter(Matcher::matches)
+                .map(m -> Integer.valueOf(m.group(1)))
+                .sorted(Comparator.naturalOrder())
+                .map(String::valueOf)
+                .toList();
+
+        assertThat(shipped).as("versioned migration scripts on the classpath").isNotEmpty();
+        assertThat(applied).containsExactlyElementsOf(shipped);
     }
 
     @Test
-    void schemaContainsExactlyTheFoundationTables() {
+    void schemaContainsTheFoundationTables() {
         List<String> tables = jdbc.queryForList(
                 "SELECT table_name FROM information_schema.tables "
                         + "WHERE table_schema = current_schema() AND table_type = 'BASE TABLE' "
                         + "AND table_name <> 'flyway_schema_history'",
                 String.class);
 
-        assertThat(tables).containsExactlyInAnyOrder(
+        // The schema has grown well past these (finance, service, workforce, analytics, ...); the
+        // foundation must still be there and must not have been renamed.
+        assertThat(tables).contains(
                 "organizations", "branches",
                 "users", "roles", "permissions", "user_roles", "role_permissions",
                 "user_sessions", "refresh_tokens", "password_reset_tokens",
@@ -107,7 +129,7 @@ class SchemaMigrationIT extends AbstractIntegrationTest {
     @Test
     void databaseRejectsASeventhVertical() {
         assertThatThrownBy(() -> jdbc.update(
-                "INSERT INTO service_verticals (code, name, display_order) VALUES ('REAL_ESTATE', 'Real Estate', 7)"))
+                "INSERT INTO service_verticals (code, name, display_order) VALUES ('NONEXISTENT_CODE', 'Nonexistent', 7)"))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("ck_service_verticals_code");
     }

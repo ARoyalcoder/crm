@@ -98,10 +98,10 @@ export function LeadsPage() {
   )
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Leads"
-        description="Enquiries that may become business, scored so the best ones are worked first."
+        description="Enquiries that may become business, scored so the best are worked first."
         action={
           canCreate ? (
             <Button asChild>

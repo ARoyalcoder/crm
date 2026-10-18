@@ -125,8 +125,8 @@ test("the technician's dashboard lists today's, upcoming, delayed and completed 
   await page.goto('/my-jobs')
 
   await expect(page.getByRole('heading', { name: 'My jobs', level: 1 })).toBeVisible()
-  await expect(page.getByRole('tab')).toHaveText([/Today's Jobs\s*2/, /Upcoming Jobs\s*3/, /Delayed Jobs\s*1/, /Completed Jobs\s*14/])
-  await expect(page.getByRole('tab', { name: /Today's Jobs/ })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('tab')).toHaveText([/Today's jobs\s*2/, /Upcoming jobs\s*3/, /Delayed jobs\s*1/, /Completed jobs\s*14/])
+  await expect(page.getByRole('tab', { name: /Today's jobs/ })).toHaveAttribute('aria-selected', 'true')
 
   const jobs = page.getByRole('list', { name: 'Jobs' }).getByRole('listitem')
   await expect(jobs).toHaveCount(2)
@@ -140,15 +140,15 @@ test("the technician's dashboard lists today's, upcoming, delayed and completed 
   await expect(jobs.nth(0).getByRole('link')).toHaveAttribute('href', `/field-jobs/${ID}`)
   await expectNoSidewaysScroll(page)
 
-  await page.getByRole('tab', { name: /Delayed Jobs/ }).click()
+  await page.getByRole('tab', { name: /Delayed jobs/ }).click()
   await expect(page).toHaveURL(/list=delayed/)
   await expect(jobs).toHaveCount(1)
   await expect(jobs.first()).toContainText('Missed yesterday')
   await expect(jobs.first()).toContainText('Delayed')
 
-  await page.getByRole('tab', { name: /Completed Jobs/ }).click()
-  await expect(page.getByText('You have not completed any jobs yet.')).toBeVisible()
-  await page.getByRole('tab', { name: /Upcoming Jobs/ }).click()
+  await page.getByRole('tab', { name: /Completed jobs/ }).click()
+  await expect(page.getByText('No completed jobs yet.')).toBeVisible()
+  await page.getByRole('tab', { name: /Upcoming jobs/ }).click()
   await expect(jobs.first()).toContainText('Service call')
 })
 
@@ -173,7 +173,7 @@ test('a technician works a job from accepting it to the customer confirming it',
   // Until the job is accepted nothing can be recorded on it.
   const checklist = page.getByRole('list', { name: 'Checklist' })
   await expect(checklist.getByLabel('Mount cameras')).toBeDisabled()
-  await expect(page.getByText('Accept the job to start ticking things off.')).toBeVisible()
+  await expect(page.getByText('Accept the job to start the checklist.')).toBeVisible()
   await expect(page.getByRole('form', { name: 'Add material' })).toHaveCount(0)
 
   // One step at a time, each with one large button.

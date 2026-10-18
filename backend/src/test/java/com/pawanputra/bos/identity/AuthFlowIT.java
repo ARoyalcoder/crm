@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -173,15 +175,21 @@ class AuthFlowIT extends AbstractIntegrationTest {
         Account account = accounts.activeUser(RoleCodes.FINANCE, RoleCodes.TECHNICIAN);
         String accessToken = login(account.email(), account.password()).path("accessToken");
 
+        // The two roles' grants, each counted once: what the API must return is exactly their union.
+        String[] union = jdbc.queryForList(
+                "SELECT DISTINCT p.code FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id "
+                        + "JOIN roles r ON r.id = rp.role_id WHERE r.code IN ('FINANCE', 'TECHNICIAN')",
+                String.class).toArray(String[]::new);
+
         bearer(accessToken).get("/api/v1/auth/me")
                 .then().statusCode(200)
                 .body("id", equalTo(account.id().toString()))
                 .body("organizationId", equalTo(account.organizationId().toString()))
                 .body("roles", containsInAnyOrder("FINANCE", "TECHNICIAN"))
-                .body("permissions", containsInAnyOrder(
-                        "FINANCE_VIEW", "FINANCE_MANAGE", "FINANCE_APPROVE", "FINANCE_CONFIGURE", "CUSTOMER_VIEW", "PROJECT_VIEW",
-                        "FIELD_JOB_WORK", "PROOF_OF_WORK_VIEW", "PROOF_OF_WORK_CREATE",
-                        "ORDER_VIEW", "QUOTATION_VIEW", "QUOTATION_CREATE", "QUOTATION_UPDATE", "QUOTATION_APPROVE"))
+                .body("permissions", containsInAnyOrder(union))
+                // one permission that only each role has, so the union cannot be empty by accident
+                .body("permissions", hasItems("FINANCE_APPROVE", "FIELD_JOB_WORK"))
+                .body("permissions", not(hasItem("ROLE_UPDATE")))
                 .body("passwordHash", nullValue());
     }
 

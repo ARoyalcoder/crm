@@ -1,35 +1,25 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CalendarClock, CheckCircle2, CircleDollarSign, Clock, Download, FileX2, Layers, MoreHorizontal, Pencil, Send, ShoppingBag, Trash2, UserRound, XCircle, Bell } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  Download,
-  Edit3,
-  FileX2,
-  History,
-  Layers,
-  Send,
-  ShoppingBag,
-  Trash2,
-  XCircle,
-} from 'lucide-react'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { ActivityTimeline, type ActivityItem } from '@/components/shared/ActivityTimeline'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
+import { StatCard } from '@/components/shared/StatCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useHasPermission } from '@/features/auth/auth-context'
+import { DocumentsCard } from '@/features/documents/components/DocumentsCard'
 import { ConvertQuotationToOrderModal } from '@/features/orders/components/ConvertQuotationToOrderModal'
+import { ApiError } from '@/lib/api/errors'
+import { daysUntil, formatDate, formatNumber, formatRupees, humanize } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import {
   approveQuotation,
   cancelQuotation,
@@ -45,13 +35,13 @@ import {
   sendQuotationToClient,
 } from '../api'
 import { CreateVersionModal } from '../components/CreateVersionModal'
-import {
-  QuotationActionModal,
-  type QuotationActionType,
-} from '../components/QuotationActionModal'
+import { QuotationActionModal, type QuotationActionType } from '../components/QuotationActionModal'
 import { QuotationModal } from '../components/QuotationModal'
 import { QuotationStatusBadge } from '../components/QuotationStatusBadge'
 
+type ActionData = { notes?: string; reason?: string; nextFollowUpDate?: string }
+
+/** One quotation: where it stands, its versions and lines, the money, and what has happened to it. */
 export function QuotationDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -62,521 +52,396 @@ export function QuotationDetailPage() {
   const canDelete = useHasPermission('QUOTATION_DELETE')
   const canCreateOrder = useHasPermission('ORDER_CREATE')
 
-  const [selectedVersionNum, setSelectedVersionNum] = useState<number | null>(null)
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [revising, setRevising] = useState(false)
+  const [action, setAction] = useState<QuotationActionType | null>(null)
+  const [converting, setConverting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [pdfFailure, setPdfFailure] = useState<string | null>(null)
 
-  // Modals
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [versionModalOpen, setVersionModalOpen] = useState(false)
-  const [actionModal, setActionModal] = useState<QuotationActionType | null>(null)
-  const [convertOrderModalOpen, setConvertOrderModalOpen] = useState(false)
-  const [pdfGenerating, setPdfGenerating] = useState(false)
+  const query = useQuery({ ...quotationDetailQuery(id!), enabled: Boolean(id) })
+  const quotation = query.data
+  const shownNumber = selectedVersion ?? quotation?.currentVersionNumber ?? 1
+  const viewingOlder = selectedVersion !== null && selectedVersion !== quotation?.currentVersionNumber
 
-  const detailQuery = useQuery({
-    ...quotationDetailQuery(id!),
-    enabled: Boolean(id),
-  })
+  const olderVersion = useQuery({ ...quotationVersionQuery(id!, shownNumber), enabled: Boolean(id && viewingOlder) })
+  const version = viewingOlder ? olderVersion.data : quotation?.currentVersion
 
-  const q = detailQuery.data
-  const activeVerNum = selectedVersionNum ?? q?.currentVersionNumber ?? 1
+  const refresh = () => void queryClient.invalidateQueries({ queryKey: quotationKeys.all })
 
-  const versionQuery = useQuery({
-    ...quotationVersionQuery(id!, activeVerNum),
-    enabled: Boolean(id && selectedVersionNum != null && selectedVersionNum !== q?.currentVersionNumber),
-  })
-
-  // Displayed version (either current from detail query, or fetched historic version)
-  const displayedVersion =
-    selectedVersionNum == null || selectedVersionNum === q?.currentVersionNumber
-      ? q?.currentVersion
-      : versionQuery.data
-
-  function invalidate() {
-    void queryClient.invalidateQueries({ queryKey: quotationKeys.all })
-  }
-
-  // Mutations
-  const actionMut = useMutation({
-    mutationFn: async ({
-      action,
-      data,
-    }: {
-      action: QuotationActionType
-      data: { notes?: string; reason?: string; nextFollowUpDate?: string }
-    }) => {
-      if (!id) return
-      switch (action) {
+  const act = useMutation({
+    mutationFn: ({ type, data }: { type: QuotationActionType; data: ActionData }) => {
+      switch (type) {
         case 'request_approval':
-          return requestQuotationApproval(id, data.notes)
+          return requestQuotationApproval(id!, data.notes)
         case 'approve':
-          return approveQuotation(id, data.notes)
+          return approveQuotation(id!, data.notes)
         case 'reject_approval':
-          return rejectQuotationApproval(id, data.reason)
+          return rejectQuotationApproval(id!, data.reason)
         case 'send':
-          return sendQuotationToClient(id, data.nextFollowUpDate, data.notes)
+          return sendQuotationToClient(id!, data.nextFollowUpDate, data.notes)
         case 'accept':
-          return markQuotationAccepted(id, data.notes)
+          return markQuotationAccepted(id!, data.notes)
         case 'reject':
-          return markQuotationRejected(id, data.reason || 'Client declined')
+          return markQuotationRejected(id!, data.reason || 'Customer declined')
         case 'cancel':
-          return cancelQuotation(id, data.reason)
+          return cancelQuotation(id!, data.reason)
       }
     },
     onSuccess: () => {
-      invalidate()
-      setActionModal(null)
+      refresh()
+      setAction(null)
+      setSelectedVersion(null)
     },
   })
 
-  const deleteMut = useMutation({
+  const remove = useMutation({
     mutationFn: () => deleteQuotation(id!),
     onSuccess: () => {
+      queryClient.removeQueries({ queryKey: quotationKeys.detail(id!) })
+      refresh()
       navigate('/quotations')
     },
+    onError: () => setConfirmingDelete(false),
   })
 
-  async function handleDownloadPdf() {
-    if (!id) return
-    try {
-      setPdfGenerating(true)
-      const res = await generateQuotationPdf(id, displayedVersion?.versionNumber)
-      window.open(res.url, '_blank')
-    } catch (err) {
-      alert((err as Error).message || 'Failed to generate PDF')
-    } finally {
-      setPdfGenerating(false)
-    }
-  }
+  const pdf = useMutation({
+    mutationFn: () => generateQuotationPdf(id!, version?.versionNumber),
+    onMutate: () => setPdfFailure(null),
+    onSuccess: (result) => window.open(result.url, '_blank', 'noopener'),
+    onError: (error) => setPdfFailure(error instanceof ApiError ? error.message : 'The PDF could not be made. Try again.'),
+  })
 
-  function formatCurrency(val?: number | null) {
-    if (val == null) return '₹0'
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 2,
-    }).format(val)
-  }
+  if (query.isPending) return <SkeletonLoader variant="page" label="Loading the quotation" />
+  if (query.isError || !quotation) return <ErrorState title="Could not load this quotation" error={query.error} onRetry={() => void query.refetch()} />
 
-  if (detailQuery.isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    )
-  }
-
-  if (detailQuery.isError || !q) {
-    return (
-      <ErrorState
-        title="Quotation not found"
-        error={detailQuery.error}
-      />
-    )
-  }
+  const open = quotation.status !== 'CANCELLED' && quotation.status !== 'REJECTED' && quotation.status !== 'EXPIRED' && quotation.status !== 'ACCEPTED'
+  const toExpiry = quotation.validUntil ? daysUntil(quotation.validUntil) : null
+  const expired = open && toExpiry !== null && toExpiry < 0
+  const history: ActivityItem[] = quotation.auditLogs.map((log) => ({
+    id: log.id,
+    title: log.fromStatus && log.toStatus ? `${humanize(log.fromStatus)} → ${humanize(log.toStatus)}` : humanize(log.action),
+    description: log.notes,
+    actor: log.performedBy,
+    at: log.performedAt,
+    tone: log.toStatus === 'ACCEPTED' || log.toStatus === 'APPROVED' ? 'success' : log.toStatus === 'REJECTED' || log.toStatus === 'CANCELLED' ? 'danger' : 'info',
+  }))
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Back button */}
-      <div>
-        <Link
-          to="/quotations"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Quotations
-        </Link>
-      </div>
-
-      {/* HEADER & LIFECYCLE ACTION BAR */}
-      <div className="flex flex-col gap-4 rounded-lg border bg-card p-6 shadow-sm">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                {q.quotationNumber}
-              </h1>
-              <QuotationStatusBadge status={q.status} />
-              <Badge variant="secondary" className="font-semibold">
-                Version {q.currentVersionNumber}
-              </Badge>
-            </div>
-            <p className="mt-1 text-sm font-medium text-foreground">{q.title}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              {q.customerName && <span>Customer: <strong className="text-foreground">{q.customerName}</strong></span>}
-              {q.leadName && <span>Lead: <strong className="text-foreground">{q.leadName}</strong></span>}
-              {q.opportunityTitle && <span>Deal: <strong className="text-foreground">{q.opportunityTitle}</strong></span>}
-              <span>Owner: <strong className="text-foreground">{q.ownerName}</strong></span>
-              {q.validUntil && <span>Valid Until: <strong>{new Date(q.validUntil).toLocaleDateString()}</strong></span>}
-            </div>
-          </div>
-
-          {/* Action buttons based on current status */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* PDF Generation */}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pdfGenerating}
-              onClick={handleDownloadPdf}
-              className="gap-1.5"
-            >
-              <Download className="h-4 w-4" />
-              {pdfGenerating ? 'Generating...' : 'Download PDF'}
+    <div className="grid gap-4">
+      <PageHeader
+        title={quotation.quotationNumber}
+        back={{ to: '/quotations', label: 'Quotations' }}
+        meta={
+          <span className="flex flex-wrap items-center gap-2">
+            <QuotationStatusBadge status={quotation.status} />
+            <Badge variant="neutral">Version {quotation.currentVersionNumber}</Badge>
+          </span>
+        }
+        description={
+          <span className="grid gap-1">
+            <span className="font-medium text-foreground">{quotation.title}</span>
+            <span>
+              {quotation.customerName ? (
+                quotation.customerId ? (
+                  <Link to={`/customers/${quotation.customerId}`} className="underline-offset-2 hover:underline">
+                    {quotation.customerName}
+                  </Link>
+                ) : (
+                  quotation.customerName
+                )
+              ) : null}
+              {quotation.leadName ? `${quotation.customerName ? ' · ' : ''}Lead ${quotation.leadName}` : ''}
+              {quotation.opportunityTitle ? ` · Deal ${quotation.opportunityTitle}` : ''}
+            </span>
+          </span>
+        }
+        action={
+          <>
+            <Button variant="outline" onClick={() => pdf.mutate()} loading={pdf.isPending}>
+              <Download aria-hidden="true" />
+              PDF
             </Button>
-
-            {/* Edit Draft */}
-            {q.status === 'DRAFT' && canUpdate && (
-              <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)} className="gap-1.5">
-                <Edit3 className="h-4 w-4" />
-                Edit Draft
+            {quotation.status === 'DRAFT' && canUpdate ? (
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil aria-hidden="true" />
+                Edit
               </Button>
-            )}
-
-            {/* Create New Version / Revision */}
-            {canUpdate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setVersionModalOpen(true)}
-                className="gap-1.5"
-              >
-                <Layers className="h-4 w-4" />
-                New Version (v{q.currentVersionNumber + 1})
+            ) : null}
+            {canUpdate && quotation.status !== 'CANCELLED' ? (
+              <Button variant="outline" onClick={() => setRevising(true)}>
+                <Layers aria-hidden="true" />
+                New version
               </Button>
-            )}
-
-            {/* Workflow transitions */}
-            {q.status === 'DRAFT' && canUpdate && (
-              <Button
-                size="sm"
-                onClick={() => setActionModal('request_approval')}
-                className="gap-1.5"
-              >
-                <Clock className="h-4 w-4" />
-                Submit for Approval
-              </Button>
-            )}
-
-            {q.status === 'PENDING_APPROVAL' && canApprove && (
+            ) : null}
+            {quotation.status === 'DRAFT' && canUpdate ? (
               <>
-                <Button
-                  size="sm"
-                  onClick={() => setActionModal('approve')}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
+                <Button onClick={() => setAction('request_approval')}>
+                  <Clock aria-hidden="true" />
+                  Submit for approval
+                </Button>
+              </>
+            ) : null}
+            {quotation.status === 'PENDING_APPROVAL' && canApprove ? (
+              <>
+                <Button variant="outline" onClick={() => setAction('reject_approval')}>
+                  <XCircle aria-hidden="true" />
+                  Send back
+                </Button>
+                <Button onClick={() => setAction('approve')}>
+                  <CheckCircle2 aria-hidden="true" />
                   Approve
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setActionModal('reject_approval')}
-                  className="gap-1.5"
-                >
-                  <XCircle className="h-4 w-4" />
-                  Reject
-                </Button>
               </>
-            )}
-
-            {(q.status === 'APPROVED' || q.status === 'DRAFT') && canUpdate && (
-              <Button
-                size="sm"
-                onClick={() => setActionModal('send')}
-                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                <Send className="h-4 w-4" />
-                Send to Client
+            ) : null}
+            {(quotation.status === 'APPROVED' || quotation.status === 'DRAFT') && canUpdate ? (
+              <Button variant={quotation.status === 'DRAFT' ? 'outline' : 'default'} onClick={() => setAction('send')}>
+                <Send aria-hidden="true" />
+                Send to customer
               </Button>
-            )}
-
-            {(q.status === 'SENT' || q.status === 'VIEWED') && canUpdate && (
+            ) : null}
+            {(quotation.status === 'SENT' || quotation.status === 'VIEWED') && canUpdate ? (
               <>
-                <Button
-                  size="sm"
-                  onClick={() => setActionModal('accept')}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Client Accepted
+                <Button variant="outline" onClick={() => setAction('reject')}>
+                  <FileX2 aria-hidden="true" />
+                  Declined
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setActionModal('reject')}
-                  className="gap-1.5 text-rose-600 border-rose-300 hover:bg-rose-50"
-                >
-                  <FileX2 className="h-4 w-4" />
-                  Client Rejected
+                <Button onClick={() => setAction('accept')}>
+                  <CheckCircle2 aria-hidden="true" />
+                  Accepted
                 </Button>
               </>
-            )}
-
-            {q.status === 'ACCEPTED' && canCreateOrder && (
-              <Button
-                size="sm"
-                onClick={() => setConvertOrderModalOpen(true)}
-                className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Convert to Order
+            ) : null}
+            {quotation.status === 'ACCEPTED' && canCreateOrder ? (
+              <Button onClick={() => setConverting(true)}>
+                <ShoppingBag aria-hidden="true" />
+                Convert to order
               </Button>
-            )}
+            ) : null}
+            {canDelete ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="More actions">
+                    <MoreHorizontal aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quotation.status !== 'CANCELLED' ? (
+                    <DropdownMenuItem onSelect={() => setAction('cancel')}>
+                      <XCircle aria-hidden="true" />
+                      Cancel quotation
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive" onSelect={() => setConfirmingDelete(true)}>
+                    <Trash2 aria-hidden="true" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </>
+        }
+      />
 
-            {canDelete && q.status !== 'CANCELLED' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActionModal('cancel')}
-                className="text-destructive hover:bg-destructive/10"
-              >
-                Cancel Quotation
-              </Button>
-            )}
+      {pdfFailure ? <ErrorState title="The PDF could not be made" message={pdfFailure} variant="compact" /> : null}
+      {remove.isError ? <ErrorState title="The quotation could not be deleted" error={remove.error} variant="compact" /> : null}
+      {quotation.rejectionReason && quotation.status === 'DRAFT' ? (
+        <p role="status" className="rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm">
+          <span className="font-semibold">Sent back for changes</span>
+          {quotation.rejectedBy ? ` by ${quotation.rejectedBy}` : ''}: {quotation.rejectionReason}
+        </p>
+      ) : null}
+      {quotation.clientRejectionReason && quotation.status === 'REJECTED' ? (
+        <p role="status" className="rounded-xl border border-destructive/25 bg-destructive-soft px-4 py-3 text-sm">
+          <span className="font-semibold">The customer declined:</span> {quotation.clientRejectionReason}
+        </p>
+      ) : null}
+      {quotation.cancellationReason && quotation.status === 'CANCELLED' ? (
+        <p role="status" className="rounded-xl border border-border bg-muted px-4 py-3 text-sm">
+          <span className="font-semibold">Cancelled:</span> {quotation.cancellationReason}
+        </p>
+      ) : null}
 
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete this quotation?')) {
-                    deleteMut.mutate()
-                  }
-                }}
-                className="text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Approval info alert if rejected or approved */}
-        {q.rejectionReason && q.status === 'DRAFT' && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
-            <strong>Internal Approval Rejection: </strong> {q.rejectionReason} (by {q.rejectedBy})
-          </div>
-        )}
-
-        {q.clientRejectionReason && q.status === 'REJECTED' && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
-            <strong>Client Decline Reason: </strong> {q.clientRejectionReason}
-          </div>
-        )}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Quotation value" icon={CircleDollarSign} value={formatRupees(quotation.finalAmount, { exact: true })} hint="Including GST" />
+        <StatCard
+          label="Valid until"
+          icon={CalendarClock}
+          tone={expired ? 'danger' : 'neutral'}
+          value={quotation.validUntil ? formatDate(quotation.validUntil) : 'No expiry'}
+          hint={
+            quotation.validUntil && open && toExpiry !== null
+              ? expired
+                ? `Expired ${-toExpiry} day${toExpiry === -1 ? '' : 's'} ago`
+                : toExpiry === 0
+                  ? 'Ends today'
+                  : `${toExpiry} day${toExpiry === 1 ? '' : 's'} left`
+              : undefined
+          }
+        />
+        <StatCard label="Follow up" icon={Bell} value={quotation.nextFollowUpDate ? formatDate(quotation.nextFollowUpDate) : 'Not set'} hint={quotation.sentAt ? `Sent ${formatDate(quotation.sentAt)}` : 'Not sent yet'} />
+        <StatCard label="Owner" icon={UserRound} value={quotation.ownerName} hint={`Created ${formatDate(quotation.createdAt)}`} />
       </div>
 
-      {/* VERSION SELECTOR BAR */}
-      <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3 text-xs">
-        <div className="flex items-center gap-2">
-          <History className="h-4 w-4 text-muted-foreground" />
-          <span className="font-semibold text-foreground">Quotation Versions:</span>
-          <div className="flex flex-wrap gap-1">
-            {q.allVersions.map((ver) => {
-              const isSelected = displayedVersion?.versionNumber === ver.versionNumber
+      {quotation.allVersions.length > 1 ? (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/70 bg-card px-4 py-3 text-sm shadow-soft">
+          <span className="font-medium">Versions</span>
+          <div role="group" aria-label="Versions of this quotation" className="flex flex-wrap gap-1.5">
+            {quotation.allVersions.map((entry) => {
+              const selected = version?.versionNumber === entry.versionNumber || (!version && shownNumber === entry.versionNumber)
               return (
                 <button
-                  key={ver.id}
+                  key={entry.id}
                   type="button"
-                  onClick={() => setSelectedVersionNum(ver.versionNumber)}
-                  className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                    isSelected
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground border'
-                  }`}
+                  aria-pressed={selected}
+                  onClick={() => setSelectedVersion(entry.versionNumber === quotation.currentVersionNumber ? null : entry.versionNumber)}
+                  className={cn(
+                    'rounded-lg border px-2.5 py-1 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
+                    selected ? 'border-primary bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
                 >
-                  v{ver.versionNumber} {ver.versionNumber === q.currentVersionNumber ? '(Active)' : ''}
+                  v{entry.versionNumber}
+                  {entry.versionNumber === quotation.currentVersionNumber ? ' (current)' : ''}
                 </button>
               )
             })}
           </div>
+          {version?.changeSummary ? <span className="text-muted-foreground">“{version.changeSummary}”</span> : null}
         </div>
+      ) : null}
 
-        {displayedVersion?.changeSummary && (
-          <span className="text-muted-foreground italic">
-            &quot;{displayedVersion.changeSummary}&quot;
-          </span>
-        )}
-      </div>
-
-      {/* DISPLAYED VERSION ITEMS TABLE & FINANCIALS */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Line Items Table */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card className="shadow-sm">
-            <CardHeader className="py-3.5 border-b">
-              <CardTitle className="text-sm font-semibold">
-                Line Items (Version {displayedVersion?.versionNumber})
-              </CardTitle>
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 lg:col-span-2">
+          <Card className="gap-0 py-0">
+            <CardHeader className="border-b py-4">
+              <CardTitle>Lines{version ? ` · version ${version.versionNumber}` : ''}</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>Service / Description</TableHead>
-                    <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Unit Price</TableHead>
-                    <TableHead className="text-right">Tax</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayedVersion?.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-mono text-xs">{item.itemOrder}</TableCell>
-                      <TableCell>
-                        <div className="font-medium text-foreground">{item.serviceName}</div>
-                        {item.description && (
-                          <div className="text-xs text-muted-foreground">{item.description}</div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">
-                        {item.taxPercentage}% ({formatCurrency(item.taxAmount)})
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrency(item.totalAmount)}
-                      </TableCell>
+            <CardContent className="px-0">
+              {viewingOlder && olderVersion.isPending ? (
+                <div className="p-5">
+                  <SkeletonLoader variant="table" count={3} label="Loading that version" />
+                </div>
+              ) : !version || version.items.length === 0 ? (
+                <EmptyState variant="compact" title="No lines on this version" />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Unit price</TableHead>
+                      <TableHead className="text-right">GST</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {version.items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="font-medium">{item.serviceName}</div>
+                          {item.description ? <p className="text-xs text-muted-foreground">{item.description}</p> : null}
+                          {item.discountPercentage ? <p className="text-xs text-muted-foreground">{item.discountPercentage}% discount on this line</p> : null}
+                        </TableCell>
+                        <TableCell className="text-right tabular">{formatNumber(item.quantity)}</TableCell>
+                        <TableCell className="text-right tabular">{formatRupees(item.unitPrice, { exact: true })}</TableCell>
+                        <TableCell className="text-right tabular text-muted-foreground">{item.taxPercentage ? `${item.taxPercentage}%` : '—'}</TableCell>
+                        <TableCell className="text-right font-medium tabular">{formatRupees(item.totalAmount, { exact: true })}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 
-          {/* Terms & Notes */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Card className="shadow-sm">
-              <CardHeader className="py-3 border-b">
-                <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                  Commercial Terms
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 text-xs text-foreground whitespace-pre-wrap">
-                {displayedVersion?.terms || 'No specific terms recorded.'}
-              </CardContent>
-            </Card>
+          <DocumentsCard entityType="QUOTATION" entityId={quotation.id} />
 
-            <Card className="shadow-sm">
-              <CardHeader className="py-3 border-b">
-                <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                  Internal Notes
-                </CardTitle>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Terms</CardTitle>
               </CardHeader>
-              <CardContent className="p-3 text-xs text-muted-foreground whitespace-pre-wrap">
-                {displayedVersion?.notes || 'No internal notes.'}
-              </CardContent>
+              <CardContent className="text-sm whitespace-pre-wrap">{version?.terms || <span className="text-muted-foreground">No terms recorded.</span>}</CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Internal notes</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm whitespace-pre-wrap text-muted-foreground">{version?.notes || 'No internal notes.'}</CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Financial Calculation Summary Card & Timeline */}
-        <div className="space-y-4">
-          <Card className="shadow-sm border-primary/20 bg-card">
-            <CardHeader className="py-3.5 border-b">
-              <CardTitle className="text-sm font-semibold">Pricing Summary</CardTitle>
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pricing</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-3 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatCurrency(displayedVersion?.subtotal)}</span>
-              </div>
-
-              {(displayedVersion?.discountAmount ?? 0) > 0 && (
-                <div className="flex justify-between text-rose-600">
-                  <span>
-                    Discount ({displayedVersion?.discountPercentage}%)
-                  </span>
-                  <span>- {formatCurrency(displayedVersion?.discountAmount)}</span>
-                </div>
+            <CardContent>
+              {version ? (
+                <dl className="grid gap-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Before tax</dt>
+                    <dd className="tabular">{formatRupees(version.subtotal, { exact: true })}</dd>
+                  </div>
+                  {version.discountAmount > 0 ? (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Discount{version.discountPercentage ? ` (${version.discountPercentage}%)` : ''}</dt>
+                      <dd className="tabular">−{formatRupees(version.discountAmount, { exact: true })}</dd>
+                    </div>
+                  ) : null}
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">GST</dt>
+                    <dd className="tabular">{formatRupees(version.taxAmount, { exact: true })}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 border-t pt-3 text-base font-semibold">
+                    <dt>Total</dt>
+                    <dd className="tabular">{formatRupees(version.finalAmount, { exact: true })}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <SkeletonLoader variant="list" count={3} label="Loading the pricing" />
               )}
-
-              {(displayedVersion?.taxAmount ?? 0) > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>
-                    Tax / GST ({displayedVersion?.taxPercentage}%)
-                  </span>
-                  <span>+ {formatCurrency(displayedVersion?.taxAmount)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between border-t pt-3 text-base font-bold text-foreground">
-                <span>Final Quotation Value</span>
-                <span className="text-primary">{formatCurrency(displayedVersion?.finalAmount)}</span>
-              </div>
             </CardContent>
           </Card>
 
-          {/* Audit Trail */}
-          <Card className="shadow-sm">
-            <CardHeader className="py-3 border-b">
-              <CardTitle className="text-xs font-semibold uppercase text-muted-foreground">
-                Audit Trail & History
-              </CardTitle>
+          <Card>
+            <CardHeader>
+              <CardTitle>History</CardTitle>
             </CardHeader>
-            <CardContent className="p-3">
-              <div className="space-y-3 text-xs">
-                {q.auditLogs.map((log) => (
-                  <div key={log.id} className="border-l-2 border-primary/40 pl-2.5">
-                    <div className="flex items-center justify-between font-semibold text-foreground">
-                      <span>{log.action}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(log.performedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    {log.notes && <div className="text-muted-foreground mt-0.5">{log.notes}</div>}
-                    <div className="text-[10px] text-muted-foreground mt-1">
-                      By {log.performedBy} on {new Date(log.performedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent>
+              <ActivityTimeline items={history} label="Quotation history" emptyTitle="Nothing recorded yet" />
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* MODALS */}
-      {editModalOpen && (
-        <QuotationModal
-          open={editModalOpen}
-          onOpenChange={setEditModalOpen}
-          quotation={q}
-          onSuccess={() => invalidate()}
-        />
-      )}
-
-      {versionModalOpen && (
-        <CreateVersionModal
-          open={versionModalOpen}
-          onOpenChange={setVersionModalOpen}
-          quotation={q}
-          onSuccess={() => invalidate()}
-        />
-      )}
-
-      {actionModal && (
+      {editing ? <QuotationModal open onOpenChange={setEditing} quotation={quotation} onSuccess={refresh} /> : null}
+      {revising ? <CreateVersionModal open onOpenChange={setRevising} quotation={quotation} onSuccess={() => { refresh(); setSelectedVersion(null) }} /> : null}
+      {action ? (
         <QuotationActionModal
-          open={Boolean(actionModal)}
-          onOpenChange={(open) => !open && setActionModal(null)}
-          actionType={actionModal}
-          quotationNumber={q.quotationNumber}
-          isPending={actionMut.isPending}
-          onConfirm={(data) => {
-            actionMut.mutate({ action: actionModal, data })
-          }}
+          open
+          onOpenChange={(next) => (next ? undefined : setAction(null))}
+          actionType={action}
+          quotationNumber={quotation.quotationNumber}
+          isPending={act.isPending}
+          error={act.error}
+          onConfirm={(data) => act.mutate({ type: action, data })}
         />
-      )}
-
-      {convertOrderModalOpen && (
-        <ConvertQuotationToOrderModal
-          open={convertOrderModalOpen}
-          onClose={() => setConvertOrderModalOpen(false)}
-          quotation={q}
-        />
-      )}
+      ) : null}
+      {converting ? <ConvertQuotationToOrderModal open onClose={() => setConverting(false)} quotation={quotation} /> : null}
+      <ConfirmationDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this quotation?"
+        description={`${quotation.quotationNumber} and its versions will be removed. To keep the record, cancel it instead.`}
+        confirmLabel="Delete quotation"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => remove.mutate()}
+      />
     </div>
   )
 }

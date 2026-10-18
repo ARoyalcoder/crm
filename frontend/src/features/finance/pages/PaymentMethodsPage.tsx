@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -39,7 +40,7 @@ export function PaymentMethodsPage() {
     <div className="grid max-w-3xl gap-6">
       <PageHeader
         title="Payment methods"
-        description="How money arrives and is returned. Offered when a payment or a refund is recorded."
+        description="How money arrives and is returned. Offered when recording a payment or refund."
         action={
           canConfigure && editing !== 'new' ? (
             <Button onClick={() => startEditing('new')}>
@@ -67,13 +68,13 @@ export function PaymentMethodsPage() {
       ) : methods.isError ? (
         <ErrorState title="Could not load the payment methods" error={methods.error} onRetry={() => void methods.refetch()} />
       ) : methods.data.length === 0 ? (
-        <p className="rounded-2xl bg-card p-6 text-sm text-muted-foreground shadow-soft">
-          There are no payment methods. Until one is added, payments and refunds cannot be recorded.
+        <p className="rounded-xl bg-card p-4 text-sm text-muted-foreground shadow-soft">
+          No payment methods. Add one to record payments and refunds.
         </p>
       ) : (
         <ul className="grid gap-3" aria-label="Payment methods">
           {methods.data.map((method) => (
-            <li key={method.id} className="grid gap-3 rounded-2xl bg-card p-4 shadow-soft">
+            <li key={method.id} className="grid gap-3 rounded-xl bg-card p-3 shadow-soft">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="grid gap-0.5">
                   <span className="font-medium">{method.name}</span>
@@ -146,7 +147,7 @@ function MethodForm({ existing, busy, error, nextOrder, onCancel, onSave }: Meth
       return
     }
     if (!/^[A-Z][A-Z0-9_]{1,29}$/.test(code)) {
-      setProblem('The code is 2 to 30 capital letters, digits or underscores, starting with a letter: BANK_TRANSFER.')
+      setProblem('2 to 30 capital letters, digits or underscores, starting with a letter: BANK_TRANSFER.')
       return
     }
     setProblem(null)
@@ -171,16 +172,16 @@ function MethodForm({ existing, busy, error, nextOrder, onCancel, onSave }: Meth
             aria-describedby="method-code-help"
           />
           <span id="method-code-help" className="text-xs text-muted-foreground">
-            {existing ? 'The code identifies the method and cannot be changed.' : 'Capitals, digits and underscores. Cannot be changed later.'}
+            {existing ? 'The code identifies the method; fixed once saved.' : 'Capitals, digits and underscores. Fixed once saved.'}
           </span>
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" className="size-4 accent-primary" checked={requiresReference} onChange={(event) => setRequiresReference(event.target.checked)} />
-        A reference (cheque number, UTR, transaction id) must be given with every payment
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <Checkbox checked={requiresReference} onChange={(event) => setRequiresReference(event.target.checked)} />
+        Every payment needs a reference (cheque number, UTR, transaction id)
       </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" className="size-4 accent-primary" checked={active} onChange={(event) => setActive(event.target.checked)} />
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <Checkbox checked={active} onChange={(event) => setActive(event.target.checked)} />
         Offered when recording a payment
       </label>
       {(problem ?? serverProblem) ? (

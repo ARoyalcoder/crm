@@ -39,9 +39,9 @@ export function PipelineAnalyticsSummary({ analytics }: PipelineAnalyticsSummary
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Total Deals
+              Total deals
             </CardTitle>
-            <BarChart3 className="h-4 w-4 text-blue-500" />
+            <BarChart3 className="h-4 w-4 text-info" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalOpportunities}</div>
@@ -54,9 +54,9 @@ export function PipelineAnalyticsSummary({ analytics }: PipelineAnalyticsSummary
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Pipeline Value
+              Pipeline value
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
+            <DollarSign className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formattedPipelineValue}</div>
@@ -67,9 +67,9 @@ export function PipelineAnalyticsSummary({ analytics }: PipelineAnalyticsSummary
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Weighted Pipeline
+              Weighted pipeline
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-indigo-500" />
+            <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formattedWeightedValue}</div>
@@ -80,21 +80,21 @@ export function PipelineAnalyticsSummary({ analytics }: PipelineAnalyticsSummary
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Win Rate
+              Win rate
             </CardTitle>
-            <Percent className="h-4 w-4 text-amber-500" />
+            <Percent className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {analytics.winRatePercentage != null ? `${analytics.winRatePercentage.toFixed(1)}%` : '0%'}
             </div>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="flex items-center text-emerald-600">
+              <span className="flex items-center text-success">
                 <CheckCircle2 className="mr-0.5 h-3 w-3" />
                 {analytics.wonOpportunities} won
               </span>
               <span>•</span>
-              <span className="flex items-center text-rose-600">
+              <span className="flex items-center text-destructive">
                 <XCircle className="mr-0.5 h-3 w-3" />
                 {analytics.lostOpportunities} lost
               </span>
@@ -105,9 +105,9 @@ export function PipelineAnalyticsSummary({ analytics }: PipelineAnalyticsSummary
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Avg Velocity
+              Avg velocity
             </CardTitle>
-            <Clock className="h-4 w-4 text-slate-500" />
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {analytics.averageTimePerStage.length > 0 ? (
@@ -137,7 +137,7 @@ export function PipelineAnalyticsSummary({ analytics }: PipelineAnalyticsSummary
       {analytics.averageTimePerStage.length > 0 && (
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Average Time Per Pipeline Stage</CardTitle>
+            <CardTitle className="text-sm font-semibold">Average time per stage</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">

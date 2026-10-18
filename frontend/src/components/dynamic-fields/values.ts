@@ -154,7 +154,7 @@ export function applyAnswerErrors<T extends FieldValues>(
   error: unknown,
 ): string | null {
   if (!(error instanceof ApiError)) {
-    return 'Something went wrong. Please try again.'
+    return 'Something went wrong. Try again.'
   }
   const known = new Set(fields.map((field) => field.key))
   const unplaced: string[] = []

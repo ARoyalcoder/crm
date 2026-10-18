@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ErrorState } from '@/components/feedback/ErrorState'
@@ -17,6 +18,7 @@ export function QualificationQuestions({ leadId, qualification }: Props) {
   const queryClient = useQueryClient()
   const canAnswer = useHasPermission('LEAD_UPDATE')
   const canConfigure = useHasPermission('LEAD_CONFIGURE')
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string | null>>({})
 
   const answer = useMutation({
     mutationFn: (change: Record<string, string | null>) => answerQuestions(leadId, change),
@@ -27,17 +29,16 @@ export function QualificationQuestions({ leadId, qualification }: Props) {
     },
   })
 
-  // While an answer is on its way to the server, show it as chosen: the click must be seen to register.
-  const pending = answer.isPending ? answer.variables : undefined
+  // Show immediate local selection, falling back to server response
   const shown = (question: Qualification['questions'][number]) =>
-    pending && question.key in pending ? pending[question.key] : (question.answer ?? null)
+    question.key in localAnswers ? localAnswers[question.key] : (question.answer ?? null)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Qualification</CardTitle>
         <CardDescription>
-          {qualification?.qualificationReason ?? 'What we know about how good a fit this lead is.'}
+          {qualification?.qualificationReason ?? 'How good a fit this lead is.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-5">
@@ -46,7 +47,7 @@ export function QualificationQuestions({ leadId, qualification }: Props) {
           <Skeleton className="h-24 w-full" aria-busy="true" aria-label="Loading questions" />
         ) : qualification.questions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No qualification questions have been set up.{' '}
+            No qualification questions yet.{' '}
             {canConfigure ? (
               <Link className="underline underline-offset-2" to="/admin/qualification-questions">
                 Set them up
@@ -55,7 +56,7 @@ export function QualificationQuestions({ leadId, qualification }: Props) {
           </p>
         ) : (
           qualification.questions.map((question) => (
-            <fieldset key={question.id} className="grid gap-2" disabled={!canAnswer || answer.isPending}>
+            <fieldset key={question.id} className="grid gap-2" disabled={!canAnswer}>
               <legend className="text-sm font-medium">
                 {question.label}
                 {question.required ? <span className="font-normal text-muted-foreground"> (required)</span> : null}
@@ -68,19 +69,26 @@ export function QualificationQuestions({ leadId, qualification }: Props) {
                       type="radio"
                       className="size-4 accent-primary"
                       name={`question-${question.key}`}
+                      value={option.value}
                       checked={shown(question) === option.value}
-                      onChange={() => answer.mutate({ [question.key]: option.value })}
+                      onChange={() => {
+                        setLocalAnswers((prev) => ({ ...prev, [question.key]: option.value }))
+                        answer.mutate({ [question.key]: option.value })
+                      }}
                     />
                     {option.label}
                   </label>
                 ))}
-                {canAnswer && question.answer ? (
+                {canAnswer && (question.answer || localAnswers[question.key]) ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     aria-label={`Clear the answer to ${question.label}`}
-                    onClick={() => answer.mutate({ [question.key]: null })}
+                    onClick={() => {
+                      setLocalAnswers((prev) => ({ ...prev, [question.key]: null }))
+                      answer.mutate({ [question.key]: null })
+                    }}
                   >
                     Clear
                   </Button>

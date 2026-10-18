@@ -21,7 +21,7 @@ export default defineConfig([
   },
   {
     // shadcn/ui primitives export variants and helpers next to components by design.
-    files: ['src/components/ui/**/*.{ts,tsx}', 'src/components/data-table/**/*.{ts,tsx}'],
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/components/data-table/**/*.{ts,tsx}', 'src/app/router.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])

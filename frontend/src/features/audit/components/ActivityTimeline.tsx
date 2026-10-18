@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import { ErrorState } from '@/components/feedback/ErrorState'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHasPermission } from '@/features/auth/auth-context'
 import { activityQuery, formatDateTime, formatValue } from '@/features/audit/api'
@@ -13,11 +15,8 @@ type ActivityTimelineProps = {
 }
 
 /**
- * The history of one record: who changed what and when. Drop it onto any record's page:
- *
- *   <ActivityTimeline entityType="Service" entityId={service.id} />
- *
- * It needs nothing from the page beyond the two props, and shows nothing to users without AUDIT_VIEW.
+ * The history of one record: who changed what and when.
+ * Displays a clean, concise feed with expandable changes on demand.
  */
 export function ActivityTimeline({ entityType, entityId }: ActivityTimelineProps) {
   const allowed = useHasPermission('AUDIT_VIEW')
@@ -29,17 +28,15 @@ export function ActivityTimeline({ entityType, entityId }: ActivityTimelineProps
 
   return (
     <Card className="max-w-2xl">
-      <CardHeader>
-        <CardTitle>Activity</CardTitle>
-        <CardDescription>
-          The most recent changes to this record.{' '}
-          <Link
-            className="underline underline-offset-2"
-            to={`/admin/audit?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`}
-          >
-            Open in the audit log
-          </Link>
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardTitle className="text-base font-semibold">Activity History</CardTitle>
+        <Link
+          className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline"
+          to={`/admin/audit?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`}
+        >
+          View in audit log
+          <ExternalLink className="size-3" />
+        </Link>
       </CardHeader>
       <CardContent>
         {activity.isPending ? (
@@ -62,30 +59,71 @@ type ActivityItem = {
   actorLabel: string
   message: string
   changes?: { field: string; from?: unknown; to?: unknown }[] | null
+  auditLogId?: string | null
 }
 
-/** The timeline itself, for any source of activity (the audit endpoint, or a module's own). */
+/** The timeline itself, clean and uncluttered with collapsible change details. */
 export function ActivityItems({ items }: { items: ActivityItem[] }) {
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
+
+  const toggle = (id: string) => {
+    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
   return (
-    <ol className="grid gap-4" aria-label="Activity">
-      {items.map((item) => (
-        <li key={item.id} className="grid gap-1 border-l-2 pl-3 text-sm">
-          <p>{item.message}</p>
-          {item.changes && item.changes.length > 0 ? (
-            <ul className="grid gap-0.5 text-xs text-muted-foreground">
-              {item.changes.map((change) => (
-                <li key={change.field}>
-                  <span className="font-mono">{change.field}</span>: {formatValue(change.from)} →{' '}
-                  <span className="text-foreground">{formatValue(change.to)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <p className="text-xs text-muted-foreground">
-            {item.actorLabel} · {formatDateTime(item.occurredAt)}
-          </p>
-        </li>
-      ))}
+    <ol className="grid gap-3.5" aria-label="Activity">
+      {items.map((item) => {
+        const isExpanded = Boolean(expandedIds[item.id])
+        const hasChanges = Boolean(item.changes && item.changes.length > 0)
+
+        return (
+          <li key={item.id} className="grid gap-1 border-l-2 border-border/80 pl-3 text-sm">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-medium text-foreground text-xs">{item.message}</p>
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                {formatDateTime(item.occurredAt)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{item.actorLabel}</span>
+              {hasChanges && (
+                <>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => toggle(item.id)}
+                    className="inline-flex items-center gap-0.5 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    {isExpanded ? (
+                      <>
+                        Hide changes <ChevronUp className="size-3" />
+                      </>
+                    ) : (
+                      <>
+                        {item.changes!.length} {item.changes!.length === 1 ? 'change' : 'changes'}{' '}
+                        <ChevronDown className="size-3" />
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {hasChanges && isExpanded && (
+              <ul className="mt-1.5 grid gap-1 rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+                {item.changes!.map((change) => (
+                  <li key={change.field} className="flex flex-wrap items-baseline gap-1">
+                    <span className="font-mono font-medium text-foreground">{change.field}:</span>
+                    <span className="line-through opacity-75">{formatValue(change.from)}</span>
+                    <span className="text-foreground">→ {formatValue(change.to)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        )
+      })}
     </ol>
   )
 }

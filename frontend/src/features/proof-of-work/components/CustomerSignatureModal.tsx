@@ -43,11 +43,11 @@ export function CustomerSignatureModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-md rounded-xl border p-6 shadow-xl space-y-4">
+      <div className="bg-card w-full max-w-md rounded-xl border p-4 shadow-xl space-y-4">
         <div className="flex items-center justify-between pb-3 border-b">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            Customer Sign-off
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            Customer sign-off
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose} disabled={isSubmitting}>
             <X className="h-4 w-4" />
@@ -60,7 +60,7 @@ export function CustomerSignatureModal({
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Customer Full Name *</label>
+            <label className="text-xs font-medium">Customer name *</label>
             <Input
               required
               placeholder="e.g. Ramesh Sharma"
@@ -71,10 +71,10 @@ export function CustomerSignatureModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Customer Remarks / Feedback</label>
+            <label className="text-xs font-medium">Customer remarks</label>
             <Textarea
               rows={2}
-              placeholder="Satisfied with installation, cleaned site after work..."
+              placeholder="Satisfied with the installation, site left clean…"
               value={customerRemarks}
               onChange={(e) => setCustomerRemarks(e.target.value)}
               disabled={isSubmitting}
@@ -82,10 +82,10 @@ export function CustomerSignatureModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Draw Customer Signature *</label>
+            <label className="text-xs font-medium">Customer signature *</label>
             <SignaturePad onChange={(data) => setSignatureData(data)} />
             {!signatureData && (
-              <p className="text-[11px] text-amber-600">Please provide signature in the box above.</p>
+              <p className="text-[11px] text-warning">Sign in the box above.</p>
             )}
           </div>
 
@@ -97,7 +97,7 @@ export function CustomerSignatureModal({
               type="submit"
               disabled={isSubmitting || !customerName.trim() || !signatureData}
             >
-              {isSubmitting ? 'Recording...' : 'Confirm & Sign'}
+              {isSubmitting ? 'Recording…' : 'Confirm & sign'}
             </Button>
           </div>
         </form>

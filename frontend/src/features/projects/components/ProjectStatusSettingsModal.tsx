@@ -1,227 +1,234 @@
 import { useState } from 'react'
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
-import { Plus, Trash2, Settings, X } from 'lucide-react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, Trash2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
+import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
-import { projectsApi } from '../api'
+import { Select } from '@/components/ui/select'
+import { projectsApi, type ProjectStatusConfig } from '../api'
 
-interface ProjectStatusSettingsModalProps {
+const CATEGORIES = [
+  { value: 'PLANNING', label: 'Planning' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'REVIEW', label: 'Review' },
+  { value: 'DONE', label: 'Done' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+] as const
+
+const schema = z.object({
+  name: z.string().trim().min(1, 'Name the status').max(100, 'Maximum 100 characters'),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Pick a colour'),
+  category: z.string().min(1),
+  isDefault: z.boolean(),
+  isCompleted: z.boolean(),
+  isCancelled: z.boolean(),
+})
+type FormValues = z.infer<typeof schema>
+
+/** The code the system stores for a status, made from its name: "Site survey" becomes SITE_SURVEY. */
+function codeFor(name: string): string {
+  return name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 50)
+}
+
+type ProjectStatusSettingsModalProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+/** The steps a project moves through. They are the columns of the board, and they decide what counts as finished. */
 export function ProjectStatusSettingsModal({ open, onOpenChange }: ProjectStatusSettingsModalProps) {
   const queryClient = useQueryClient()
-  const { data: statuses } = useQuery(projectsApi.statusesQuery())
+  const statuses = useQuery(projectsApi.statusesQuery())
+  const [removing, setRemoving] = useState<ProjectStatusConfig | null>(null)
 
-  const [code, setCode] = useState('')
-  const [name, setName] = useState('')
-  const [color, setColor] = useState('#3b82f6')
-  const [category, setCategory] = useState('IN_PROGRESS')
-  const [isDefault, setIsDefault] = useState(false)
-  const [isCompleted, setIsCompleted] = useState(false)
-  const [isCancelled, setIsCancelled] = useState(false)
-
-  const createMutation = useMutation({
-    mutationFn: (data: Parameters<typeof projectsApi.createStatusConfig>[0]) =>
-      projectsApi.createStatusConfig(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', 'statuses'] })
-      queryClient.invalidateQueries({ queryKey: ['projects', 'kanban'] })
-      setCode('')
-      setName('')
-      setColor('#3b82f6')
-      setIsDefault(false)
-      setIsCompleted(false)
-      setIsCancelled(false)
-    },
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: '', color: '#6366f1', category: 'IN_PROGRESS', isDefault: false, isCompleted: false, isCancelled: false },
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => projectsApi.deleteStatusConfig(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', 'statuses'] })
-      queryClient.invalidateQueries({ queryKey: ['projects', 'kanban'] })
-    },
-  })
-
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!code.trim() || !name.trim()) return
-
-    createMutation.mutate({
-      code: code.trim().toUpperCase().replace(/\s+/g, '_'),
-      name: name.trim(),
-      displayOrder: (statuses?.length || 0) + 1,
-      color,
-      category,
-      isDefault,
-      isCompleted,
-      isCancelled,
-    })
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['projects', 'statuses'] })
+    void queryClient.invalidateQueries({ queryKey: ['projects', 'kanban'] })
+    void queryClient.invalidateQueries({ queryKey: ['projects', 'dashboard'] })
   }
 
-  if (!open) return null
+  const add = useMutation({
+    mutationFn: (values: FormValues) =>
+      projectsApi.createStatusConfig({
+        code: codeFor(values.name),
+        name: values.name.trim(),
+        displayOrder: (statuses.data?.length ?? 0) + 1,
+        color: values.color,
+        category: values.category,
+        isDefault: values.isDefault,
+        isCompleted: values.isCompleted,
+        isCancelled: values.isCancelled,
+      }),
+    onSuccess: () => {
+      refresh()
+      form.reset()
+    },
+  })
+
+  const remove = useMutation({
+    mutationFn: (status: ProjectStatusConfig) => projectsApi.deleteStatusConfig(status.id),
+    onSuccess: () => {
+      refresh()
+      setRemoving(null)
+    },
+    onError: () => setRemoving(null),
+  })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="max-w-lg w-full p-6 shadow-xl bg-card max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 border-b mb-4">
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            <h3 className="font-semibold text-base">Configurable Project Statuses</h3>
-          </div>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold tracking-tight">Project statuses</DialogTitle>
+            <DialogDescription>The steps a project moves through. They become the board columns.</DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Configure custom workflow statuses. These appear as columns across your Project Kanban board.
-          </p>
+          {remove.isError ? <ErrorState title="That status could not be deleted" error={remove.error} variant="compact" /> : null}
 
-          {/* List of current statuses */}
-          <div className="space-y-2 border rounded-lg p-2 bg-muted/20">
-            {statuses?.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center justify-between p-2 rounded bg-card border text-xs"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="font-semibold">{s.name}</span>
-                  <span className="text-muted-foreground font-mono text-[10px]">({s.code})</span>
-                  {s.isDefault && (
-                    <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded font-medium">Default</span>
-                  )}
-                  {s.isCompleted && (
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.2 rounded font-medium">
-                      Completed
-                    </span>
-                  )}
-                  {s.isCancelled && (
-                    <span className="text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-1.5 py-0.2 rounded font-medium">
-                      Cancelled
-                    </span>
-                  )}
-                </div>
+          {statuses.isPending ? (
+            <SkeletonLoader variant="list" count={4} label="Loading statuses" />
+          ) : statuses.isError ? (
+            <ErrorState title="Could not load the statuses" error={statuses.error} onRetry={() => void statuses.refetch()} />
+          ) : (
+            <ul className="grid gap-2" aria-label="Current statuses">
+              {statuses.data.map((status) => (
+                <li key={status.id} className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm">
+                  <span className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span aria-hidden="true" className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: status.color }} />
+                    <span className="font-medium">{status.name}</span>
+                    {status.isDefault ? <Badge variant="neutral">Starting status</Badge> : null}
+                    {status.isCompleted ? <Badge variant="success">Counts as completed</Badge> : null}
+                    {status.isCancelled ? <Badge variant="neutral">Counts as cancelled</Badge> : null}
+                  </span>
+                  <Button variant="ghost" size="icon" aria-label={`Delete the ${status.name} status`} onClick={() => setRemoving(status)}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive h-6 w-6 p-0 hover:bg-destructive/10"
-                  onClick={() => {
-                    if (confirm(`Delete status ${s.name}?`)) {
-                      deleteMutation.mutate(s.id)
-                    }
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((values) => add.mutate(values))} className="grid gap-4 border-t pt-4" noValidate>
+              <h3 className="text-sm font-semibold">Add a status</h3>
+              {add.isError ? <ErrorState title="That status could not be added" error={add.error} variant="compact" /> : null}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Site survey" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stage</FormLabel>
+                      <FormControl>
+                        <Select {...field}>
+                          {CATEGORIES.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Colour</FormLabel>
+                      <FormControl>
+                        <Input type="color" className="h-10 w-20 cursor-pointer p-1" {...field} />
+                      </FormControl>
+                      <FormDescription>Shown as a dot beside the name.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <fieldset className="grid gap-2 text-sm">
+                <legend className="mb-1 font-medium">What it means</legend>
+                {(
+                  [
+                    ['isDefault', 'New projects start here'],
+                    ['isCompleted', 'A project in this status is completed'],
+                    ['isCancelled', 'A project in this status is cancelled'],
+                  ] as const
+                ).map(([name, label]) => (
+                  <FormField
+                    key={name}
+                    control={form.control}
+                    name={name}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onChange={(event) => field.onChange(event.target.checked)}
+                            onBlur={field.onBlur}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">{label}</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </fieldset>
+              <div className="flex justify-end">
+                <Button type="submit" loading={add.isPending}>
+                  <Plus aria-hidden="true" />
+                  Add status
                 </Button>
               </div>
-            ))}
-          </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-          {/* Add status form */}
-          <form onSubmit={handleAdd} className="space-y-3 pt-3 border-t">
-            <h4 className="text-xs font-semibold">Add New Status</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-medium block mb-1">Status Code *</label>
-                <Input
-                  placeholder="e.g. TESTING"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="h-8 text-xs font-mono"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium block mb-1">Display Name *</label>
-                <Input
-                  placeholder="e.g. Quality Testing"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-8 text-xs"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-medium block mb-1">Color (Hex/CSS)</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="h-8 w-10 cursor-pointer rounded border"
-                  />
-                  <Input
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="h-8 text-xs font-mono"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-[11px] font-medium block mb-1">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full h-8 text-xs bg-background border rounded px-2"
-                >
-                  <option value="PLANNING">PLANNING</option>
-                  <option value="IN_PROGRESS">IN_PROGRESS</option>
-                  <option value="REVIEW">REVIEW</option>
-                  <option value="DONE">DONE</option>
-                  <option value="CANCELLED">CANCELLED</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4 text-xs pt-1">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isDefault}
-                  onChange={(e) => setIsDefault(e.target.checked)}
-                  className="rounded text-primary h-3.5 w-3.5"
-                />
-                <span>Default Initial Status</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isCompleted}
-                  onChange={(e) => setIsCompleted(e.target.checked)}
-                  className="rounded text-primary h-3.5 w-3.5"
-                />
-                <span>Marks Project Completed</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isCancelled}
-                  onChange={(e) => setIsCancelled(e.target.checked)}
-                  className="rounded text-primary h-3.5 w-3.5"
-                />
-                <span>Marks Project Cancelled</span>
-              </label>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button size="sm" type="submit" disabled={createMutation.isPending}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Status
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Card>
-    </div>
+      <ConfirmationDialog
+        open={removing !== null}
+        onOpenChange={(next) => (next ? undefined : setRemoving(null))}
+        title={removing ? `Delete the “${removing.name}” status?` : 'Delete this status?'}
+        description="Projects using it cannot move on until it is replaced. This cannot be undone."
+        confirmLabel="Delete status"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => removing && remove.mutate(removing)}
+      />
+    </>
   )
 }

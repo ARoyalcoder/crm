@@ -68,12 +68,19 @@ class PermissionCatalogIT extends AbstractIntegrationTest {
                 Permissions.ORDER_VIEW, Permissions.ORDER_CREATE, Permissions.ORDER_UPDATE);
         assertThat(permissionsOf(RoleCodes.TECHNICIAN)).containsExactlyInAnyOrder(
                 Permissions.PROJECT_VIEW, Permissions.FIELD_JOB_WORK,
-                Permissions.PROOF_OF_WORK_VIEW, Permissions.PROOF_OF_WORK_CREATE);
+                Permissions.PROOF_OF_WORK_VIEW, Permissions.PROOF_OF_WORK_CREATE,
+                Permissions.AMC_VIEW, Permissions.WORKFORCE_VIEW,
+                Permissions.NOTIFICATION_VIEW, Permissions.DOCUMENT_VIEW,
+                Permissions.DOCUMENT_UPLOAD, Permissions.PULSE_VIEW);
         assertThat(permissionsOf(RoleCodes.FINANCE)).containsExactlyInAnyOrder(
                 Permissions.FINANCE_VIEW, Permissions.FINANCE_MANAGE, Permissions.FINANCE_APPROVE,
                 Permissions.FINANCE_CONFIGURE, Permissions.CUSTOMER_VIEW, Permissions.PROJECT_VIEW,
                 Permissions.QUOTATION_VIEW, Permissions.QUOTATION_CREATE, Permissions.QUOTATION_UPDATE, Permissions.QUOTATION_APPROVE,
-                Permissions.ORDER_VIEW);
+                Permissions.ORDER_VIEW,
+                // added by the receivables (V29), performance (V32) and analytics (V37) modules
+                Permissions.RECEIVABLES_VIEW, Permissions.RECEIVABLES_MANAGE,
+                Permissions.COMMISSION_VIEW, Permissions.COMMISSION_MANAGE,
+                Permissions.ANALYTICS_VIEW);
         assertThat(permissionsOf(RoleCodes.ADMIN))
                 .contains(Permissions.USER_UPDATE, Permissions.CATALOG_DELETE)
                 .doesNotContain(Permissions.ROLE_UPDATE, Permissions.FINANCE_APPROVE);

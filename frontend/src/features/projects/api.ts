@@ -78,10 +78,11 @@ export type ProjectMilestone = z.infer<typeof milestoneSchema>
 export const memberSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  name: z.string(),
-  email: z.string().nullish(),
+  userName: z.string(),
+  userEmail: z.string().nullish(),
   role: z.string(),
-  addedAt: z.string(),
+  joinedAt: z.string(),
+  assignedBy: z.string().nullish(),
 })
 export type ProjectMember = z.infer<typeof memberSchema>
 

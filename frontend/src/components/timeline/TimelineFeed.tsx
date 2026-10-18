@@ -63,7 +63,7 @@ export function TimelineFeed({ label, queryKey, fetchPage, emptyMessage }: Timel
         <ErrorState title="Could not load the timeline" error={timeline.error} onRetry={() => void timeline.refetch()} />
       ) : events.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {categories.length === 0 ? emptyMessage : 'Nothing of this kind has happened yet.'}
+          {categories.length === 0 ? emptyMessage : 'Nothing here yet.'}
         </p>
       ) : (
         <>
@@ -85,7 +85,7 @@ export function TimelineFeed({ label, queryKey, fetchPage, emptyMessage }: Timel
               {timeline.isFetchingNextPage ? 'Loading…' : 'Show older'}
             </Button>
           ) : (
-            <p className="text-xs text-muted-foreground">That is everything, back to the beginning.</p>
+            <p className="text-xs text-muted-foreground">That is everything.</p>
           )}
         </>
       )}

@@ -36,9 +36,9 @@ class ServiceVerticalServiceTest {
 
     @Test
     void unknownCodeIsNotFoundWithoutTouchingTheDatabase() {
-        assertThatThrownBy(() -> service.getByCode("REAL_ESTATE"))
+        assertThatThrownBy(() -> service.getByCode("NONEXISTENT_CODE"))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("Service vertical 'REAL_ESTATE' was not found")
+                .hasMessage("Service vertical 'NONEXISTENT_CODE' was not found")
                 .extracting("errorCode").isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
         verifyNoInteractions(repository);
     }

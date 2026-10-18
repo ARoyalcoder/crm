@@ -3,12 +3,11 @@ import type { CustomerDetail } from '@/features/customers/api'
 import { ActivitiesTab } from '@/features/customers/profile/ActivitiesTab'
 import { BusinessInfoTab } from '@/features/customers/profile/BusinessInfoTab'
 import { ContactsTab } from '@/features/customers/profile/ContactsTab'
-import { NotBuiltYetTab } from '@/features/customers/profile/NotBuiltYetTab'
 import { SummaryTab } from '@/features/customers/profile/SummaryTab'
 import { TimelineTab } from '@/features/customers/profile/TimelineTab'
-import { CustomerFinanceTab } from '@/features/finance/components/CustomerFinanceTab'
-
 import { CustomerProjectsTab } from '@/features/customers/profile/CustomerProjectsTab'
+import { AmcWarrantyTab, DocumentsTab, SalesHistoryTab, ServiceHistoryTab } from '@/features/customers/profile/RelatedTabs'
+import { CustomerFinanceTab } from '@/features/finance/components/CustomerFinanceTab'
 
 export type CustomerTabProps = { customer: CustomerDetail }
 
@@ -21,29 +20,22 @@ export type CustomerTab = {
   component: ComponentType<CustomerTabProps>
 }
 
-/** A section whose module does not exist yet. It says so plainly instead of pretending to be empty. */
-function notBuilt(key: string, label: string, contents: string): CustomerTab {
-  return { key, label, component: () => <NotBuiltYetTab title={label} contents={contents} /> }
-}
-
 /**
  * The sections of the Customer 360, in order. (The header, with status and health, sits above them all.)
  *
- * This is where a module plugs itself into the profile: when Sales is built, it replaces its
- * `notBuilt(...)` line with `{ key: 'sales', label: 'Sales history', component: CustomerSalesTab }`,
- * and its component receives the customer. Nothing else in the profile changes. Its events reach
- * the Timeline section separately, through a CustomerTimelineSource on the backend.
+ * Each section is a module plugging itself into the profile: it receives the customer and shows its own records. Their
+ * events reach the Timeline section separately, through a CustomerTimelineSource on the backend.
  */
 export const customerTabs: CustomerTab[] = [
   { key: 'summary', label: 'Summary', component: SummaryTab },
   { key: 'timeline', label: 'Timeline', component: TimelineTab },
-  { key: 'business', label: 'Business information', component: BusinessInfoTab },
+  { key: 'business', label: 'Business info', component: BusinessInfoTab },
   { key: 'contacts', label: 'Contacts', count: (customer) => customer.contactCount, component: ContactsTab },
-  notBuilt('sales', 'Sales history', 'Leads, opportunities, quotations and orders'),
-  { key: 'projects', label: 'Project history', component: CustomerProjectsTab },
-  { key: 'financials', label: 'Financial summary', component: CustomerFinanceTab },
-  notBuilt('service', 'Service history', 'Support tickets and service visits'),
-  notBuilt('amc', 'AMC / Warranty', 'Maintenance contracts and warranties'),
-  notBuilt('documents', 'Documents', 'Files'),
+  { key: 'sales', label: 'Sales', component: SalesHistoryTab },
+  { key: 'projects', label: 'Projects', component: CustomerProjectsTab },
+  { key: 'financials', label: 'Finance', component: CustomerFinanceTab },
+  { key: 'service', label: 'Service', component: ServiceHistoryTab },
+  { key: 'amc', label: 'AMC & warranty', component: AmcWarrantyTab },
+  { key: 'documents', label: 'Documents', component: DocumentsTab },
   { key: 'activities', label: 'Activities', component: ActivitiesTab },
 ]

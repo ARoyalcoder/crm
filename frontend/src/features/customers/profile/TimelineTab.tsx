@@ -13,14 +13,13 @@ export function TimelineTab({ customer }: CustomerTabProps) {
     <Card>
       <CardHeader>
         <CardTitle>Customer timeline</CardTitle>
-        <CardDescription>Everything that has happened with this customer, newest first.</CardDescription>
       </CardHeader>
       <CardContent>
         <TimelineFeed
           label="Customer timeline"
           queryKey={customerTimelineKey(customer.id)}
           fetchPage={(request) => fetchCustomerTimeline(customer.id, request)}
-          emptyMessage="Nothing has happened with this customer yet."
+          emptyMessage="No activity recorded yet."
         />
       </CardContent>
     </Card>

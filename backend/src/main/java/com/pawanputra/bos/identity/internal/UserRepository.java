@@ -32,5 +32,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     List<User> findAllByOrganizationIdAndStatusOrderByFullNameAsc(UUID organizationId, UserStatus status);
 
+    @EntityGraph(attributePaths = {"roleAssignments.role"})
+    List<User> findAllByOrganizationIdOrderByFullNameAsc(UUID organizationId);
+
     Page<User> findAllByOrganizationId(UUID organizationId, Pageable pageable);
 }

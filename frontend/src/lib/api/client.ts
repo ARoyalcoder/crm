@@ -38,6 +38,14 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler) {
   unauthorizedHandler = handler
 }
 
+/** Called whenever a mutating request (POST, PUT, PATCH, DELETE) succeeds to refresh data globally. */
+type MutationListener = () => void
+let mutationListener: MutationListener | null = null
+
+export function setMutationListener(listener: MutationListener) {
+  mutationListener = listener
+}
+
 /**
  * The only place the app talks HTTP. Every response is validated against a Zod schema, and every
  * failure - server error body, network failure, unexpected payload - surfaces as an ApiError.
@@ -53,7 +61,11 @@ export async function apiRequest<T>(path: string, schema: z.ZodType<T>, options:
       response = await send(path, options)
     }
   }
-  return parse(response, schema, options.method ?? 'GET', path)
+  const result = await parse(response, schema, options.method ?? 'GET', path)
+  if (options.method && options.method !== 'GET') {
+    mutationListener?.()
+  }
+  return result
 }
 
 /**
@@ -101,8 +113,11 @@ export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob>
 async function send(path: string, options: RequestOptions): Promise<Response> {
   const { method = 'GET', body, signal, authenticated = true, idempotencyKey } = options
   const upload = body instanceof FormData
+  const normalizedPath = path.startsWith(env.apiBaseUrl)
+    ? path
+    : `${env.apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`
   try {
-    return await fetch(`${env.apiBaseUrl}${path}`, {
+    return await fetch(normalizedPath, {
       method,
       signal,
       // Sends the refresh cookie to the /auth endpoints. The API is same-origin (proxied), so 'same-origin' is enough.
@@ -114,7 +129,7 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
         ...(authenticated && accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
       },
-      body: upload ? body : body !== undefined ? JSON.stringify(body) : undefined,
+      body: upload ? body : body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     })
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') {

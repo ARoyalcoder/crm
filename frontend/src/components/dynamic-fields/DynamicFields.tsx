@@ -10,7 +10,14 @@ import { fileProblem } from '@/components/dynamic-fields/values'
 import { Button } from '@/components/ui/button'
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ApiError } from '@/lib/api/errors'
 import { cn } from '@/lib/utils'
@@ -53,14 +60,29 @@ function DateInput({ input, aria }: InputProps) {
 }
 
 function SelectInput({ field, input, aria }: InputProps) {
+  const placeholder = field.required ? 'Choose…' : 'Not specified'
+  const items = [
+    { label: placeholder, value: '' },
+    ...(field.options ?? []).map((option) => ({ label: option.label, value: option.value })),
+  ]
   return (
-    <Select {...aria} {...input} value={(input.value as string) ?? ''}>
-      <option value="">{field.required ? 'Choose…' : 'Not specified'}</option>
-      {(field.options ?? []).map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
+    <Select
+      items={items}
+      value={(input.value as string) ?? ''}
+      onValueChange={input.onChange}
+    >
+      <SelectTrigger {...aria} className="w-full">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {items.map((option) => (
+            <SelectItem key={option.value || '__empty'} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
     </Select>
   )
 }
@@ -154,7 +176,7 @@ function FileInput({ field, input, uploadFile, aria }: InputProps) {
       onChange(await uploadFile(field, file))
     } catch (error) {
       const fromServer = error instanceof ApiError ? (error.fieldErrors[0]?.message ?? error.message) : null
-      setProblem(fromServer ?? 'The file could not be uploaded. Please try again.')
+      setProblem(fromServer ?? 'Upload failed. Try again.')
     } finally {
       setBusy(false)
     }

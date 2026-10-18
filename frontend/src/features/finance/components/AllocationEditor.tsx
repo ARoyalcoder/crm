@@ -19,7 +19,7 @@ export function AllocationEditor({ invoices, availablePaise, value, onChange }: 
   const problems = allocationProblems(invoices, value, availablePaise)
 
   if (invoices.length === 0) {
-    return <p className="text-sm text-muted-foreground">This customer has no invoices waiting for payment.</p>
+    return <p className="text-sm text-muted-foreground">No invoices awaiting payment.</p>
   }
   return (
     <div className="grid gap-3">

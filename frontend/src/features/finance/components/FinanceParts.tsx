@@ -5,11 +5,11 @@ import { customersQuery } from '@/features/customers/api'
 import { INVOICE_STATUSES, labelOf, PAYMENT_STATUSES } from '@/features/finance/api'
 import { cn } from '@/lib/utils'
 
-const GOOD = 'border-emerald-200 bg-emerald-50 text-emerald-800'
-const WARN = 'border-amber-200 bg-amber-50 text-amber-900'
-const BAD = 'border-red-200 bg-red-50 text-red-800'
+const GOOD = 'border-success/30 bg-success-soft text-success'
+const WARN = 'border-warning/30 bg-warning-soft text-warning'
+const BAD = 'border-destructive/30 bg-destructive-soft text-destructive'
 const NEUTRAL = 'bg-muted text-muted-foreground'
-const ACTIVE = 'border-violet-200 bg-violet-50 text-violet-800'
+const ACTIVE = 'border-primary/30 bg-accent text-accent-foreground'
 
 const INVOICE_TONES: Record<string, string> = {
   DRAFT: NEUTRAL,
@@ -45,9 +45,9 @@ export function PaymentStatusBadge({ status }: { status: string }) {
 /** One headline figure: what it is, the amount, and a line of context. */
 export function StatTile({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: 'bad' }) {
   return (
-    <div className="grid gap-1 rounded-2xl bg-card p-4 shadow-soft">
+    <div className="grid gap-1 rounded-xl bg-card p-3 shadow-soft">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <span className={cn('text-xl font-semibold tabular-nums', tone === 'bad' && 'text-red-700')}>{value}</span>
+      <span className={cn('text-xl font-semibold tabular-nums', tone === 'bad' && 'text-destructive')}>{value}</span>
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
     </div>
   )
@@ -56,7 +56,7 @@ export function StatTile({ label, value, hint, tone }: { label: string; value: s
 /** A titled white card, the building block of the invoice and payment pages. */
 export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="grid gap-3 rounded-2xl bg-card p-4 shadow-soft sm:p-5" aria-label={title}>
+    <section className="grid gap-3 rounded-xl bg-card p-3 shadow-soft sm:p-3.5" aria-label={title}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         {action}

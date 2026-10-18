@@ -71,10 +71,10 @@ export function PaymentsPage() {
   const summary = useQuery(financeSummaryQuery)
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Payments"
-        description="Money received from customers, and which invoices it has settled."
+        description="Money received, and the invoices it settled."
         action={
           canManage ? (
             <Button asChild>
@@ -92,7 +92,7 @@ export function PaymentsPage() {
           <StatTile
             label="Unallocated"
             value={formatMoney(summary.data.unallocatedPayments)}
-            hint="Received, and not yet put against an invoice or refunded"
+            hint="Received, not yet allocated or refunded"
           />
         </div>
       ) : null}

@@ -64,7 +64,7 @@ class QuotationServiceTest {
     }
 
     @Test
-    void createQuotationCalculatesSubtotalTaxAndFinalAmount() {
+    void createQuotationCalculatesSubtotalTaxAndFinalAmountWithoutChargingGstTwice() {
         when(users.find(orgId, userId))
                 .thenReturn(Optional.of(new UserDirectory.UserSummary(userId, "Aditya Singh", "aditya@example.com", true)));
         when(quotations.save(any(Quotation.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -88,19 +88,49 @@ class QuotationServiceTest {
 
         assertThat(created.status()).isEqualTo(QuotationStatus.DRAFT);
         assertThat(created.currentVersionNumber()).isEqualTo(1);
-        // itm1: 2 * 5000 = 10000 + 18% tax (1800) = 11800
-        // itm2: 1 * 2000 = 2000 + 18% tax (360) = 2360
-        // sum items total = 14160
-        assertThat(created.subtotal()).isEqualByComparingTo(BigDecimal.valueOf(14160));
-        // Discount 10%: 1416.00
-        assertThat(created.discountAmount()).isEqualByComparingTo(BigDecimal.valueOf(1416.00));
-        // After discount = 14160 - 1416 = 12744
-        // Tax 18% = 2293.92
-        assertThat(created.taxAmount()).isEqualByComparingTo(BigDecimal.valueOf(2293.92));
-        // Final = 12744 + 2293.92 = 15037.92
-        assertThat(created.finalAmount()).isEqualByComparingTo(BigDecimal.valueOf(15037.92));
+        // itm1: 2 * 5000 = 10000, GST 18% = 1800
+        // itm2: 1 * 2000 = 2000, GST 18% = 360
+        // Subtotal is before tax: 12000
+        assertThat(created.subtotal()).isEqualByComparingTo(BigDecimal.valueOf(12000));
+        // Discount 10%: 1200.00
+        assertThat(created.discountAmount()).isEqualByComparingTo(BigDecimal.valueOf(1200.00));
+        // The lines' GST (2160) is reduced with the discount: 2160 * 10800 / 12000 = 1944. The quotation-wide 18% is not
+        // applied on top of it: that would charge GST twice.
+        assertThat(created.taxAmount()).isEqualByComparingTo(BigDecimal.valueOf(1944.00));
+        // Final = 12000 - 1200 + 1944 = 12744, the same as taking 10% off the tax-inclusive 14160.
+        assertThat(created.finalAmount()).isEqualByComparingTo(BigDecimal.valueOf(12744.00));
         verify(quotations).save(any(Quotation.class));
         verify(events).publish(any());
+    }
+
+    private QuotationViews.Detail createWith(BigDecimal overallTax, BigDecimal lineTax) {
+        when(users.find(orgId, userId))
+                .thenReturn(Optional.of(new UserDirectory.UserSummary(userId, "Aditya Singh", "aditya@example.com", true)));
+        when(quotations.save(any(Quotation.class))).thenAnswer(inv -> inv.getArgument(0));
+        QuotationService.ItemInput line = new QuotationService.ItemInput(
+                null, "Camera", null, BigDecimal.ONE, BigDecimal.valueOf(100000), BigDecimal.ZERO, lineTax);
+        QuotationService.CreateCommand cmd = new QuotationService.CreateCommand(
+                "One line", UUID.randomUUID(), "Acme", null, null, null, null, userId,
+                BigDecimal.ZERO, overallTax, null, null, null, null, List.of(line));
+        return service.create(orgId, cmd, userId, "Aditya Singh");
+    }
+
+    @Test
+    void aLineWithGstAndAQuotationWideRateIsTaxedOnce() {
+        QuotationViews.Detail created = createWith(BigDecimal.valueOf(18), BigDecimal.valueOf(18));
+
+        assertThat(created.subtotal()).isEqualByComparingTo(BigDecimal.valueOf(100000));
+        assertThat(created.taxAmount()).isEqualByComparingTo(BigDecimal.valueOf(18000));
+        assertThat(created.finalAmount()).isEqualByComparingTo(BigDecimal.valueOf(118000));
+    }
+
+    @Test
+    void theQuotationWideRateAppliesOnlyWhenNoLineCarriesTax() {
+        QuotationViews.Detail created = createWith(BigDecimal.valueOf(18), BigDecimal.ZERO);
+
+        assertThat(created.subtotal()).isEqualByComparingTo(BigDecimal.valueOf(100000));
+        assertThat(created.taxAmount()).isEqualByComparingTo(BigDecimal.valueOf(18000));
+        assertThat(created.finalAmount()).isEqualByComparingTo(BigDecimal.valueOf(118000));
     }
 
     @Test

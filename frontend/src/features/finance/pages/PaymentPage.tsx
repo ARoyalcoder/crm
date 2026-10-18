@@ -42,7 +42,7 @@ export function PaymentPage() {
 
   if (!payment.data) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <PageHeader title="Payment" back={back} />
         <RecordLoadState noun="payment" isPending={payment.isPending} error={payment.error} onRetry={() => void payment.refetch()} />
       </div>
@@ -82,7 +82,7 @@ function PaymentView({ detail, back }: { detail: PaymentDetail; back: { to: stri
         action={<PaymentStatusBadge status={payment.status} />}
       />
       {reversed ? (
-        <p className="rounded-2xl bg-card p-4 text-sm shadow-soft">
+        <p className="rounded-xl bg-card p-3 text-sm shadow-soft">
           Reversed{detail.reversedAt ? ` on ${formatDay(detail.reversedAt.slice(0, 10))}` : ''}
           {detail.reversedByName ? ` by ${detail.reversedByName}` : ''}: {detail.reversalReason}. It settles nothing and stays here
           as a record.
@@ -161,7 +161,7 @@ function PaymentView({ detail, back }: { detail: PaymentDetail; back: { to: stri
                 {releasing === allocation.id ? (
                   <ReasonForm
                     title="Release allocation"
-                    explanation={`${allocation.invoiceNumber ?? 'The invoice'} will be owed ${formatMoney(allocation.amount)} again, and this payment will have it to allocate elsewhere or refund. The allocation stays on record, marked released.`}
+                    explanation={`${allocation.invoiceNumber ?? 'The invoice'} is owed ${formatMoney(allocation.amount)} again, and the payment can allocate it elsewhere or refund it. The allocation stays on record, marked released.`}
                     submitLabel="Release"
                     busy={act.isPending}
                     onSubmit={(reason) => act.mutate(() => releaseAllocation(id, allocation.id, reason))}
@@ -188,7 +188,7 @@ function PaymentView({ detail, back }: { detail: PaymentDetail; back: { to: stri
           }
         >
           {detail.refunds.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nothing has been refunded.</p>
+            <p className="text-sm text-muted-foreground">Nothing refunded.</p>
           ) : (
             <ul className="grid gap-2 text-sm">
               {detail.refunds.map((refund) => (
@@ -221,7 +221,7 @@ function PaymentView({ detail, back }: { detail: PaymentDetail; back: { to: stri
       {actions.reverse ? (
         <Section title="Reverse">
           <p className="text-sm text-muted-foreground">
-            For a payment that should not stand: a cheque that bounced, an entry made by mistake.
+            For a payment that should not stand: a bounced cheque, an entry made by mistake.
           </p>
           <Button variant="outline" className="w-fit" onClick={() => open(panel === 'reverse' ? null : 'reverse')}>
             Reverse payment
@@ -229,7 +229,7 @@ function PaymentView({ detail, back }: { detail: PaymentDetail; back: { to: stri
           {panel === 'reverse' ? (
             <ReasonForm
               title="Reverse payment"
-              explanation="Every invoice this payment settled will be owed again. The payment stays on record, marked reversed, with your reason. This cannot be undone."
+              explanation="Every invoice this payment settled becomes owed again. The payment stays on record, marked reversed, with your reason. This cannot be undone."
               submitLabel="Reverse this payment"
               busy={act.isPending}
               onSubmit={(reason) => act.mutate(() => reversePayment(id, reason))}
@@ -311,7 +311,7 @@ function RefundForm({ unallocated, busy, failed, onRefund }: RefundFormProps) {
   function submit(event: FormEvent) {
     event.preventDefault()
     if (!/^\d+(\.\d{1,2})?$/.test(amount.trim()) || Number(amount) <= 0) {
-      setProblem('Enter an amount of more than zero, with at most 2 decimals.')
+      setProblem('Enter an amount above zero, up to 2 decimals.')
     } else if (toPaise(amount) > toPaise(unallocated)) {
       setProblem(`Only ${formatMoney(unallocated)} is unallocated. To refund more, release that much from its invoices first.`)
     } else if (!method) {
@@ -319,7 +319,7 @@ function RefundForm({ unallocated, busy, failed, onRefund }: RefundFormProps) {
     } else if (method.requiresReference && reference.trim() === '') {
       setProblem(`A reference is required for ${method.name}.`)
     } else if (reason.trim() === '') {
-      setProblem('Say why: the reason is kept with the refund.')
+      setProblem('Give a reason; it is kept with the refund.')
     } else {
       setProblem(null)
       const next = isAnswered(failed) ? newIdempotencyKey() : key
@@ -331,7 +331,7 @@ function RefundForm({ unallocated, busy, failed, onRefund }: RefundFormProps) {
   return (
     <form onSubmit={submit} className="grid gap-3 rounded-xl border p-3" aria-label="Refund">
       <p className="text-sm">
-        Returns unallocated money to the customer. A refund is final once recorded: it cannot be edited or deleted.
+        Returns unallocated money to the customer. A refund is final: it cannot be edited or deleted.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">

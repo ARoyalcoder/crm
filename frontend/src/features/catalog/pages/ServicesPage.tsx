@@ -122,10 +122,10 @@ export function ServicesPage() {
   )
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Services"
-        description="What the company sells. Each service belongs to a category in one of the six verticals."
+        description="What the company sells, by category and vertical."
         action={
           canCreate ? (
             <Button asChild>

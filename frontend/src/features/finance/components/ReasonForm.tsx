@@ -24,7 +24,7 @@ export function ReasonForm({ title, explanation, submitLabel, busy, onSubmit }: 
   function submit(event: FormEvent) {
     event.preventDefault()
     if (reason.trim() === '') {
-      setProblem('Say why: the reason is kept on record.')
+      setProblem('Give a reason; it is kept on record.')
       return
     }
     setProblem(null)

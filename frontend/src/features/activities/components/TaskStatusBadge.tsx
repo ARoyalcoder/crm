@@ -6,21 +6,21 @@ export function TaskStatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'COMPLETED':
       return (
-        <Badge variant="outline" className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <Badge variant="outline" className="gap-1 border-success/30 bg-success-soft text-success">
           <CheckCircle2 className="h-3 w-3" />
           <span>{labelOf(TASK_STATUSES, status)}</span>
         </Badge>
       )
     case 'IN_PROGRESS':
       return (
-        <Badge variant="outline" className="gap-1 border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+        <Badge variant="outline" className="gap-1 border-info/30 bg-info-soft text-info">
           <PlayCircle className="h-3 w-3" />
           <span>{labelOf(TASK_STATUSES, status)}</span>
         </Badge>
       )
     case 'CANCELLED':
       return (
-        <Badge variant="outline" className="gap-1 border-slate-300 bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-400">
+        <Badge variant="outline" className="gap-1 border-border bg-muted/50 text-muted-foreground">
           <XCircle className="h-3 w-3" />
           <span>{labelOf(TASK_STATUSES, status)}</span>
         </Badge>

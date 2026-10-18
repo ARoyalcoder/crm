@@ -105,7 +105,7 @@ test('"Why this score?" lists every reason with its points, and the reason for e
   await expect(panel).toContainText('Last activity was yesterday')
   await expect(panel).toContainText('All 1 required questions answered, and no answer rules the lead out')
   // And how the score was produced.
-  await expect(panel).toContainText('Worked out by fixed rules, not by a model')
+  await expect(panel).toContainText('Fixed rules, not a model')
   await expect(panel).toContainText('As of 9 Oct 2026')
 })
 
@@ -153,11 +153,11 @@ test('a score outside 0 to 100 says so, a lead with no reasons says so, and anot
   response = qualification([], { engine: 'model-2027', questions: [] })
   await page.reload()
   await expect(panel).toContainText('0out of 100')
-  await expect(panel).toContainText("Nothing adds to or takes from this lead's score yet.")
+  await expect(panel).toContainText("Nothing affects this lead's score yet.")
   await expect(panel.getByRole('list', { name: 'Score factors' })).toHaveCount(0)
   // A scorer this version of the screen has never heard of is named rather than misdescribed.
   await expect(panel).toContainText('Scored by model-2027.')
-  await expect(panel).not.toContainText('fixed rules')
+  await expect(panel).not.toContainText('Fixed rules')
 })
 
 test('answering a qualification question saves at once and the score follows', async ({ page }) => {
@@ -229,7 +229,7 @@ test('logging an activity rescored the lead and the page shows it', async ({ pag
   )
 
   await page.goto(`/leads/${ID}`)
-  await expect(page.getByText('Nothing has been done about this lead yet.')).toBeVisible()
+  await expect(page.getByText('No activity on this lead yet.')).toBeVisible()
   await expect(page.getByRole('group', { name: 'Assessment' })).toContainText('Health: Needs attention')
 
   const form = page.getByRole('form', { name: 'Log activity' })

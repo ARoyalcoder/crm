@@ -101,4 +101,36 @@ final class AuthDtos {
             return new UserAccountResponse(user.getId(), user.getEmail(), user.getFullName(), user.getStatus());
         }
     }
+
+    record RoleSummary(String code, String name) {}
+
+    record UserSummaryResponse(
+            UUID id,
+            String name,
+            String email,
+            java.util.List<RoleSummary> roles,
+            boolean active) {
+
+        static UserSummaryResponse from(User user) {
+            java.util.List<RoleSummary> roles = user.getRoles().stream()
+                    .map(r -> new RoleSummary(r.getCode(), r.getName()))
+                    .toList();
+            return new UserSummaryResponse(
+                    user.getId(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    roles,
+                    user.isActive());
+        }
+    }
+
+    record CreateUserRequest(
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Email String email,
+            @jakarta.validation.constraints.NotBlank String fullName,
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(min = 6) String password,
+            @jakarta.validation.constraints.NotBlank String roleCode) {}
+
+    record UpdateUserRequest(
+            @jakarta.validation.constraints.NotBlank String roleCode,
+            String fullName) {}
 }

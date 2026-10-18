@@ -17,7 +17,7 @@ export function CustomerProfilePage() {
 
   if (!customer.data) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <PageHeader title="Customer" back={{ to: '/customers', label: 'Customers' }} />
         <RecordLoadState
           noun="customer"
@@ -37,7 +37,7 @@ function Profile({ customer }: { customer: CustomerDetail }) {
   const ActiveTab = active.component
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <CustomerHeader customer={customer} />
 
       <div role="tablist" aria-label="Customer sections" className="flex gap-1 overflow-x-auto border-b">

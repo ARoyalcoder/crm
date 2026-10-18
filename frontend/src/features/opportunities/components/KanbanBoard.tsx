@@ -103,9 +103,9 @@ export function KanbanBoardView({
                   className={cn(
                     'h-2.5 w-2.5 rounded-full shrink-0',
                     stage.isWon
-                      ? 'bg-emerald-500'
+                      ? 'bg-success'
                       : stage.isLost
-                      ? 'bg-rose-500'
+                      ? 'bg-destructive-solid'
                       : 'bg-primary'
                   )}
                 />
@@ -131,7 +131,7 @@ export function KanbanBoardView({
                   className="w-full justify-start text-xs text-muted-foreground hover:text-foreground"
                 >
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Add Opportunity
+                  Add opportunity
                 </Button>
               </div>
             )}
@@ -180,7 +180,7 @@ export function KanbanBoardView({
 
                       {/* Service */}
                       {opp.serviceName && (
-                        <div className="mt-1 truncate text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                        <div className="mt-1 truncate text-[11px] font-medium text-muted-foreground ">
                           {opp.serviceName}
                         </div>
                       )}
@@ -195,9 +195,9 @@ export function KanbanBoardView({
                           className={cn(
                             'text-[10px] font-medium px-1.5 py-0',
                             opp.probability >= 70
-                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                              ? 'bg-success-soft text-success'
                               : opp.probability >= 30
-                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                              ? 'bg-warning-soft text-warning'
                               : 'bg-muted text-muted-foreground'
                           )}
                         >

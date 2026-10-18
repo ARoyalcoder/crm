@@ -7,6 +7,7 @@ import { AdminList } from '@/components/list/AdminList'
 import { FilterSelect, ListToolbar, SearchInput } from '@/components/list/ListControls'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useHasPermission } from '@/features/auth/auth-context'
 import {
   financeSummaryQuery,
@@ -80,10 +81,10 @@ export function InvoicesPage() {
   const summary = useQuery(financeSummaryQuery)
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Invoices"
-        description="What customers have been billed, and what they still owe."
+        description="Billed to customers, and what they still owe."
         action={
           canManage ? (
             <Button asChild>
@@ -114,6 +115,13 @@ export function InvoicesPage() {
             value={formatMoney(summary.data.invoicedThisMonth)}
             hint={`${formatMoney(summary.data.receivedThisMonth)} received`}
           />
+        </div>
+      ) : summary.isPending ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Loading summary">
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
         </div>
       ) : null}
       <AdminList

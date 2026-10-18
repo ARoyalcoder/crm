@@ -66,7 +66,7 @@ export function FieldJobFormPage() {
   const back = id ? { to: `/field-jobs/${id}`, label: 'Job' } : { to: '/field-jobs', label: 'Field jobs' }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title={id ? 'Edit job' : 'New job'} back={back} />
       {id && !existing.data ? (
         <RecordLoadState noun="job" isPending={existing.isPending} error={existing.error} onRetry={() => void existing.refetch()} />
@@ -212,7 +212,7 @@ function JobForm({ detail, cancelTo }: { detail?: JobDetail; cancelTo: string })
                   <FormControl>
                     <Textarea rows={4} {...field} />
                   </FormControl>
-                  <FormDescription>What the technician needs to know before going.</FormDescription>
+                  <FormDescription>What the technician needs to know beforehand.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -228,8 +228,8 @@ function JobForm({ detail, cancelTo }: { detail?: JobDetail; cancelTo: string })
                   </FormControl>
                   <FormDescription>
                     {checklistLocked
-                      ? 'The technician has set off, so the checklist can no longer be changed.'
-                      : 'One item per line. All of them must be ticked before the job can be completed.'}
+                      ? 'The technician has set off; the checklist is locked.'
+                      : 'One item per line. All must be ticked to complete the job.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

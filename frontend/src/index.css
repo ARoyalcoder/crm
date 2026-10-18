@@ -1,86 +1,741 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter/index.css';
 
 @custom-variant dark (&:is(.dark *));
 
-/* Design tokens (shadcn/ui convention). Components use the semantic names, never raw colours. */
+/* ------------------------------------------------------------------------------------------------
+   Design tokens. Components use the semantic names below and never raw colours, so light and dark
+   themes (and any later re-branding) change in this one place.
+
+   Direction: soft off-white surfaces with a faint lavender cast, white cards, one refined violet
+   accent, semantic status colours. Every text / background pair listed here was checked against
+   WCAG 2.2 AA (4.5:1 for text, 3:1 for the focus ring and control borders).
+   ------------------------------------------------------------------------------------------------ */
 :root {
-  /* Soft and friendly: a lavender page, white cards that float on it, one purple for what matters. */
-  --radius: 0.9rem;
-  --background: oklch(0.972 0.012 300);
-  --foreground: oklch(0.24 0.03 285);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 285);
-  --primary: oklch(0.52 0.2 287);
-  --primary-foreground: oklch(0.99 0.005 300);
-  --secondary: oklch(0.95 0.02 295);
-  --secondary-foreground: oklch(0.34 0.08 287);
-  --muted: oklch(0.96 0.012 300);
-  --muted-foreground: oklch(0.5 0.03 285);
-  --accent: oklch(0.94 0.03 295);
-  --accent-foreground: oklch(0.34 0.1 287);
-  --destructive: oklch(0.55 0.21 27);
-  --border: oklch(0.92 0.012 300);
-  --input: oklch(0.9 0.015 300);
-  --ring: oklch(0.6 0.15 287);
-  --sidebar: oklch(1 0 0);
-  /* Cards are lifted by a wide, faint, purple-tinted shadow rather than outlined. */
-  --soft-shadow: 0 10px 30px -12px oklch(0.45 0.15 287 / 0.18), 0 2px 6px -2px oklch(0.45 0.15 287 / 0.08);
+  --radius: 1.125rem;
+
+  /* Surfaces - Clean smooth canvas matching Login Page */
+  --background: #eef3fa;
+  --foreground: #0d1527;
+  --card: #ffffff;
+  --card-foreground: #0d1527;
+  --popover: #ffffff;
+  --popover-foreground: #0d1527;
+
+  /* Brand - Signature Electric Blue from Login Page */
+  --primary: #2b66fe;
+  --primary-foreground: #ffffff;
+  --accent: #eaf1fe;
+  --accent-foreground: #1e50e2;
+
+  /* Neutrals */
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+  --muted: #e8eef7;
+  --muted-foreground: #64748b;
+  --subtle: #94a3b8;
+
+  /* Lines and controls */
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #2b66fe;
+
+  /* Status */
+  --success: #059669;
+  --success-soft: #e6f8f0;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --destructive: #e11d48;
+  --destructive-soft: #ffe4e6;
+  --destructive-solid: #e11d48;
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+
+  /* Navigation */
+  --sidebar: #ffffff;
+  --sidebar-border: #e2e8f0;
+
+  /* Charts */
+  --chart-1: #2b66fe;
+  --chart-2: #ea580c;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #ec4899;
+  --chart-6: #16a34a;
+  --chart-7: #3b82f6;
+  --chart-8: #f43f5e;
+  --chart-other: #94a3b8;
+
+  /* Chart Furniture & Scales */
+  --chart-grid: #e2e8f0;
+  --chart-axis: #cbd5e1;
+  --chart-label: #64748b;
+  --chart-surface: #ffffff;
+  --ord-1: #bfdbfe;
+  --ord-2: #93c5fd;
+  --ord-3: #60a5fa;
+  --ord-4: #3b82f6;
+  --ord-5: #2563eb;
+  --ord-6: #1d4ed8;
+  --status-good: #10b981;
+  --status-warning: #f59e0b;
+  --status-serious: #f97316;
+  --status-critical: #ef4444;
+
+  /* Neumorphic Dual Shadows from Login Page */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --soft-shadow: 6px 6px 18px rgba(180, 196, 224, 0.38), -6px -6px 18px rgba(255, 255, 255, 0.95);
+  --pop-shadow: 12px 12px 28px rgba(180, 196, 224, 0.45), -12px -12px 28px rgba(255, 255, 255, 1);
+  --destructive-foreground: var(--color-red-800);
+  --success-foreground: var(--color-emerald-900);
+  --info-foreground: var(--color-violet-900);
+  --warning-foreground: var(--color-yellow-900);
+  --invert: var(--color-zinc-900);
+  --invert-foreground: var(--color-zinc-50);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
 .dark {
-  --background: oklch(0.19 0.025 285);
-  --foreground: oklch(0.96 0.01 300);
-  --card: oklch(0.24 0.03 285);
-  --card-foreground: oklch(0.96 0.01 300);
-  --primary: oklch(0.74 0.14 290);
-  --primary-foreground: oklch(0.2 0.04 285);
-  --secondary: oklch(0.3 0.04 285);
-  --secondary-foreground: oklch(0.96 0.01 300);
-  --muted: oklch(0.29 0.03 285);
-  --muted-foreground: oklch(0.74 0.03 290);
-  --accent: oklch(0.32 0.05 287);
-  --accent-foreground: oklch(0.96 0.01 300);
-  --destructive: oklch(0.7 0.19 22);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.7 0.14 290);
-  --sidebar: oklch(0.24 0.03 285);
-  --soft-shadow: 0 10px 30px -12px oklch(0 0 0 / 0.5);
+  --background: #0a0f1d;
+  --foreground: #f1f5f9;
+  --card: #111827;
+  --card-foreground: #f1f5f9;
+  --popover: #0f172a;
+  --popover-foreground: #f1f5f9;
+
+  --primary: #3872ff;
+  --primary-foreground: #ffffff;
+  --accent: #1e293b;
+  --accent-foreground: #60a5fa;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #151d30;
+  --muted-foreground: #94a3b8;
+  --subtle: #64748b;
+
+  --border: rgb(255 255 255 / 0.09);
+  --input: #475569;
+  --ring: #3872ff;
+
+  --success: #34d399;
+  --success-soft: #064e3b;
+  --warning: #fbbf24;
+  --warning-soft: #451a03;
+  --destructive: #f87171;
+  --destructive-soft: #450a0a;
+  --destructive-solid: #dc2626;
+  --info: #60a5fa;
+  --info-soft: #172554;
+
+  --sidebar: #0d1322;
+  --sidebar-border: rgb(255 255 255 / 0.08);
+
+  --chart-1: #3872ff;
+  --chart-2: #fb923c;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+  --chart-6: #4ade80;
+  --chart-7: #60a5fa;
+  --chart-8: #f87171;
+  --chart-other: #64748b;
+
+  /* Chart Furniture & High-Contrast Scales in Dark Mode */
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-axis: rgba(255, 255, 255, 0.16);
+  --chart-label: #94a3b8;
+  --chart-surface: #111827;
+  --ord-1: #93c5fd;
+  --ord-2: #60a5fa;
+  --ord-3: #3b82f6;
+  --ord-4: #2563eb;
+  --ord-5: #1d4ed8;
+  --ord-6: #1e3a8a;
+  --status-good: #34d399;
+  --status-warning: #fbbf24;
+  --status-serious: #fb923c;
+  --status-critical: #f87171;
+
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --soft-shadow: 6px 6px 16px rgba(0, 0, 0, 0.45), -4px -4px 12px rgba(255, 255, 255, 0.03);
+  --pop-shadow: 10px 10px 26px rgba(0, 0, 0, 0.65), -8px -8px 20px rgba(255, 255, 255, 0.04);
+  --destructive-foreground: var(--color-red-600);
+  --success-foreground: var(--color-emerald-600);
+  --info-foreground: var(--color-violet-600);
+  --warning-foreground: var(--color-yellow-600);
+  --invert: var(--color-zinc-700);
+  --invert-foreground: var(--color-zinc-50);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
 @theme inline {
+  --font-sans: 'Plus Jakarta Sans', 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: 'Outfit', 'Plus Jakarta Sans', 'Inter Variable', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Menlo, Consolas, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-solid: var(--destructive-solid);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
+  --radius-3xl: calc(var(--radius) + 8px);
   --shadow-soft: var(--soft-shadow);
+  --shadow-pop: var(--pop-shadow);
+  --color-invert-foreground: var(--invert-foreground);
+  --color-invert: var(--invert);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info-foreground: var(--info-foreground);
+  --color-success-foreground: var(--success-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    font-size: 13.5px;
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
+    max-width: 100vw;
+  }
+  @media (min-width: 1600px) {
+    html {
+      font-size: 14px;
+    }
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family:
-      ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+    max-width: 100vw;
   }
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.025em;
+  }
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+  }
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+  }
+  h3 {
+    font-size: 1.05rem;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+  }
+  h4 {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+  }
+  code, kbd, samp, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+  /* Quiet, consistent scrollbars where the browser allows styling them. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--subtle) 55%, transparent) transparent;
+  }
+
+  /* Distinct, visible, and modern custom scrollbar for all data tables */
+  [data-slot="table-container"],
+  .table-scrollbar,
+  .custom-table-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: #2b66fe rgba(226, 232, 240, 0.85);
+  }
+
+  .dark [data-slot="table-container"],
+  .dark .table-scrollbar,
+  .dark .custom-table-scroll {
+    scrollbar-color: #3872ff rgba(30, 41, 59, 0.85);
+  }
+
+  [data-slot="table-container"]::-webkit-scrollbar,
+  .table-scrollbar::-webkit-scrollbar,
+  .custom-table-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+    background: transparent;
+  }
+
+  [data-slot="table-container"]::-webkit-scrollbar-track,
+  .table-scrollbar::-webkit-scrollbar-track,
+  .custom-table-scroll::-webkit-scrollbar-track {
+    background: rgba(226, 232, 240, 0.75);
+    border-radius: 9999px;
+    margin: 2px 6px;
+  }
+
+  .dark [data-slot="table-container"]::-webkit-scrollbar-track,
+  .dark .table-scrollbar::-webkit-scrollbar-track,
+  .dark .custom-table-scroll::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.75);
+  }
+
+  [data-slot="table-container"]::-webkit-scrollbar-thumb,
+  .table-scrollbar::-webkit-scrollbar-thumb,
+  .custom-table-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #2b66fe, #3872ff);
+    border-radius: 9999px;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 4px rgba(43, 102, 254, 0.35);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .dark [data-slot="table-container"]::-webkit-scrollbar-thumb,
+  .dark .table-scrollbar::-webkit-scrollbar-thumb,
+  .dark .custom-table-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #3872ff, #60a5fa);
+    border: 1.5px solid rgba(15, 23, 42, 0.9);
+  }
+
+  [data-slot="table-container"]::-webkit-scrollbar-thumb:hover,
+  .table-scrollbar::-webkit-scrollbar-thumb:hover,
+  .custom-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #1e50e2, #2563eb);
+    box-shadow: 0 2px 8px rgba(43, 102, 254, 0.5);
+  }
+
+  /* Slim, elegant custom scrollbar for dropdowns, popovers, and menus */
+  .custom-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+  }
+  .dark .custom-scroll {
+    scrollbar-color: rgba(100, 116, 139, 0.6) transparent;
+  }
+  .custom-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 9999px;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.75);
+  }
+  .dark .custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.45);
+  }
+  .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.7);
+  }
+}
+
+/* Numbers that line up in columns (tables, axis ticks). Big standalone figures stay proportional. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Respect users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes pp-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pp-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pp-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pp-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Overlays and menus: short, GPU-friendly fades. */
+[data-state='open'][data-slot-anim],
+[role='dialog'][data-state='open'],
+[role='menu'][data-state='open'] {
+  animation: pp-fade-in 120ms ease-out;
+}
+[data-popover][data-state='open'] {
+  animation: pp-pop 140ms ease-out;
+}
+[data-drawer='right'][data-state='open'] {
+  animation: pp-slide-in-right 200ms ease-out;
+}
+[data-drawer='left'][data-state='open'] {
+  animation: pp-slide-in-left 200ms ease-out;
+}
+.pp-rise {
+  animation: pp-rise 180ms ease-out;
+}
+
+/* Print: invoices and reports print as documents, without the application around them. */
+@media print {
+  body {
+    background: #fff !important;
+  }
+  [data-print-hide] {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Universal Dark Mode Table & Chart Surfaces
+   Guarantees that every data table (custom, TanStack, raw table) has rich contrast,
+   distinct elevated header background, and smooth hover effects in dark mode.
+   ------------------------------------------------------------------------------------------------ */
+.dark table {
+  color: #f1f5f9;
+}
+
+.dark table thead,
+.dark table thead tr {
+  background-color: rgba(30, 41, 59, 0.85);
+}
+
+.dark table thead th {
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark table tbody tr {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dark table tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.45);
+}
+
+.dark table tfoot,
+.dark table tfoot tr {
+  background-color: rgba(30, 41, 59, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  color: #f1f5f9;
+}
+
+/* Common table scroll containers in dark mode */
+.dark div.overflow-x-auto,
+.dark div.overflow-auto {
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+.dark div.overflow-x-auto.rounded-2xl.border,
+.dark div.overflow-auto.rounded-lg.border,
+.dark div.overflow-x-auto.rounded-lg.border {
+  background-color: rgba(17, 24, 39, 0.9);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+/* Charts: crisp SVG text rendering in dark mode */
+.dark .recharts-cartesian-grid line {
+  stroke: var(--chart-grid);
+}
+
+.dark .recharts-text {
+  fill: var(--chart-label);
+}
+
+.dark .recharts-cartesian-axis-line {
+  stroke: var(--chart-axis);
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Dynamic Micro-Interactions for Charts and Tables
+   ------------------------------------------------------------------------------------------------ */
+/* Interactive Table Row Accents */
+tr[data-slot="table-row"]:hover td:first-child {
+  position: relative;
+}
+
+tr[data-slot="table-row"]:hover td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 3px;
+  border-radius: 4px;
+  background: #3872ff;
+  transition: opacity 0.2s ease;
+}
+
+/* Glass hover border on active table container */
+div[data-slot="table-container"]:hover {
+  border-color: rgba(56, 114, 255, 0.25);
+}
+
+.dark div[data-slot="table-container"]:hover {
+  border-color: rgba(56, 114, 255, 0.35);
+}
+
+/* Clean Recharts active dots without blur filters */
+.recharts-active-dot circle {
+  stroke-width: 3px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Ultra-Smooth Data Shimmer Skeleton Animation
+   ------------------------------------------------------------------------------------------------ */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(226, 232, 240, 0.65);
+}
+
+.dark .animate-shimmer {
+  background-color: rgba(30, 41, 59, 0.6);
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.dark .animate-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Animated Wave Loader
+   ------------------------------------------------------------------------------------------------ */
+.loading-wave {
+  width: 300px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.loading-bar {
+  width: 20px;
+  height: 10px;
+  margin: 0 5px;
+  background-color: #3498db;
+  border-radius: 5px;
+  animation: loading-wave-animation 1s ease-in-out infinite;
+}
+
+.loading-bar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.loading-bar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.loading-bar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+@keyframes loading-wave-animation {
+  0% {
+    height: 10px;
+  }
+
+  50% {
+    height: 50px;
+  }
+
+  100% {
+    height: 10px;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Theme change animation (see components/theme/theme-transition.ts)
+   ------------------------------------------------------------------------------------------------ */
+
+/* The browser's default cross-fade is replaced by the animations below. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The new theme grows out of the control that was clicked, over the old one (the new picture is always on top). */
+html[data-theme-transition='reveal']::view-transition-new(root) {
+  /* Ease-in-out, not ease-out: a strong ease-out covers the page in the first third and wastes the rest. */
+  animation: pp-theme-reveal 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+@keyframes pp-theme-reveal {
+  from {
+    clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 0px));
+  }
+  to {
+    clip-path: circle(var(--theme-r, 150vmax) at var(--theme-x, 50%) var(--theme-y, 0px));
+  }
+}
+
+/* No known starting point (the operating system switched theme): a soft fade. */
+html[data-theme-transition='fade']::view-transition-new(root) {
+  animation: pp-fade-in 0.8s ease both;
+}
+
+/* While the browser photographs the page no colour may be half-faded, or the "new" picture would show
+   in-between colours and then jump. Components' own transition-colors are switched off for the duration. */
+html[data-theme-transition],
+html[data-theme-transition] *,
+html[data-theme-transition] *::before,
+html[data-theme-transition] *::after {
+  transition: none !important;
+}
+
+/* Browsers without view transitions: every colour fades for a moment instead. */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.6s ease,
+              border-color 0.6s ease,
+              color 0.6s ease,
+              fill 0.6s ease,
+              stroke 0.6s ease,
+              box-shadow 0.6s ease !important;
+  transition-delay: 0s !important;
 }

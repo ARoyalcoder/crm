@@ -111,28 +111,39 @@ public class QuotationVersion {
         this.items.add(item);
     }
 
+    /**
+     * Works out the quotation's money from its lines. Each line carries its own discount and GST rate, so:
+     * <ul>
+     *   <li>the subtotal is the lines before tax, after their own discounts;</li>
+     *   <li>the quotation-wide discount comes off that;</li>
+     *   <li>tax is the lines' tax, reduced in the same proportion as the discount. A quotation-wide tax rate is used
+     *       only when no line carries any tax: applying both would charge GST twice.</li>
+     * </ul>
+     */
     public void recalculateTotals() {
-        BigDecimal sumSubtotal = BigDecimal.ZERO;
+        BigDecimal lineNet = BigDecimal.ZERO;
+        BigDecimal lineTax = BigDecimal.ZERO;
         for (QuotationItem item : items) {
-            sumSubtotal = sumSubtotal.add(item.getTotalAmount());
+            lineNet = lineNet.add(item.getSubtotal().subtract(item.getDiscountAmount()));
+            lineTax = lineTax.add(item.getTaxAmount());
         }
-        this.subtotal = sumSubtotal;
+        this.subtotal = lineNet;
 
-        // Apply discount percentage
         if (discountPercentage != null && discountPercentage.compareTo(BigDecimal.ZERO) > 0) {
-            this.discountAmount = sumSubtotal.multiply(discountPercentage)
+            this.discountAmount = lineNet.multiply(discountPercentage)
                     .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
         } else {
             this.discountAmount = BigDecimal.ZERO;
         }
 
-        BigDecimal afterDiscount = sumSubtotal.subtract(this.discountAmount);
+        BigDecimal afterDiscount = lineNet.subtract(this.discountAmount);
         if (afterDiscount.compareTo(BigDecimal.ZERO) < 0) {
             afterDiscount = BigDecimal.ZERO;
         }
 
-        // Apply tax percentage
-        if (taxPercentage != null && taxPercentage.compareTo(BigDecimal.ZERO) > 0) {
+        if (lineTax.compareTo(BigDecimal.ZERO) > 0 && lineNet.compareTo(BigDecimal.ZERO) > 0) {
+            this.taxAmount = lineTax.multiply(afterDiscount).divide(lineNet, 2, java.math.RoundingMode.HALF_UP);
+        } else if (taxPercentage != null && taxPercentage.compareTo(BigDecimal.ZERO) > 0) {
             this.taxAmount = afterDiscount.multiply(taxPercentage)
                     .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
         } else {

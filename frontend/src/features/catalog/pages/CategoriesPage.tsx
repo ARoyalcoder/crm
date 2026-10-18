@@ -89,7 +89,7 @@ export function CategoriesPage() {
   )
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Service categories"
         description="Groups of services inside a vertical."

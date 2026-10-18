@@ -18,7 +18,7 @@ export function ProjectTemplatePage() {
 
   if (!template.data) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <PageHeader title="Project template" back={{ to: '/admin/project-templates', label: 'Project templates' }} />
         <RecordLoadState
           noun="template"
@@ -38,7 +38,7 @@ function TemplateView({ template }: { template: TemplateDetail }) {
   const nameOf = (key: string) => stages.find((scheduled) => scheduled.stage.key === key)?.stage.name ?? key
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title={template.name}
         description={[template.service.name, template.service.verticalName, template.description].filter(Boolean).join(' · ')}
@@ -63,7 +63,7 @@ function TemplateView({ template }: { template: TemplateDetail }) {
           <CardTitle>Timeline</CardTitle>
           <CardDescription>
             {stages.length} {stages.length === 1 ? 'stage' : 'stages'}, estimated {days(template.plan.totalDays)} from the
-            start of a project. A stage starts when the stages it waits for have finished.
+            start of a project. A stage starts when the stages it waits for finish.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -126,7 +126,7 @@ function StageCard({ scheduled, position }: { scheduled: ScheduledStage; positio
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 text-sm sm:grid-cols-3">
-        {empty ? <p className="text-muted-foreground sm:col-span-3">Nothing is defined inside this stage.</p> : null}
+        {empty ? <p className="text-muted-foreground sm:col-span-3">Nothing defined in this stage.</p> : null}
         {stage.tasks.length > 0 ? (
           <section className="grid content-start gap-2" aria-label={`Tasks of ${stage.name}`}>
             <h3 className="font-medium">Tasks</h3>

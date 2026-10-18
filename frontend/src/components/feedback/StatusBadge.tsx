@@ -1,6 +1,2 @@
-import { Badge } from '@/components/ui/badge'
-
-/** Active / Inactive, said in words as well as colour. */
-export function StatusBadge({ active }: { active: boolean }) {
-  return active ? <Badge variant="outline">Active</Badge> : <Badge variant="secondary">Inactive</Badge>
-}
+/** Kept so existing imports keep working; the component now lives with the other shared pieces. */
+export { StatusBadge } from '@/components/shared/StatusBadge'

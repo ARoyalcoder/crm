@@ -76,7 +76,7 @@ export function JobProofSection({ jobId }: JobProofSectionProps) {
   if (isLoading) {
     return (
       <div className="p-4 text-center text-muted-foreground text-xs">
-        Loading Job Proof of Work...
+        Loading proof of work…
       </div>
     )
   }
@@ -84,7 +84,7 @@ export function JobProofSection({ jobId }: JobProofSectionProps) {
   if (error || !timeline) {
     return (
       <div className="p-4 text-center text-muted-foreground text-xs">
-        Proof of Work timeline unavailable for this job.
+        No proof-of-work timeline for this job.
       </div>
     )
   }

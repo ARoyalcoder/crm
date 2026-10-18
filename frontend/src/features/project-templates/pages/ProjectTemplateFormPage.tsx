@@ -10,6 +10,7 @@ import { FormActions, FormError, RecordLoadState } from '@/components/forms/Form
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -177,10 +178,10 @@ export function ProjectTemplateFormPage() {
   const back = id ? { to: `${LIST}/${id}`, label: 'Template' } : { to: LIST, label: 'Project templates' }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title={id ? 'Edit project template' : 'New project template'}
-        description="Define the stages in the order they are usually done. Each stage waits for the stages you tick under it."
+        description="Define stages in the usual order. Each stage waits for the stages ticked under it."
         back={back}
       />
       {id && !existing.data ? (
@@ -229,7 +230,7 @@ function TemplateForm({ template, cancelTo }: { template?: TemplateDetail; cance
    */
   function showServerErrors(error: unknown): string | null {
     if (!(error instanceof ApiError)) {
-      return 'Something went wrong. Please try again.'
+      return 'Something went wrong. Try again.'
     }
     if (error.fieldErrors.length === 0) {
       return error.message
@@ -246,7 +247,7 @@ function TemplateForm({ template, cancelTo }: { template?: TemplateDetail; cance
         unplaced.push(`${violation.field}: ${violation.message}`)
       }
     }
-    return unplaced.length > 0 ? unplaced.join('; ') : 'Some stages need attention. See the messages below.'
+    return unplaced.length > 0 ? unplaced.join('; ') : 'Some stages need attention. See below.'
   }
 
   if (services.isError) {
@@ -260,7 +261,7 @@ function TemplateForm({ template, cancelTo }: { template?: TemplateDetail; cance
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6" aria-label={template ? 'Edit template' : 'New template'} noValidate>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4" aria-label={template ? 'Edit template' : 'New template'} noValidate>
         <FormError message={formError} />
         <Card>
           <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -285,7 +286,7 @@ function TemplateForm({ template, cancelTo }: { template?: TemplateDetail; cance
                     )}
                   </FormControl>
                   <FormDescription>
-                    {template ? 'A template stays with its service.' : 'Each service has one template. It cannot be moved later.'}
+                    {template ? 'A template stays with its service.' : 'One template per service. Cannot be moved later.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -459,14 +460,12 @@ function StageEditor({ index, count, roles, onMove, onRemove }: StageEditorProps
             <FormItem>
               <FormLabel>Waits for</FormLabel>
               {others.length === 0 ? (
-                <p className="text-sm text-muted-foreground">This is the only stage: it starts with the project.</p>
+                <p className="text-sm text-muted-foreground">The only stage; it starts with the project.</p>
               ) : (
                 <div role="group" aria-label={`${title} waits for`} className="flex flex-wrap gap-x-5 gap-y-2">
                   {others.map((other, position) => (
-                    <label key={other.uid} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary"
+                    <label key={other.uid} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
                         checked={field.value.includes(other.uid)}
                         onChange={(event) =>
                           field.onChange(
@@ -481,7 +480,7 @@ function StageEditor({ index, count, roles, onMove, onRemove }: StageEditorProps
                   ))}
                 </div>
               )}
-              <FormDescription>Leave everything unticked for a stage that starts with the project.</FormDescription>
+              <FormDescription>Leave all unticked for a stage that starts with the project.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -547,7 +546,7 @@ function StageEditor({ index, count, roles, onMove, onRemove }: StageEditorProps
                     <FormControl>
                       <Textarea rows={2} {...field} />
                     </FormControl>
-                    <FormDescription>What must be ticked off before the task is done, one item per line.</FormDescription>
+                    <FormDescription>Items to tick off before the task is done, one per line.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -589,9 +588,7 @@ function StageEditor({ index, count, roles, onMove, onRemove }: StageEditorProps
                 render={({ field }) => (
                   <FormItem className="flex h-9 items-center gap-2">
                     <FormControl>
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary"
+                      <Checkbox
                         checked={field.value}
                         onChange={(event) => field.onChange(event.target.checked)}
                         onBlur={field.onBlur}

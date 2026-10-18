@@ -150,7 +150,7 @@ export function OpportunitiesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Opportunities"
-        description="Manage your deal pipeline, stages, win probabilities, and sales performance."
+        description="Deal pipeline, stages, win probabilities and sales performance."
         action={
           canCreate && (
             <Button
@@ -160,7 +160,7 @@ export function OpportunitiesPage() {
               }}
             >
               <Plus className="mr-1.5 h-4 w-4" />
-              New Opportunity
+              New opportunity
             </Button>
           )
         }
@@ -222,7 +222,7 @@ export function OpportunitiesPage() {
             <div className="relative min-w-[200px]">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
-                placeholder="Search deals..."
+                placeholder="Search deals…"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -239,7 +239,7 @@ export function OpportunitiesPage() {
               }}
               className="w-28 text-xs h-8"
             >
-              <option value="">All Statuses</option>
+              <option value="">All statuses</option>
               <option value="OPEN">Open</option>
               <option value="WON">Won</option>
               <option value="LOST">Lost</option>
@@ -253,7 +253,7 @@ export function OpportunitiesPage() {
                 }}
                 className="w-36 text-xs h-8"
               >
-                <option value="">All Stages</option>
+                <option value="">All stages</option>
                 {activePipeline.stages.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -271,26 +271,26 @@ export function OpportunitiesPage() {
           <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
             <div className="flex items-center gap-6">
               <div>
-                <span className="text-muted-foreground">Open Deals: </span>
+                <span className="text-muted-foreground">Open deals: </span>
                 <span className="font-semibold text-foreground">
                   {analyticsData.data.openOpportunities}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">Pipeline Value: </span>
+                <span className="text-muted-foreground">Pipeline value: </span>
                 <span className="font-semibold text-foreground">
                   {formatCurrency(analyticsData.data.pipelineValue)}
                 </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Weighted: </span>
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                <span className="font-semibold text-primary ">
                   {formatCurrency(analyticsData.data.weightedPipelineValue)}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">Win Rate: </span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="text-muted-foreground">Win rate: </span>
+                <span className="font-semibold text-success ">
                   {analyticsData.data.winRatePercentage != null
                     ? `${analyticsData.data.winRatePercentage.toFixed(1)}%`
                     : '0%'}
@@ -303,7 +303,7 @@ export function OpportunitiesPage() {
               onClick={() => setView('analytics')}
               className="h-auto p-0 text-xs text-primary"
             >
-              View Full Analytics →
+              View full analytics →
             </Button>
           </div>
         </div>
@@ -320,7 +320,7 @@ export function OpportunitiesPage() {
             </div>
           ) : kanbanData.isError ? (
             <ErrorState
-              title="Failed to load pipeline Kanban board"
+              title="Could not load the pipeline board"
               error={kanbanData.error}
             />
           ) : kanbanData.data && activePipeline ? (
@@ -354,7 +354,7 @@ export function OpportunitiesPage() {
             ) : listData.isError ? (
               <div className="p-6">
                 <ErrorState
-                  title="Failed to load opportunities"
+                  title="Could not load opportunities"
                   error={listData.error}
                 />
               </div>
@@ -364,11 +364,11 @@ export function OpportunitiesPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Opportunity</TableHead>
-                      <TableHead>Customer / Lead</TableHead>
+                      <TableHead>Customer / lead</TableHead>
                       <TableHead>Stage</TableHead>
                       <TableHead>Value</TableHead>
                       <TableHead>Probability</TableHead>
-                      <TableHead>Close Date</TableHead>
+                      <TableHead>Close date</TableHead>
                       <TableHead>Owner</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -408,9 +408,9 @@ export function OpportunitiesPage() {
                               variant="outline"
                               className={
                                 opp.status === 'WON'
-                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                                  ? 'border-success bg-success-soft text-success'
                                   : opp.status === 'LOST'
-                                  ? 'border-rose-500 bg-rose-50 text-rose-800'
+                                  ? 'border-destructive bg-destructive-soft text-destructive'
                                   : ''
                               }
                             >
@@ -477,7 +477,7 @@ export function OpportunitiesPage() {
             </div>
           ) : analyticsData.isError ? (
             <ErrorState
-              title="Failed to load analytics"
+              title="Could not load analytics"
               error={analyticsData.error}
             />
           ) : analyticsData.data ? (

@@ -105,6 +105,16 @@ public class User extends SoftDeletableEntity {
         roleAssignments.removeIf(a -> a.getRole().equals(role));
     }
 
+    /** Replaces current assigned roles with a single role. */
+    public void reassignSingleRole(Role role) {
+        boolean alreadyHasOnlyThisRole = roleAssignments.size() == 1 &&
+                roleAssignments.iterator().next().getRole().equals(role);
+        if (!alreadyHasOnlyThisRole) {
+            roleAssignments.clear();
+            roleAssignments.add(new UserRole(this, role));
+        }
+    }
+
     /** Sign-in is refused while locked, even with the right password. */
     public boolean isLocked(Instant now) {
         return lockedUntil != null && lockedUntil.isAfter(now);

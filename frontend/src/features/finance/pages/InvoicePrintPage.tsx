@@ -67,7 +67,7 @@ function Sheet({ detail }: { detail: InvoiceDetail }) {
         </div>
       </header>
 
-      <section className="grid gap-6 sm:grid-cols-2 print:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 print:grid-cols-2">
         <div className="grid gap-0.5">
           <span className="text-xs tracking-wide text-black/60 uppercase">Billed to</span>
           <span className="font-medium">{invoice.customerName}</span>

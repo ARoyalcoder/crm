@@ -99,7 +99,7 @@ export function CustomersPage() {
   const exporting = useMutation({ mutationFn: () => exportCustomers(filters) })
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Customers"
         description="People and companies the business works with."

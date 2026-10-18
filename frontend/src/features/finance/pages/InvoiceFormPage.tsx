@@ -50,9 +50,9 @@ const percent = decimal({ decimals: 2, min: 0, max: 100, blank: true, message: '
 const lineSchema = z.object({
   description: z.string().trim().min(1, 'Say what is being billed').max(500, 'At most 500 characters'),
   hsnSac: z.string().trim().refine((text) => text === '' || /^[0-9]{4,8}$/.test(text), '4 to 8 digits'),
-  quantity: decimal({ decimals: 3, min: 0, exclusive: true, message: 'More than zero, at most 3 decimals' }),
+  quantity: decimal({ decimals: 3, min: 0, exclusive: true, message: 'Above zero, up to 3 decimals' }),
   unit: z.string().trim().max(20, 'At most 20 characters'),
-  unitPrice: decimal({ decimals: 2, min: 0, message: 'An amount, at most 2 decimals' }),
+  unitPrice: decimal({ decimals: 2, min: 0, message: 'An amount, up to 2 decimals' }),
   discountPercent: percent,
   taxPercent: percent,
 })
@@ -103,13 +103,13 @@ export function InvoiceFormPage() {
   const waitingFor = id && !existing.data ? existing : !settings.data ? settings : presetCustomerId && preset.isPending ? preset : null
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title={id ? 'Edit draft invoice' : 'New invoice'} back={back} />
       {waitingFor ? (
         <RecordLoadState noun="invoice" isPending={waitingFor.isPending} error={waitingFor.error} onRetry={() => void waitingFor.refetch()} />
       ) : existing.data && !existing.data.actions.edit ? (
-        <p role="alert" className="rounded-2xl bg-card p-6 text-sm shadow-soft">
-          This invoice has been issued and can no longer be changed. Use a credit note or a debit note instead.
+        <p role="alert" className="rounded-xl bg-card p-4 text-sm shadow-soft">
+          This invoice is issued and cannot be changed. Use a credit or debit note instead.
         </p>
       ) : (
         <InvoiceForm
@@ -330,7 +330,7 @@ function InvoiceForm({ detail, defaults, presetCustomer, cancelTo }: InvoiceForm
               />
             ) : (
               <p className="text-right text-sm text-muted-foreground">
-                {preview.isError ? 'The total could not be worked out.' : 'The total appears once every line is complete.'}
+                {preview.isError ? 'Could not calculate the total.' : 'The total appears once every line is complete.'}
               </p>
             )}
           </div>
@@ -344,7 +344,7 @@ function InvoiceForm({ detail, defaults, presetCustomer, cancelTo }: InvoiceForm
         </Section>
 
         <p className="text-sm text-muted-foreground">
-          This saves a draft. A draft has no number and can be changed or discarded; it becomes an invoice when you issue it.
+          Saves a draft. A draft has no number and can be edited or discarded; it becomes an invoice when issued.
         </p>
         <FormActions submitLabel={detail ? 'Save draft' : 'Create draft'} submitting={form.formState.isSubmitting} cancelTo={cancelTo} />
       </form>

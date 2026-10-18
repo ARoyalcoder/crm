@@ -74,19 +74,19 @@ test('the dashboard shows every card, the pipeline, delivery performance and pro
 
   // The ten cards.
   await expect(page.getByRole('region', { name: 'Overview' }).getByRole('group')).toHaveCount(10)
-  await expect(card(page, 'Active Projects')).toContainText('19')
-  await expect(card(page, 'Starting Today')).toContainText('2')
-  await expect(card(page, 'Due Today')).toContainText('1')
-  await expect(card(page, 'Delayed Projects')).toContainText('3')
-  await expect(card(page, 'Delayed Projects')).toContainText('Past their expected date')
-  await expect(card(page, 'Completed This Month')).toContainText('4')
-  await expect(card(page, 'Revenue in Progress')).toContainText('₹18,45,000')
-  await expect(card(page, 'Completed Revenue')).toContainText('₹52,30,000')
-  await expect(card(page, 'Completed Revenue')).toContainText('₹7,60,000 this month')
-  await expect(card(page, 'Average Project Duration')).toContainText('34.7 days')
-  await expect(card(page, 'Average Delivery Delay')).toContainText('9 days')
-  await expect(card(page, 'Client Satisfaction')).toContainText('4.5 / 5')
-  await expect(card(page, 'Client Satisfaction')).toContainText('From 12 rated projects')
+  await expect(card(page, 'Active projects')).toContainText('19')
+  await expect(card(page, 'Starting today')).toContainText('2')
+  await expect(card(page, 'Due today')).toContainText('1')
+  await expect(card(page, 'Delayed projects')).toContainText('3')
+  await expect(card(page, 'Delayed projects')).toContainText('Past their expected date')
+  await expect(card(page, 'Completed this month')).toContainText('4')
+  await expect(card(page, 'Revenue in progress')).toContainText('₹18,45,000')
+  await expect(card(page, 'Completed revenue')).toContainText('₹52,30,000')
+  await expect(card(page, 'Completed revenue')).toContainText('₹7,60,000 this month')
+  await expect(card(page, 'Average project duration')).toContainText('34.7 days')
+  await expect(card(page, 'Average delivery delay')).toContainText('9 days')
+  await expect(card(page, 'Client satisfaction')).toContainText('4.5 / 5')
+  await expect(card(page, 'Client satisfaction')).toContainText('From 12 rated projects')
 
   // The pipeline: the stages the server sent, in its order, each with its count.
   const stages = page.getByRole('list', { name: 'Projects by stage' }).getByRole('listitem')
@@ -98,20 +98,20 @@ test('the dashboard shows every card, the pipeline, delivery performance and pro
   await expect(page.getByRole('meter', { name: 'Delivered on time' })).toHaveAttribute('aria-valuenow', '75')
   await expect(page.getByText('75%')).toBeVisible()
   const delivery = page.getByLabel('Delivery figures')
-  await expect(delivery).toContainText('Delivered On Time✓ 18')
-  await expect(delivery).toContainText('Delivered Late⚠ 6')
-  await expect(delivery).toContainText('Average Delay9 days')
-  await expect(delivery).toContainText('Average Completion Time34.7 days')
-  await expect(delivery).toContainText('Fastest Delivery6 days · Lobby render')
-  await expect(delivery).toContainText('Longest Delivery92 days · Villa walkthrough')
+  await expect(delivery).toContainText('Delivered on time✓ 18')
+  await expect(delivery).toContainText('Delivered late⚠ 6')
+  await expect(delivery).toContainText('Average delay9 days')
+  await expect(delivery).toContainText('Average completion time34.7 days')
+  await expect(delivery).toContainText('Fastest delivery6 days · Lobby render')
+  await expect(delivery).toContainText('Longest delivery92 days · Villa walkthrough')
 
   // Productivity.
   const productivity = page.getByLabel('Productivity figures')
-  await expect(productivity).toContainText('Projects Completed24 · 4 this month')
-  await expect(productivity).toContainText('Average Hours46.5 hours per project')
-  await expect(productivity).toContainText('Average Deliverables3.2 per project')
+  await expect(productivity).toContainText('Projects completed24 · 4 this month')
+  await expect(productivity).toContainText('Average hours46.5 hours per project')
+  await expect(productivity).toContainText('Average deliverables3.2 per project')
   // Drawings are not recorded anywhere yet: the screen says so rather than showing a number.
-  await expect(productivity).toContainText('Average DrawingsNot tracked yet')
+  await expect(productivity).toContainText('Average drawingsNot tracked yet')
   await expect(page.getByRole('table', { name: 'Employee productivity' }).getByRole('row')).toHaveText([
     /Employee/, /Asha Verma\s*41\s*3\s*312\.5\s*9/, /Ravi Kumar\s*28\s*6\s*205\s*7/,
   ])
@@ -146,18 +146,18 @@ test('a figure that cannot be worked out is said in words, not shown as zero', a
 
   await page.goto('/project-analytics')
 
-  await expect(card(page, 'Active Projects')).toContainText('0')
-  await expect(card(page, 'Delayed Projects')).toContainText('Nothing is past its date')
-  await expect(card(page, 'Average Project Duration')).toContainText('Not known yet')
-  await expect(card(page, 'Average Delivery Delay')).toContainText('No late deliveries')
-  await expect(card(page, 'Client Satisfaction')).toContainText('No ratings yet')
-  await expect(page.getByText('No project has been placed in a stage yet.')).toBeVisible()
-  await expect(page.getByText('There are no active projects.')).toBeVisible()
-  await expect(page.getByText('No project has been delivered yet.')).toBeVisible()
+  await expect(card(page, 'Active projects')).toContainText('0')
+  await expect(card(page, 'Delayed projects')).toContainText('Nothing is past its date')
+  await expect(card(page, 'Average project duration')).toContainText('Not known yet')
+  await expect(card(page, 'Average delivery delay')).toContainText('No late deliveries')
+  await expect(card(page, 'Client satisfaction')).toContainText('No ratings yet')
+  await expect(page.getByText('No project is in a stage yet.')).toBeVisible()
+  await expect(page.getByText('No active projects.')).toBeVisible()
+  await expect(page.getByText('No projects delivered yet.')).toBeVisible()
   await expect(page.getByRole('meter')).toHaveCount(0)
-  await expect(page.getByLabel('Delivery figures')).toContainText('Fastest DeliveryNothing delivered yet')
-  await expect(page.getByLabel('Productivity figures')).toContainText('Average HoursNo hours logged yet')
-  await expect(page.getByText('No tasks have been assigned to anyone yet.')).toBeVisible()
+  await expect(page.getByLabel('Delivery figures')).toContainText('Fastest deliveryNothing delivered yet')
+  await expect(page.getByLabel('Productivity figures')).toContainText('Average hoursNo hours logged yet')
+  await expect(page.getByText('No tasks assigned yet.')).toBeVisible()
   await expect(page.getByRole('note', { name: 'Today' })).toContainText('No projects are running at the moment.')
 })
 
@@ -201,11 +201,12 @@ test('someone who may only view projects sees the analytics but moves nothing', 
 
   await page.goto('/project-analytics')
 
-  await expect(card(page, 'Active Projects')).toContainText('19')
+  await expect(card(page, 'Active projects')).toContainText('19')
   const rows = page.getByRole('list', { name: 'Active projects' }).getByRole('listitem')
   await expect(rows.nth(0)).toContainText('Drafting/Modeling')
   await expect(rows.nth(1)).toContainText('Not in a stage')
-  await expect(page.getByRole('combobox')).toHaveCount(0)
+  // The header's global search is a combobox too; only the page content must have no stage selectors.
+  await expect(page.getByRole('main').getByRole('combobox')).toHaveCount(0)
 })
 
 test('project analytics are hidden from users without the permission', async ({ page }) => {

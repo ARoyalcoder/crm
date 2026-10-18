@@ -48,7 +48,7 @@ export function Timeline({ events, label, compact = false }: TimelineProps) {
     )
   }
   return (
-    <div className="grid gap-6" role="group" aria-label={label}>
+    <div className="grid gap-4" role="group" aria-label={label}>
       {groupByDay(events).map((group) => (
         <section key={group.day} className="grid gap-3" aria-label={group.day}>
           <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{group.day}</h3>

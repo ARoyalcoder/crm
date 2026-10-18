@@ -24,7 +24,7 @@ export function SummaryTab({ customer }: CustomerTabProps) {
   const overview = useQuery(customerOverviewQuery(customer.id))
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-3">
           <CardTitle>Customer health</CardTitle>
@@ -131,7 +131,7 @@ function RecentTimelineCard({ customerId }: { customerId: string }) {
       <CardHeader>
         <CardTitle>Recent timeline</CardTitle>
         <CardDescription>
-          The latest that has happened with this customer.{' '}
+          Latest activity with this customer.{' '}
           <Link className="underline underline-offset-2" to={`/customers/${customerId}?tab=timeline`}>
             View the full timeline
           </Link>

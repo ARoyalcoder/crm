@@ -4,16 +4,16 @@ import { cn } from '@/lib/utils'
 
 /** Must match the backend enum CustomerOverviewService.HealthLevel. */
 const LEVELS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
-  GOOD: { label: 'Healthy', icon: CircleCheck, tone: 'border-emerald-200 bg-emerald-50 text-emerald-800' },
-  NEEDS_ATTENTION: { label: 'Needs attention', icon: TriangleAlert, tone: 'border-amber-200 bg-amber-50 text-amber-900' },
-  AT_RISK: { label: 'At risk', icon: CircleAlert, tone: 'border-red-200 bg-red-50 text-red-800' },
+  GOOD: { label: 'Healthy', icon: CircleCheck, tone: 'border-success/30 bg-success-soft text-success' },
+  NEEDS_ATTENTION: { label: 'Needs attention', icon: TriangleAlert, tone: 'border-warning/30 bg-warning-soft text-warning' },
+  AT_RISK: { label: 'At risk', icon: CircleAlert, tone: 'border-destructive/30 bg-destructive-soft text-destructive' },
   UNKNOWN: { label: 'Not enough history', icon: CircleHelp, tone: 'bg-muted text-muted-foreground' },
 }
 
 const IMPACTS: Record<string, { icon: LucideIcon; tone: string; label: string }> = {
-  POSITIVE: { icon: CircleCheck, tone: 'text-emerald-700', label: 'Good sign' },
-  WARNING: { icon: TriangleAlert, tone: 'text-amber-700', label: 'Needs attention' },
-  CRITICAL: { icon: CircleAlert, tone: 'text-red-700', label: 'At risk' },
+  POSITIVE: { icon: CircleCheck, tone: 'text-success', label: 'Good sign' },
+  WARNING: { icon: TriangleAlert, tone: 'text-warning', label: 'Needs attention' },
+  CRITICAL: { icon: CircleAlert, tone: 'text-destructive', label: 'At risk' },
 }
 
 /** The customer's health in a word, with an icon and colour that agree with it. */
@@ -36,8 +36,7 @@ export function CustomerHealthReasons({ health }: { health: CustomerOverview['he
   if (health.signals.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        There is not enough on record yet to judge how this relationship is going. Log calls, meetings and visits
-        as they happen and this will fill in.
+        Not enough on record to judge this relationship. Log calls, meetings and visits to build the picture.
       </p>
     )
   }

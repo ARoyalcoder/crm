@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils'
 
 const BASE = 'inline-flex w-fit items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap'
 
-const GOOD = 'border-emerald-200 bg-emerald-50 text-emerald-800'
-const WARN = 'border-amber-200 bg-amber-50 text-amber-900'
-const BAD = 'border-red-200 bg-red-50 text-red-800'
+const GOOD = 'border-success/30 bg-success-soft text-success'
+const WARN = 'border-warning/30 bg-warning-soft text-warning'
+const BAD = 'border-destructive/30 bg-destructive-soft text-destructive'
 const NEUTRAL = 'bg-muted text-muted-foreground'
 
 const TONES: Record<string, string> = {

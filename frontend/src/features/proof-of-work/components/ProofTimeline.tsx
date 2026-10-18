@@ -95,44 +95,44 @@ export function ProofTimeline({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="shadow-sm">
           <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Total Proof Records</span>
+            <span className="text-xs text-muted-foreground font-medium">Total records</span>
             <p className="text-xl font-bold">{timeline.totalItems}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-emerald-600">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-success">
               <ShieldCheck className="h-3.5 w-3.5" />
               Verified by PM
             </span>
-            <p className="text-xl font-bold text-emerald-600">{timeline.verifiedItems}</p>
+            <p className="text-xl font-bold text-success">{timeline.verifiedItems}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-indigo-600">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-primary">
               <UserCheck className="h-3.5 w-3.5" />
-              Customer Signed
+              Customer signed
             </span>
-            <p className="text-xl font-bold text-indigo-600">{timeline.customerConfirmedItems}</p>
+            <p className="text-xl font-bold text-primary">{timeline.customerConfirmedItems}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-sky-600">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-info">
               <Camera className="h-3.5 w-3.5" />
-              Photos Uploaded
+              Photos uploaded
             </span>
-            <p className="text-xl font-bold text-sky-600">{timeline.photoCount}</p>
+            <p className="text-xl font-bold text-info">{timeline.photoCount}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardContent className="p-3.5 space-y-1">
-            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-amber-600">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 text-warning">
               <FileCheck className="h-3.5 w-3.5" />
-              Technical Docs
+              Technical docs
             </span>
-            <p className="text-xl font-bold text-amber-600">{timeline.documentCount}</p>
+            <p className="text-xl font-bold text-warning">{timeline.documentCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -145,28 +145,28 @@ export function ProofTimeline({
             size="sm"
             onClick={() => setFilterCategory('ALL')}
           >
-            All Items ({timeline.items.length})
+            All items ({timeline.items.length})
           </Button>
           <Button
             variant={filterCategory === 'BEFORE_PHOTO' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setFilterCategory('BEFORE_PHOTO')}
           >
-            Before Photos
+            Before photos
           </Button>
           <Button
             variant={filterCategory === 'DURING_PHOTO' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setFilterCategory('DURING_PHOTO')}
           >
-            During Photos
+            During photos
           </Button>
           <Button
             variant={filterCategory === 'AFTER_PHOTO' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setFilterCategory('AFTER_PHOTO')}
           >
-            After Photos
+            After photos
           </Button>
           <Button
             variant={filterCategory === 'CHECKLIST' ? 'secondary' : 'ghost'}
@@ -180,7 +180,7 @@ export function ProofTimeline({
         {canCreate && (
           <Button onClick={() => setCreateModalOpen(true)} size="sm" className="gap-1.5 shrink-0">
             <Plus className="h-4 w-4" />
-            Record Proof of Work
+            Record proof of work
           </Button>
         )}
       </div>
@@ -193,12 +193,12 @@ export function ProofTimeline({
             <div className="space-y-1">
               <p className="font-medium text-sm">No Proof of Work records yet</p>
               <p className="text-xs text-muted-foreground">
-                Document before/after site photos, technical tests, checklists and client sign-offs.
+                Record site photos, tests, checklists and client sign-offs.
               </p>
             </div>
             {canCreate && (
               <Button size="sm" onClick={() => setCreateModalOpen(true)}>
-                Record First Proof
+                Record first proof
               </Button>
             )}
           </CardContent>
@@ -250,21 +250,20 @@ export function ProofTimeline({
       {/* Delete Confirmation Modal */}
       {deleteConfirmItemId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="bg-card w-full max-w-md rounded-xl border p-6 shadow-xl space-y-4">
+          <div className="bg-card w-full max-w-md rounded-xl border p-4 shadow-xl space-y-4">
             <div className="flex items-center gap-2 text-destructive font-semibold">
               <AlertCircle className="h-5 w-5" />
-              Confirm Safe Deletion
+              Confirm deletion
             </div>
             <p className="text-xs text-muted-foreground">
-              Unauthorized deletion is strictly prevented. Non-verified proof items may be archived
-              only with an explicit audit justification recorded in the system audit logs.
+              Deletion is blocked. Unverified proof can only be archived, with a reason recorded in the audit log.
             </p>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Audit Reason *</label>
+              <label className="text-xs font-medium">Reason *</label>
               <textarea
                 className="w-full rounded-md border p-2 text-xs bg-background"
                 rows={3}
-                placeholder="Specify reason for deletion/archival (e.g. Duplicate entry recorded by mistake)..."
+                placeholder="Reason for deletion or archival, e.g. duplicate entry…"
                 value={deleteReason}
                 onChange={(e) => setDeleteReason(e.target.value)}
               />
@@ -286,7 +285,7 @@ export function ProofTimeline({
                 disabled={!deleteReason.trim()}
                 onClick={() => handleDelete(deleteConfirmItemId)}
               >
-                Archive with Audit Log
+                Archive with audit log
               </Button>
             </div>
           </div>
@@ -296,17 +295,16 @@ export function ProofTimeline({
       {/* Verification Remarks Modal */}
       {verifyRemarksItemId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="bg-card w-full max-w-md rounded-xl border p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-2 text-emerald-600 font-semibold">
+          <div className="bg-card w-full max-w-md rounded-xl border p-4 shadow-xl space-y-4">
+            <div className="flex items-center gap-2 text-success font-semibold">
               <ShieldCheck className="h-5 w-5" />
-              Project Manager Verification
+              Manager verification
             </div>
             <p className="text-xs text-muted-foreground">
-              Verifying this proof certifies quality inspection. Once verified, this proof item
-              becomes immutable and cannot be deleted.
+              Verifying certifies quality inspection. Once verified, the proof is immutable and cannot be deleted.
             </p>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Verification Remarks (Optional)</label>
+              <label className="text-xs font-medium">Remarks (optional)</label>
               <textarea
                 className="w-full rounded-md border p-2 text-xs bg-background"
                 rows={2}
@@ -327,11 +325,11 @@ export function ProofTimeline({
                 Cancel
               </Button>
               <Button
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-success hover:bg-success/90 text-white"
                 size="sm"
                 onClick={() => handleVerify(verifyRemarksItemId)}
               >
-                Sign & Verify
+                Sign & verify
               </Button>
             </div>
           </div>
@@ -372,11 +370,11 @@ function ProofItemCard({
       {/* Timeline Node Icon */}
       <div className="absolute -left-6 top-1.5 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-background border-2 border-primary ring-4 ring-background">
         {item.verified ? (
-          <ShieldCheck className="h-3 w-3 text-emerald-600" />
+          <ShieldCheck className="h-3 w-3 text-success" />
         ) : item.customerConfirmed ? (
-          <UserCheck className="h-3 w-3 text-indigo-600" />
+          <UserCheck className="h-3 w-3 text-primary" />
         ) : isPhoto ? (
-          <Camera className="h-3 w-3 text-sky-600" />
+          <Camera className="h-3 w-3 text-info" />
         ) : (
           <Clock className="h-3 w-3 text-muted-foreground" />
         )}
@@ -399,7 +397,7 @@ function ProofItemCard({
 
             <div className="flex items-center gap-1.5">
               {item.verified ? (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-success-soft text-success">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Verified by {item.verifiedByName}
                 </span>
@@ -407,7 +405,7 @@ function ProofItemCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs gap-1 border-emerald-300 hover:bg-emerald-50 text-emerald-700"
+                  className="h-7 text-xs gap-1 border-success/30 hover:bg-success-soft text-success"
                   onClick={onOpenVerify}
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
@@ -435,7 +433,7 @@ function ProofItemCard({
           {item.technicianNotes && (
             <div className="text-xs bg-muted/40 p-3 rounded-lg space-y-1">
               <div className="flex items-center justify-between text-muted-foreground font-medium">
-                <span>Technician Observations</span>
+                <span>Technician notes</span>
                 <span>{item.technicianName ?? 'Technician'}</span>
               </div>
               <p className="whitespace-pre-wrap">{item.technicianNotes}</p>
@@ -448,7 +446,7 @@ function ProofItemCard({
               <div className="flex items-center justify-between text-xs font-medium">
                 <span className="flex items-center gap-1.5">
                   <CheckSquare className="h-4 w-4 text-primary" />
-                  Checklist Completion
+                  Checklist completion
                 </span>
                 <span className="text-muted-foreground">
                   {item.checklists.filter((c) => c.completed).length}/{item.checklists.length} Done
@@ -469,7 +467,7 @@ function ProofItemCard({
                   >
                     <div className="flex items-center gap-2">
                       {check.completed ? (
-                        <CheckSquare className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <CheckSquare className="h-4 w-4 text-success shrink-0" />
                       ) : (
                         <Square className="h-4 w-4 text-muted-foreground shrink-0" />
                       )}
@@ -502,7 +500,7 @@ function ProofItemCard({
                   onClick={onOpenUpload}
                 >
                   <Upload className="h-3 w-3" />
-                  Add Photo / Doc
+                  Add photo or document
                 </Button>
               )}
             </div>
@@ -570,11 +568,11 @@ function ProofItemCard({
           {/* Customer Confirmation / Sign-off */}
           <div className="border-t pt-3">
             {item.customerConfirmed ? (
-              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
+              <div className="bg-success-soft border border-success/30 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs text-success font-semibold">
                   <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Customer Sign-off Recorded
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    Customer sign-off recorded
                   </span>
                   <span>{item.confirmedAt ? new Date(item.confirmedAt).toLocaleDateString() : ''}</span>
                 </div>
@@ -590,7 +588,7 @@ function ProofItemCard({
                 {item.customerSignature && (
                   <div className="pt-1">
                     <span className="text-[10px] text-muted-foreground block mb-1">
-                      Customer Signature
+                      Customer signature
                     </span>
                     <img
                       src={item.customerSignature}
@@ -610,7 +608,7 @@ function ProofItemCard({
                   onClick={onOpenSign}
                 >
                   <UserCheck className="h-3.5 w-3.5" />
-                  Record Customer Sign-off
+                  Record customer sign-off
                 </Button>
               </div>
             ) : (

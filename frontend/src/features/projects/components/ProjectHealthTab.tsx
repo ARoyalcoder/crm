@@ -1,402 +1,215 @@
 import { useState } from 'react'
-import {
-  AlertTriangle,
-  CheckCircle2,
-  AlertCircle,
-  TrendingUp,
-  DollarSign,
-  Calendar,
-  CheckSquare,
-  Users,
-  ShieldAlert,
-  FileCheck2,
-  Edit,
-  ArrowUpRight,
-  TrendingDown,
-} from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { AlertCircle, AlertTriangle, CalendarClock, CheckCircle2, CheckSquare, FileCheck2, Pencil, ShieldAlert, Users, Wallet, type LucideIcon } from 'lucide-react'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { toneChip, toneText } from '@/components/shared/tones'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { useHasPermission } from '@/features/auth/auth-context'
+import { formatPercent, formatRupees } from '@/lib/format'
+import type { Tone } from '@/lib/status'
+import { cn } from '@/lib/utils'
 import type { ProjectHealth } from '../api'
 import { EditProfitabilityModal } from './EditProfitabilityModal'
 
-interface ProjectHealthTabProps {
+type ProjectHealthTabProps = {
   projectId: string
   health?: ProjectHealth
+  /** The project has milestones, tasks or deliverables to measure. Without them the score would only be a default. */
+  measurable: boolean
 }
 
-function getScoreColor(score: number): { text: string; bg: string; border: string; bar: string } {
-  if (score >= 80) {
-    return {
-      text: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/40',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      bar: 'bg-emerald-500',
-    }
-  }
-  if (score >= 60) {
-    return {
-      text: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-950/40',
-      border: 'border-amber-200 dark:border-amber-800',
-      bar: 'bg-amber-500',
-    }
-  }
-  return {
-    text: 'text-rose-600 dark:text-rose-400',
-    bg: 'bg-rose-50 dark:bg-rose-950/40',
-    border: 'border-rose-200 dark:border-rose-800',
-    bar: 'bg-rose-500',
-  }
+function scoreTone(score: number): 'success' | 'warning' | 'danger' {
+  return score >= 80 ? 'success' : score >= 60 ? 'warning' : 'danger'
 }
 
-function getSeverityBadge(severity: string) {
-  switch (severity?.toUpperCase()) {
-    case 'CRITICAL':
-      return <Badge variant="destructive" className="text-[10px] uppercase font-semibold">Critical</Badge>
-    case 'WARNING':
-      return <Badge className="bg-amber-500 text-white hover:bg-amber-600 text-[10px] uppercase font-semibold">Warning</Badge>
-    case 'INFO':
-    default:
-      return <Badge variant="secondary" className="text-[10px] uppercase font-semibold">Info</Badge>
-  }
+const SEVERITY: Record<string, { tone: Tone; label: string; icon: LucideIcon }> = {
+  CRITICAL: { tone: 'danger', label: 'Critical', icon: AlertCircle },
+  WARNING: { tone: 'warning', label: 'Warning', icon: AlertTriangle },
+  INFO: { tone: 'info', label: 'For information', icon: CheckCircle2 },
 }
 
-export function ProjectHealthTab({ projectId, health }: ProjectHealthTabProps) {
-  const [isEditOpen, setIsEditOpen] = useState(false)
+/** How a project is doing against its schedule, budget, tasks and sign-offs, and what it has cost so far. */
+export function ProjectHealthTab({ projectId, health, measurable }: ProjectHealthTabProps) {
+  const canUpdate = useHasPermission('PROJECT_UPDATE')
+  const [editing, setEditing] = useState(false)
 
   if (!health) {
-    return (
-      <div className="p-8 text-center text-muted-foreground text-sm">
-        Health metrics are calculating...
-      </div>
-    )
+    return <EmptyState icon={ShieldAlert} title="No health figures yet" description="They appear once the project has milestones, tasks or costs." />
   }
 
-  const {
-    overallScore,
-    scheduleHealth,
-    budgetHealth,
-    taskHealth,
-    clientApprovalHealth,
-    teamCapacityHealth,
-    profitability,
-    riskAlerts,
-  } = health
-
-  const overallColors = getScoreColor(overallScore)
+  const { overallScore, scheduleHealth, budgetHealth, taskHealth, clientApprovalHealth, teamCapacityHealth, profitability, riskAlerts } = health
+  const tone = scoreTone(overallScore)
+  const costRecorded = profitability.actualCost > 0
 
   const components = [
-    {
-      title: 'Schedule Health',
-      score: scheduleHealth,
-      icon: Calendar,
-      description: 'Timeline adherence against expected completion date',
-    },
-    {
-      title: 'Budget Health',
-      score: budgetHealth,
-      icon: DollarSign,
-      description: 'Actual cost vs allocated budget consumption',
-    },
-    {
-      title: 'Task Health',
-      score: taskHealth,
-      icon: CheckSquare,
-      description: 'Completion rate, blocked items, and overdue tasks',
-    },
-    {
-      title: 'Client Approval Health',
-      score: clientApprovalHealth,
-      icon: FileCheck2,
-      description: 'Accepted vs pending deliverables sign-off status',
-    },
-    {
-      title: 'Team Capacity Health',
-      score: teamCapacityHealth,
-      icon: Users,
-      description: 'Active task distribution per assigned team member',
-    },
+    { title: 'Schedule', score: scheduleHealth, icon: CalendarClock, text: 'Progress against the expected completion date' },
+    { title: 'Budget', score: budgetHealth, icon: Wallet, text: 'Recorded cost against the budget' },
+    { title: 'Tasks', score: taskHealth, icon: CheckSquare, text: 'Completion, blocked and overdue tasks' },
+    { title: 'Sign-off', score: clientApprovalHealth, icon: FileCheck2, text: 'Deliverables accepted against pending' },
+    { title: 'Team load', score: teamCapacityHealth, icon: Users, text: 'Open tasks per team member' },
   ]
 
   return (
-    <div className="space-y-6">
-      {/* Overview & Score Card Header */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Overall Score Meter */}
-        <Card className={`p-5 rounded-xl border ${overallColors.border} ${overallColors.bg} flex flex-col justify-between`}>
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
-                Overall Project Health
-              </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${overallColors.text} bg-background/80`}>
-                {overallScore >= 80 ? 'Healthy' : overallScore >= 60 ? 'Moderate Risk' : 'High Risk'}
-              </span>
-            </div>
-            <div className="mt-4 flex items-baseline gap-3">
-              <span className={`text-5xl font-black tracking-tight ${overallColors.text}`}>
-                {overallScore}%
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">Composite Score</span>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="w-full bg-background/60 rounded-full h-2.5 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${overallColors.bar}`}
-                style={{ width: `${overallScore}%` }}
-              />
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-2">
-              Weighted: Schedule (25%), Budget (25%), Tasks (20%), Approval (15%), Capacity (15%)
-            </p>
-          </div>
+    <div className="grid gap-4">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="justify-between">
+          <CardHeader>
+            <CardTitle>Overall health</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {measurable ? (
+              <>
+                <p className="flex items-baseline gap-3">
+                  <span className={cn('text-4xl font-semibold tracking-tight tabular', toneText[tone])}>{Math.round(overallScore)}%</span>
+                  <Badge variant={tone}>{overallScore >= 80 ? 'Healthy' : overallScore >= 60 ? 'Needs attention' : 'At risk'}</Badge>
+                </p>
+                <Progress value={overallScore} label="Overall project health" tone={tone} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Not scored yet. Add milestones, tasks or deliverables to track health.
+              </p>
+            )}
+          </CardContent>
         </Card>
 
-        {/* Profitability Summary Card */}
-        <Card className="p-5 rounded-xl border col-span-1 md:col-span-2 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b">
-            <div>
-              <h3 className="font-semibold text-sm flex items-center gap-1.5">
-                <TrendingUp className="h-4 w-4 text-emerald-500" />
-                Project Profitability Overview
-              </h3>
-              <p className="text-xs text-muted-foreground">Live revenue, actual costs, and gross margins</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => setIsEditOpen(true)}
-            >
-              <Edit className="h-3.5 w-3.5" />
-              Update Financials
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-            <div className="space-y-0.5">
-              <span className="text-[11px] text-muted-foreground">Contract Revenue</span>
-              <p className="text-base font-bold text-foreground">
-                ₹{profitability.revenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-[11px] text-muted-foreground">Actual Cost</span>
-              <p className="text-base font-bold text-foreground">
-                ₹{profitability.actualCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-[11px] text-muted-foreground">Gross Profit</span>
-              <p className={`text-base font-bold flex items-center gap-1 ${profitability.grossProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {profitability.grossProfit >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4" />
-                ) : (
-                  <TrendingDown className="h-4 w-4" />
-                )}
-                ₹{profitability.grossProfit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-[11px] text-muted-foreground">Gross Margin</span>
-              <p className={`text-base font-bold ${profitability.grossMargin >= 15 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {profitability.grossMargin.toFixed(2)}%
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Target Expected Cost: <strong className="text-foreground">₹{profitability.expectedCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-            </span>
-            <span>
-              Projected Final Cost: <strong className="text-foreground">₹{profitability.projectedFinalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-            </span>
-          </div>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Revenue and cost</CardTitle>
+            {canUpdate ? (
+              <CardAction>
+                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  <Pencil aria-hidden="true" />
+                  Update figures
+                </Button>
+              </CardAction>
+            ) : null}
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="grid gap-0.5">
+                <dt className="text-xs text-muted-foreground">Revenue</dt>
+                <dd className="text-lg font-semibold tabular">{formatRupees(profitability.revenue)}</dd>
+              </div>
+              <div className="grid gap-0.5">
+                <dt className="text-xs text-muted-foreground">Cost recorded</dt>
+                <dd className="text-lg font-semibold tabular">{formatRupees(profitability.actualCost)}</dd>
+              </div>
+              <div className="grid gap-0.5">
+                <dt className="text-xs text-muted-foreground">Margin</dt>
+                <dd className={cn('text-lg font-semibold tabular', costRecorded ? (profitability.grossProfit >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground')}>
+                  {costRecorded ? formatRupees(profitability.grossProfit) : '—'}
+                </dd>
+              </div>
+              <div className="grid gap-0.5">
+                <dt className="text-xs text-muted-foreground">Margin %</dt>
+                <dd className={cn('text-lg font-semibold tabular', costRecorded ? (profitability.grossMargin >= 15 ? 'text-success' : 'text-warning') : 'text-muted-foreground')}>
+                  {costRecorded ? formatPercent(profitability.grossMargin) : '—'}
+                </dd>
+              </div>
+            </dl>
+            {!costRecorded ? <p className="text-xs text-muted-foreground">No cost recorded yet, so there is no margin.</p> : null}
+            <p className="flex flex-wrap justify-between gap-2 border-t pt-3 text-sm text-muted-foreground">
+              <span>
+                Expected cost <strong className="font-medium text-foreground tabular">{formatRupees(profitability.expectedCost)}</strong>
+              </span>
+              <span>
+                Projected final cost <strong className="font-medium text-foreground tabular">{formatRupees(profitability.projectedFinalCost)}</strong>
+              </span>
+            </p>
+          </CardContent>
         </Card>
       </div>
 
-      {/* 5 Component Health Intelligence Indicators */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-sm">Health Component Breakdown</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {components.map((comp) => {
-            const colors = getScoreColor(comp.score)
-            const Icon = comp.icon
-            return (
-              <Card key={comp.title} className="p-4 rounded-xl border shadow-sm flex flex-col justify-between">
-                <div className="space-y-2">
+      {measurable ? (
+        <section aria-labelledby="components-heading" className="grid gap-3">
+          <h2 id="components-heading" className="text-base font-semibold tracking-tight">
+            What makes up the score
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {components.map(({ title, score, icon: Icon, text }) => {
+              const componentTone = scoreTone(score)
+              return (
+                <li key={title} className="grid gap-2 rounded-xl border border-border/70 bg-card p-3 shadow-soft">
                   <div className="flex items-center justify-between">
-                    <div className="p-1.5 rounded-lg bg-muted text-foreground">
-                      <Icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className={`text-lg font-bold ${colors.text}`}>{comp.score}%</span>
+                    <span className={cn('flex size-8 items-center justify-center rounded-lg', toneChip.primary)}>
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <span className={cn('text-lg font-semibold tabular', toneText[componentTone])}>{Math.round(score)}%</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-xs text-foreground">{comp.title}</h4>
-                    <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
-                      {comp.description}
-                    </p>
+                    <h3 className="text-sm font-medium">{title}</h3>
+                    <p className="text-xs text-muted-foreground">{text}</p>
                   </div>
-                </div>
+                  <Progress value={score} label={`${title} health`} tone={componentTone} className="h-1.5" />
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      ) : null}
 
-                <div className="mt-3">
-                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${colors.bar}`}
-                      style={{ width: `${comp.score}%` }}
-                    />
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Risk Alerts Panel */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-sm flex items-center gap-1.5">
-            <ShieldAlert className="h-4 w-4 text-amber-500" />
-            Active Risk Alerts
-            <span className="text-xs font-normal text-muted-foreground">
-              ({riskAlerts.length} detected)
-            </span>
-          </h3>
-        </div>
-
+      <section aria-labelledby="risks-heading" className="grid gap-3">
+        <h2 id="risks-heading" className="flex items-center gap-2 text-base font-semibold tracking-tight">
+          Risk alerts
+          <span className="text-sm font-normal text-muted-foreground">({riskAlerts.length})</span>
+        </h2>
         {riskAlerts.length === 0 ? (
-          <Card className="p-6 text-center border-dashed">
-            <div className="flex flex-col items-center justify-center space-y-2">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-              <p className="text-sm font-semibold text-foreground">No Active Risk Alerts</p>
-              <p className="text-xs text-muted-foreground">
-                All schedule, budget, margin, task execution, and approval thresholds are currently within expected ranges.
-              </p>
-            </div>
-          </Card>
+          <EmptyState icon={CheckCircle2} variant="compact" title="No risk alerts" description="Schedule, budget, margin, tasks and sign-offs are all within limits." />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {riskAlerts.map((alert, idx) => (
-              <Card
-                key={`${alert.code}-${idx}`}
-                className={`p-4 rounded-xl border ${
-                  alert.severity === 'CRITICAL'
-                    ? 'border-rose-300 bg-rose-50/50 dark:bg-rose-950/20'
-                    : alert.severity === 'WARNING'
-                    ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-950/20'
-                    : 'border-blue-300 bg-blue-50/50 dark:bg-blue-950/20'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="pt-0.5">
-                    {alert.severity === 'CRITICAL' ? (
-                      <AlertCircle className="h-5 w-5 text-rose-600" />
-                    ) : alert.severity === 'WARNING' ? (
-                      <AlertTriangle className="h-5 w-5 text-amber-600" />
-                    ) : (
-                      <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-foreground">{alert.title}</h4>
-                      {getSeverityBadge(alert.severity)}
+          <ul className="grid gap-3 md:grid-cols-2">
+            {riskAlerts.map((alert, index) => {
+              const severity = SEVERITY[alert.severity?.toUpperCase()] ?? SEVERITY.INFO!
+              const Icon = severity.icon
+              return (
+                <li key={`${alert.code}-${index}`} className={cn('flex items-start gap-3 rounded-2xl p-4', toneChip[severity.tone])}>
+                  <Icon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                  <div className="grid gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-semibold">{alert.title}</h3>
+                      <span className="text-xs font-medium">{severity.label}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {alert.description}
-                    </p>
+                    <p className="text-sm">{alert.description}</p>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </li>
+              )
+            })}
+          </ul>
         )}
-      </div>
+      </section>
 
-      {/* Itemized Cost Breakdown Table */}
-      <Card className="rounded-xl border">
-        <CardContent className="p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b">
-            <div>
-              <h3 className="font-semibold text-sm">Itemized Project Cost Breakdown</h3>
-              <p className="text-xs text-muted-foreground">Comprehensive direct expenditure tracking</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setIsEditOpen(true)}
-            >
-              Edit Breakdown
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="p-3 bg-muted/40 rounded-lg space-y-1">
-              <span className="text-[11px] text-muted-foreground font-medium">Material Cost</span>
-              <p className="text-sm font-bold">
-                ₹{profitability.materialCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="p-3 bg-muted/40 rounded-lg space-y-1">
-              <span className="text-[11px] text-muted-foreground font-medium">Labour Cost</span>
-              <p className="text-sm font-bold">
-                ₹{profitability.labourCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="p-3 bg-muted/40 rounded-lg space-y-1">
-              <span className="text-[11px] text-muted-foreground font-medium">Vendor / Subcontract</span>
-              <p className="text-sm font-bold">
-                ₹{profitability.vendorCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="p-3 bg-muted/40 rounded-lg space-y-1">
-              <span className="text-[11px] text-muted-foreground font-medium">Travel & Logistics</span>
-              <p className="text-sm font-bold">
-                ₹{profitability.travelCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="p-3 bg-muted/40 rounded-lg space-y-1">
-              <span className="text-[11px] text-muted-foreground font-medium">Other Direct Expenses</span>
-              <p className="text-sm font-bold">
-                ₹{profitability.otherExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-muted/20 border rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-            <div>
-              <span className="text-muted-foreground">Total Actual Cost Incurred: </span>
-              <strong className="text-foreground text-sm">
-                ₹{profitability.actualCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </strong>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Target Expected Cost: </span>
-              <strong className="text-foreground text-sm">
-                ₹{profitability.expectedCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </strong>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Projected Final Cost: </span>
-              <strong className="text-foreground text-sm">
-                ₹{profitability.projectedFinalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </strong>
-            </div>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Cost recorded so far</CardTitle>
+          {canUpdate ? (
+            <CardAction>
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                Edit costs
+              </Button>
+            </CardAction>
+          ) : null}
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              ['Materials', profitability.materialCost],
+              ['Labour', profitability.labourCost],
+              ['Vendors and subcontract', profitability.vendorCost],
+              ['Travel and logistics', profitability.travelCost],
+              ['Other direct costs', profitability.otherExpenses],
+            ].map(([label, value]) => (
+              <div key={label as string} className="grid gap-0.5 rounded-xl bg-muted/50 p-3">
+                <dt className="text-xs text-muted-foreground">{label}</dt>
+                <dd className="text-sm font-semibold tabular">{formatRupees(value as number)}</dd>
+              </div>
+            ))}
+          </dl>
         </CardContent>
       </Card>
 
-      <EditProfitabilityModal
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        projectId={projectId}
-        profitability={profitability}
-      />
+      {editing ? <EditProfitabilityModal open onOpenChange={setEditing} projectId={projectId} profitability={profitability} /> : null}
     </div>
   )
 }

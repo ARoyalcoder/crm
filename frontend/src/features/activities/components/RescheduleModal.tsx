@@ -27,7 +27,7 @@ export function RescheduleModal({ activity, onClose, onReschedule }: RescheduleM
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!dueDate) {
-      setError('Please choose a due date')
+      setError('Choose a due date')
       return
     }
     setError(null)
@@ -39,7 +39,7 @@ export function RescheduleModal({ activity, onClose, onReschedule }: RescheduleM
       )
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to reschedule')
+      setError(err instanceof Error ? err.message : 'Could not reschedule')
     } finally {
       setSubmitting(false)
     }
@@ -47,11 +47,11 @@ export function RescheduleModal({ activity, onClose, onReschedule }: RescheduleM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-md p-6 shadow-xl">
+      <Card className="w-full max-w-md p-4 shadow-xl">
         <div className="flex items-center justify-between pb-3 border-b">
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">Reschedule Due Date</h2>
+            <h2 className="text-base font-semibold">Reschedule</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
@@ -73,15 +73,15 @@ export function RescheduleModal({ activity, onClose, onReschedule }: RescheduleM
               Tomorrow
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => quickAddDays(3)}>
-              In 3 Days
+              In 3 days
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => quickAddDays(7)}>
-              Next Week
+              Next week
             </Button>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">New Due Date & Time *</label>
+            <label className="text-xs font-medium">New due date & time *</label>
             <Input
               type="datetime-local"
               value={dueDate}
@@ -91,7 +91,7 @@ export function RescheduleModal({ activity, onClose, onReschedule }: RescheduleM
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Updated Reminder (Optional)</label>
+            <label className="text-xs font-medium">New reminder (optional)</label>
             <Input
               type="datetime-local"
               value={reminderAt}
@@ -106,7 +106,7 @@ export function RescheduleModal({ activity, onClose, onReschedule }: RescheduleM
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={submitting}>
-              {submitting ? 'Saving…' : 'Save Changes'}
+              {submitting ? 'Saving…' : 'Save changes'}
             </Button>
           </div>
         </form>

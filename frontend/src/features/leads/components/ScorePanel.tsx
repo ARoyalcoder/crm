@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 /** What each scorer is, in words. A scorer this screen has not heard of is shown by its name. */
 const ENGINES: Record<string, string> = {
-  'rules-v1': 'Worked out by fixed rules, not by a model: the same facts always give the same score.',
+  'rules-v1': 'Fixed rules, not a model: the same facts always give the same score.',
 }
 
 type ScorePanelProps = {
@@ -28,8 +28,7 @@ export function ScorePanel({ qualification, isPending, error, onRetry }: ScorePa
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Why this score?</CardTitle>
-        <CardDescription>Every reason that adds to or takes from this lead's score.</CardDescription>
+        <CardTitle>Score breakdown</CardTitle>
       </CardHeader>
       <CardContent>
         {qualification ? (
@@ -59,8 +58,7 @@ function Explanation({ qualification }: { qualification: Qualification }) {
 
       {factors.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Nothing adds to or takes from this lead's score yet. Estimate its value, answer the qualification
-          questions and log what you do, and the reasons will appear here.
+          Nothing affects this lead's score yet. Estimate its value, answer the qualification questions and log activity to see reasons here.
         </p>
       ) : (
         <div className="grid gap-2">
@@ -71,7 +69,7 @@ function Explanation({ qualification }: { qualification: Qualification }) {
                 <span
                   className={cn(
                     'w-10 shrink-0 text-right font-mono font-medium tabular-nums',
-                    factor.points > 0 ? 'text-emerald-700' : 'text-red-700',
+                    factor.points > 0 ? 'text-success' : 'text-destructive',
                   )}
                 >
                   {signed(factor.points)}
@@ -86,7 +84,7 @@ function Explanation({ qualification }: { qualification: Qualification }) {
           </p>
           {total !== score ? (
             <p className="text-xs text-muted-foreground">
-              The reasons add up to {total}. A score is kept between 0 and 100, so it is shown as {score}.
+              The reasons add up to {total}; scores stay between 0 and 100, so {score} is shown.
             </p>
           ) : null}
         </div>

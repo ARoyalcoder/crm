@@ -1,501 +1,636 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, CheckSquare, Square, Calendar, User, Clock, Trash2, Link as LinkIcon, X } from 'lucide-react'
+import { CalendarDays, CheckSquare, Clock, Link as LinkIcon, ListTodo, Plus, Square, Trash2, UserRound } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { FormDialog } from '@/components/shared/FormDialog'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
+import { Select } from '@/components/ui/select'
+import { StatusSelect, type StatusOption } from '@/components/ui/status-select'
+import { Textarea } from '@/components/ui/textarea'
+import { useHasPermission } from '@/features/auth/auth-context'
+import { daysUntil, formatDate, formatNumber } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { projectsApi, type ProjectMember, type ProjectMilestone, type ProjectTask } from '../api'
+import { PROJECT_PRIORITIES } from '../lib'
+import { optimisticProject, withTasks } from '../optimistic'
 import { PriorityBadge } from './ProjectStatusBadge'
-import { projectsApi, type ProjectTask, type ProjectMilestone, type ProjectMember } from '../api'
 
-interface ProjectTasksTabProps {
+const TASK_STATUS_OPTIONS: StatusOption[] = [
+  { value: 'TODO', label: 'To do', color: 'bg-slate-400' },
+  { value: 'IN_PROGRESS', label: 'In progress', color: 'bg-violet-500' },
+  { value: 'IN_REVIEW', label: 'In review', color: 'bg-amber-500' },
+  { value: 'COMPLETED', label: 'Completed', color: 'bg-emerald-500' },
+  { value: 'BLOCKED', label: 'Blocked', color: 'bg-rose-500' },
+]
+
+const TASK_STATUSES = [
+  { value: 'TODO', label: 'To do' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'IN_REVIEW', label: 'In review' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'BLOCKED', label: 'Blocked' },
+] as const
+
+const FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'open', label: 'Open' },
+  { value: 'done', label: 'Completed' },
+] as const
+type Filter = (typeof FILTERS)[number]['value']
+
+const schema = z
+  .object({
+    title: z.string().trim().min(1, 'Name the task').max(250, 'Keep it under 250 characters'),
+    description: z.string(),
+    milestoneId: z.string(),
+    assignedToId: z.string(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+    startDate: z.string(),
+    dueDate: z.string(),
+    estimatedHours: z.string().refine((value) => value === '' || Number(value) >= 0, 'Hours cannot be negative'),
+    dependsOn: z.array(z.string()),
+  })
+  .superRefine((values, context) => {
+    if (values.startDate && values.dueDate && values.dueDate < values.startDate) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['dueDate'], message: 'Due date cannot be before start date' })
+    }
+  })
+type FormValues = z.infer<typeof schema>
+
+type ProjectTasksTabProps = {
   projectId: string
   tasks: ProjectTask[]
   milestones: ProjectMilestone[]
   members: ProjectMember[]
 }
 
+/** The work items of a project: who has them, when they are due, what they wait on and their checklists. */
 export function ProjectTasksTab({ projectId, tasks, milestones, members }: ProjectTasksTabProps) {
   const queryClient = useQueryClient()
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [newChecklistTaskId, setNewChecklistTaskId] = useState<string | null>(null)
-  const [checklistText, setChecklistText] = useState('')
+  const canUpdate = useHasPermission('PROJECT_UPDATE')
+  const [adding, setAdding] = useState(false)
+  const [removing, setRemoving] = useState<ProjectTask | null>(null)
+  const [filter, setFilter] = useState<Filter>('all')
 
-  // Task form state
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [milestoneId, setMilestoneId] = useState('')
-  const [assignedToId, setAssignedToId] = useState('')
-  const [priority, setPriority] = useState('MEDIUM')
-  const [startDate, setStartDate] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [estimatedHours, setEstimatedHours] = useState('')
-  const [selectedDependencies, setSelectedDependencies] = useState<string[]>([])
+  const optimistic = optimisticProject(queryClient, projectId)
 
-  const addMutation = useMutation({
-    mutationFn: (data: Parameters<typeof projectsApi.addTask>[1]) =>
-      projectsApi.addTask(projectId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-      setIsAddOpen(false)
-      resetForm()
+  // A new status shows at once (and moves the progress figure); the server confirms in the background.
+  const changeStatus = useMutation({
+    mutationFn: ({ task, status }: { task: ProjectTask; status: string }) => projectsApi.updateTaskStatus(projectId, task.id, status),
+    onMutate: ({ task, status }) =>
+      optimistic.apply((project) =>
+        withTasks(
+          project,
+          project.tasks.map((item) =>
+            item.id === task.id ? { ...item, status, completedAt: status === 'COMPLETED' ? new Date().toISOString() : null } : item,
+          ),
+        ),
+      ),
+    onError: (_error, _variables, context) => optimistic.rollback(context),
+    onSettled: optimistic.settle,
+  })
+  const remove = useMutation({
+    mutationFn: (task: ProjectTask) => projectsApi.deleteTask(projectId, task.id),
+    onMutate: (task) => {
+      setRemoving(null)
+      return optimistic.apply((project) =>
+        withTasks(
+          project,
+          project.tasks.filter((item) => item.id !== task.id),
+        ),
+      )
     },
+    onError: (_error, _task, context) => optimistic.rollback(context),
+    onSettled: optimistic.settle,
   })
 
-  const statusMutation = useMutation({
-    mutationFn: ({ taskId, status }: { taskId: string; status: string }) =>
-      projectsApi.updateTaskStatus(projectId, taskId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (taskId: string) => projectsApi.deleteTask(projectId, taskId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-    },
-  })
-
-  const addChecklistMutation = useMutation({
-    mutationFn: ({ taskId, itemText }: { taskId: string; itemText: string }) =>
-      projectsApi.addChecklistItem(projectId, taskId, itemText),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-      setNewChecklistTaskId(null)
-      setChecklistText('')
-    },
-  })
-
-  const toggleChecklistMutation = useMutation({
-    mutationFn: ({ taskId, itemId, completed }: { taskId: string; itemId: string; completed: boolean }) =>
-      projectsApi.toggleChecklistItem(projectId, taskId, itemId, completed),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-    },
-  })
-
-  const deleteChecklistMutation = useMutation({
-    mutationFn: ({ taskId, itemId }: { taskId: string; itemId: string }) =>
-      projectsApi.deleteChecklistItem(projectId, taskId, itemId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
-    },
-  })
-
-  const resetForm = () => {
-    setTitle('')
-    setDescription('')
-    setMilestoneId('')
-    setAssignedToId('')
-    setPriority('MEDIUM')
-    setStartDate('')
-    setDueDate('')
-    setEstimatedHours('')
-    setSelectedDependencies([])
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) return
-
-    addMutation.mutate({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      milestoneId: milestoneId || undefined,
-      assignedToId: assignedToId || undefined,
-      priority,
-      startDate: startDate || undefined,
-      dueDate: dueDate || undefined,
-      estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
-      dependsOnTaskIds: selectedDependencies.length > 0 ? selectedDependencies : undefined,
-    })
-  }
+  const visible = useMemo(() => {
+    const open = tasks.filter((task) => task.status !== 'COMPLETED').sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999'))
+    const done = tasks.filter((task) => task.status === 'COMPLETED')
+    return filter === 'open' ? open : filter === 'done' ? done : [...open, ...done]
+  }, [tasks, filter])
+  const counts = { all: tasks.length, open: tasks.filter((task) => task.status !== 'COMPLETED').length, done: tasks.filter((task) => task.status === 'COMPLETED').length }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Tasks ({tasks.length})</h3>
-        <Button size="sm" onClick={() => setIsAddOpen(true)}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Add Task
-        </Button>
+    <section aria-labelledby="tasks-heading" className="grid gap-4">
+      {/* The tab already says "Tasks (n)", so the heading is kept for screen readers only. */}
+      <h2 id="tasks-heading" className="sr-only">
+        Tasks
+      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {tasks.length > 0 ? (
+          <div role="group" aria-label="Show tasks" className="inline-flex rounded-xl bg-muted p-1">
+            {FILTERS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={filter === option.value}
+                onClick={() => setFilter(option.value)}
+                className={cn(
+                  'h-7 rounded-lg px-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
+                  filter === option.value ? 'bg-card text-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {option.label} <span className="tabular text-xs">{formatNumber(counts[option.value])}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {canUpdate ? (
+          <Button size="sm" className="ml-auto" onClick={() => setAdding(true)}>
+            <Plus aria-hidden="true" />
+            Add task
+          </Button>
+        ) : null}
       </div>
 
+      {changeStatus.isError ? <ErrorState title="The task could not be updated" error={changeStatus.error} variant="compact" /> : null}
+      {remove.isError ? <ErrorState title="The task could not be deleted" error={remove.error} variant="compact" /> : null}
+
       {tasks.length === 0 ? (
-        <div className="text-center py-12 border border-dashed rounded-lg bg-muted/20 text-muted-foreground">
-          No tasks defined yet. Click "Add Task" to create actionable work items.
-        </div>
+        <EmptyState icon={ListTodo} title="No tasks yet" description={canUpdate ? 'Add the work items for the team.' : 'No tasks in this project yet.'} />
+      ) : visible.length === 0 ? (
+        <EmptyState variant="compact" title={filter === 'open' ? 'Nothing left to do' : 'Nothing completed yet'} />
       ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => {
-            const isCompleted = task.status === 'COMPLETED'
-            return (
-              <div
-                key={task.id}
-                className={`p-4 rounded-xl border space-y-3 transition-colors ${
-                  isCompleted ? 'bg-muted/30 border-muted' : 'bg-card border-border hover:border-primary/50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 flex-1">
-                    <button
-                      onClick={() =>
-                        statusMutation.mutate({
-                          taskId: task.id,
-                          status: isCompleted ? 'TODO' : 'COMPLETED',
-                        })
-                      }
-                      className="mt-0.5 text-muted-foreground hover:text-primary transition-colors"
-                      title={isCompleted ? 'Mark To-do' : 'Mark Completed'}
-                    >
-                      {isCompleted ? (
-                        <CheckSquare className="h-5 w-5 text-emerald-600" />
-                      ) : (
-                        <Square className="h-5 w-5 text-muted-foreground hover:text-primary" />
-                      )}
-                    </button>
-
-                    <div className="space-y-1 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h4
-                          className={`text-sm font-semibold ${
-                            isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
-                          }`}
-                        >
-                          {task.title}
-                        </h4>
-                        <PriorityBadge priority={task.priority} />
-                        {task.milestoneTitle && (
-                          <span className="text-[11px] bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                            {task.milestoneTitle}
-                          </span>
-                        )}
-                        <span
-                          className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                            isCompleted
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                              : task.status === 'IN_PROGRESS'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                              : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
-                          }`}
-                        >
-                          {task.status}
-                        </span>
-                      </div>
-
-                      {task.description && (
-                        <p className="text-xs text-muted-foreground">{task.description}</p>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
-                        {task.assignedToName && (
-                          <span className="flex items-center gap-1">
-                            <User className="h-3.5 w-3.5" />
-                            {task.assignedToName}
-                          </span>
-                        )}
-                        {task.dueDate && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
-                        {task.estimatedHours != null && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
-                            Est: {task.estimatedHours}h
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Dependencies */}
-                      {task.dependencies && task.dependencies.length > 0 && (
-                        <div className="flex items-center gap-1.5 pt-1 text-[11px] text-amber-600 dark:text-amber-400">
-                          <LinkIcon className="h-3 w-3" />
-                          <span>Depends on: {task.dependencies.map((d) => d.dependsOnTaskTitle).join(', ')}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={task.status}
-                      onChange={(e) =>
-                        statusMutation.mutate({ taskId: task.id, status: e.target.value })
-                      }
-                      className="h-7 text-xs bg-background border rounded px-2"
-                    >
-                      <option value="TODO">TODO</option>
-                      <option value="IN_PROGRESS">IN_PROGRESS</option>
-                      <option value="IN_REVIEW">IN_REVIEW</option>
-                      <option value="COMPLETED">COMPLETED</option>
-                      <option value="BLOCKED">BLOCKED</option>
-                    </select>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
-                      onClick={() => {
-                        if (confirm('Delete this task?')) {
-                          deleteMutation.mutate(task.id)
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Checklist items section */}
-                <div className="pl-8 pt-2 border-t space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Checklist ({(task.checklists ?? []).filter((c) => c.completed).length} / {(task.checklists ?? []).length})
-                    </span>
-                    <button
-                      onClick={() => setNewChecklistTaskId(task.id)}
-                      className="text-[11px] text-primary hover:underline font-medium"
-                    >
-                      + Add Item
-                    </button>
-                  </div>
-
-                  {(task.checklists ?? []).length > 0 && (
-                    <div className="space-y-1">
-                      {(task.checklists ?? []).map((item) => (
-                        <div key={item.id} className="flex items-center justify-between text-xs py-0.5 group">
-                          <label className="flex items-center gap-2 cursor-pointer flex-1">
-                            <input
-                              type="checkbox"
-                              checked={item.completed}
-                              onChange={(e) =>
-                                toggleChecklistMutation.mutate({
-                                  taskId: task.id,
-                                  itemId: item.id,
-                                  completed: e.target.checked,
-                                })
-                              }
-                              className="rounded text-primary focus:ring-primary h-3.5 w-3.5"
-                            />
-                            <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
-                              {item.itemText}
-                            </span>
-                          </label>
-                          <button
-                            onClick={() =>
-                              deleteChecklistMutation.mutate({ taskId: task.id, itemId: item.id })
-                            }
-                            className="opacity-0 group-hover:opacity-100 text-destructive text-[11px] px-1 hover:underline"
-                          >
-                            remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {newChecklistTaskId === task.id && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <Input
-                        placeholder="New checklist item..."
-                        value={checklistText}
-                        onChange={(e) => setChecklistText(e.target.value)}
-                        className="h-7 text-xs flex-1"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            if (checklistText.trim()) {
-                              addChecklistMutation.mutate({
-                                taskId: task.id,
-                                itemText: checklistText.trim(),
-                              })
-                            }
-                          }
-                        }}
-                      />
-                      <Button
-                        size="sm"
-                        className="h-7 text-xs px-2"
-                        onClick={() => {
-                          if (checklistText.trim()) {
-                            addChecklistMutation.mutate({
-                              taskId: task.id,
-                              itemText: checklistText.trim(),
-                            })
-                          }
-                        }}
-                      >
-                        Add
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs px-2"
-                        onClick={() => {
-                          setNewChecklistTaskId(null)
-                          setChecklistText('')
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <ul className="grid gap-3">
+          {visible.map((task) => (
+            <TaskRow
+              key={task.id}
+              projectId={projectId}
+              task={task}
+              canUpdate={canUpdate}
+              onStatus={(status) => changeStatus.mutate({ task, status })}
+              onDelete={() => setRemoving(task)}
+            />
+          ))}
+        </ul>
       )}
 
-      {/* Add Task Dialog */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="max-w-md w-full p-6 shadow-xl bg-card max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b mb-4">
-              <h3 className="font-semibold text-base">Add Project Task</h3>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setIsAddOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
+      {adding ? <AddTaskDialog projectId={projectId} tasks={tasks} milestones={milestones} members={members} onClose={() => setAdding(false)} /> : null}
+
+      <ConfirmationDialog
+        open={removing !== null}
+        onOpenChange={(open) => (open ? undefined : setRemoving(null))}
+        title="Delete this task?"
+        description={removing ? `“${removing.title}” and its checklist will be removed.` : undefined}
+        confirmLabel="Delete task"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => removing && remove.mutate(removing)}
+      />
+    </section>
+  )
+}
+
+type TaskRowProps = {
+  projectId: string
+  task: ProjectTask
+  canUpdate: boolean
+  onStatus: (status: string) => void
+  onDelete: () => void
+}
+
+function TaskRow({ projectId, task, canUpdate, onStatus, onDelete }: TaskRowProps) {
+  const done = task.status === 'COMPLETED'
+  const late = !done && task.dueDate ? daysUntil(task.dueDate) < 0 : false
+  const daysLate = late && task.dueDate ? -daysUntil(task.dueDate) : 0
+  const [addingItem, setAddingItem] = useState(false)
+  const hasChecklist = (task.checklists?.length ?? 0) > 0
+
+  return (
+    <li className={cn('grid gap-3 rounded-xl border border-border/70 p-3 shadow-soft', done ? 'bg-muted/40' : 'bg-card')}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <button
+            type="button"
+            disabled={!canUpdate}
+            onClick={() => onStatus(done ? 'TODO' : 'COMPLETED')}
+            aria-label={done ? `Reopen ${task.title}` : `Mark ${task.title} as completed`}
+            className="mt-0.5 shrink-0 rounded-md text-muted-foreground transition-colors outline-none hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-default disabled:hover:text-muted-foreground"
+          >
+            {done ? <CheckSquare className="size-5 text-success" aria-hidden="true" /> : <Square className="size-5" aria-hidden="true" />}
+          </button>
+          <div className="grid min-w-0 flex-1 gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className={cn('text-sm font-semibold', done && 'text-muted-foreground line-through')}>{task.title}</h3>
+              {/* Priority only matters while the work is open, and "Medium" is the default, so it is not repeated on every card. */}
+              {!done && task.priority !== 'MEDIUM' ? <PriorityBadge priority={task.priority} /> : null}
+              {task.milestoneTitle ? (
+                <span title={task.milestoneTitle} className="max-w-[16rem] truncate rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {task.milestoneTitle}
+                </span>
+              ) : null}
+              {/* The status dropdown already shows the status; the badge is only for people who cannot change it. */}
+              {!canUpdate ? <StatusBadge status={task.status} /> : null}
             </div>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="text-xs font-medium block mb-1">Task Title *</label>
-                <Input
-                  placeholder="e.g. Procure inverter units"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-1">Description</label>
-                <Input
-                  placeholder="Details of the task"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium block mb-1">Milestone</label>
-                  <select
-                    value={milestoneId}
-                    onChange={(e) => setMilestoneId(e.target.value)}
-                    className="w-full h-9 text-xs bg-background border rounded px-2"
-                  >
-                    <option value="">(No Milestone)</option>
-                    {milestones.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium block mb-1">Assignee</label>
-                  <select
-                    value={assignedToId}
-                    onChange={(e) => setAssignedToId(e.target.value)}
-                    className="w-full h-9 text-xs bg-background border rounded px-2"
-                  >
-                    <option value="">Unassigned</option>
-                    {members.map((mem) => (
-                      <option key={mem.userId} value={mem.userId}>
-                        {mem.name} ({mem.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-medium block mb-1">Priority</label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
-                    className="w-full h-9 text-xs bg-background border rounded px-2"
-                  >
-                    <option value="LOW">LOW</option>
-                    <option value="MEDIUM">MEDIUM</option>
-                    <option value="HIGH">HIGH</option>
-                    <option value="CRITICAL">CRITICAL</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1">Start Date</label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1">Due Date</label>
-                  <Input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium block mb-1">Estimated Hours</label>
-                <Input
-                  type="number"
-                  placeholder="e.g. 16"
-                  value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              {/* Task dependencies selector */}
-              {tasks.length > 0 && (
-                <div>
-                  <label className="text-xs font-medium block mb-1">Dependencies (Finish to Start)</label>
-                  <div className="max-h-24 overflow-y-auto border rounded p-2 space-y-1 bg-muted/20">
-                    {tasks.map((existing) => (
-                      <label key={existing.id} className="flex items-center gap-2 text-xs cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedDependencies.includes(existing.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedDependencies([...selectedDependencies, existing.id])
-                            } else {
-                              setSelectedDependencies(selectedDependencies.filter((id) => id !== existing.id))
-                            }
-                          }}
-                          className="rounded text-primary h-3.5 w-3.5"
-                        />
-                        <span className="truncate">{existing.title}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+            {task.description ? <p className="text-sm text-muted-foreground">{task.description}</p> : null}
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {task.assignedToName ? (
+                <span className="flex items-center gap-1">
+                  <UserRound className="size-3.5" aria-hidden="true" />
+                  {task.assignedToName}
+                </span>
+              ) : (
+                <span>Unassigned</span>
               )}
-
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={addMutation.isPending}>
-                  {addMutation.isPending ? 'Saving...' : 'Create Task'}
-                </Button>
-              </div>
-            </form>
-          </Card>
+              {task.dueDate && !done ? (
+                <span className={cn('flex items-center gap-1', late && 'font-medium text-destructive')}>
+                  <CalendarDays className="size-3.5" aria-hidden="true" />
+                  Due {formatDate(task.dueDate)}
+                  {late ? ` · ${daysLate} day${daysLate === 1 ? '' : 's'} late` : ''}
+                </span>
+              ) : null}
+              {task.estimatedHours ? (
+                <span className="flex items-center gap-1" title="Estimated hours">
+                  <Clock className="size-3.5" aria-hidden="true" />
+                  {task.estimatedHours} h
+                </span>
+              ) : null}
+              {canUpdate && !done && !hasChecklist && !addingItem ? (
+                <button
+                  type="button"
+                  onClick={() => setAddingItem(true)}
+                  className="flex items-center gap-1 rounded text-muted-foreground transition-colors outline-none hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                >
+                  <Plus className="size-3.5" aria-hidden="true" />
+                  Checklist
+                </button>
+              ) : null}
+            </p>
+            {task.dependencies && task.dependencies.length > 0 ? (
+              <p className="flex items-center gap-1.5 text-xs text-warning">
+                <LinkIcon className="size-3.5 shrink-0" aria-hidden="true" />
+                Waits for {task.dependencies.map((dependency) => dependency.dependsOnTaskTitle).join(', ')}
+              </p>
+            ) : null}
+          </div>
         </div>
-      )}
+
+        {canUpdate ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <StatusSelect
+              aria-label={`Status of ${task.title}`}
+              value={task.status}
+              onValueChange={onStatus}
+              statuses={TASK_STATUS_OPTIONS}
+              className="w-40"
+              triggerClassName="h-8 w-40 text-xs"
+            />
+            <Button variant="ghost" size="icon" aria-label={`Delete ${task.title}`} onClick={onDelete}>
+              <Trash2 aria-hidden="true" />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      {hasChecklist || addingItem ? (
+        <Checklist projectId={projectId} task={task} canUpdate={canUpdate} adding={addingItem} onAddingChange={setAddingItem} />
+      ) : null}
+    </li>
+  )
+}
+
+type ChecklistProps = {
+  projectId: string
+  task: ProjectTask
+  canUpdate: boolean
+  /** Whether the "new item" box is open; the card owns this so its "+ Checklist" link can open it. */
+  adding: boolean
+  onAddingChange: (adding: boolean) => void
+}
+
+function Checklist({ projectId, task, canUpdate, adding, onAddingChange }: ChecklistProps) {
+  const queryClient = useQueryClient()
+  const [text, setText] = useState('')
+  const items = task.checklists ?? []
+  const doneCount = items.filter((item) => item.completed).length
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
+
+  const add = useMutation({
+    mutationFn: (itemText: string) => projectsApi.addChecklistItem(projectId, task.id, itemText),
+    onSuccess: () => {
+      void refresh()
+      setText('')
+      onAddingChange(false)
+    },
+  })
+  const optimistic = optimisticProject(queryClient, projectId)
+  /** Changes this task's checklist on the screen at once. */
+  const editChecklist = (change: (items: NonNullable<ProjectTask['checklists']>) => NonNullable<ProjectTask['checklists']>) =>
+    optimistic.apply((project) => ({
+      ...project,
+      tasks: project.tasks.map((item) => (item.id === task.id ? { ...item, checklists: change(item.checklists ?? []) } : item)),
+    }))
+  const toggle = useMutation({
+    mutationFn: ({ itemId, completed }: { itemId: string; completed: boolean }) => projectsApi.toggleChecklistItem(projectId, task.id, itemId, completed),
+    onMutate: ({ itemId, completed }) => editChecklist((list) => list.map((entry) => (entry.id === itemId ? { ...entry, completed } : entry))),
+    onError: (_error, _variables, context) => optimistic.rollback(context),
+    onSettled: optimistic.settle,
+  })
+  const removeItem = useMutation({
+    mutationFn: (itemId: string) => projectsApi.deleteChecklistItem(projectId, task.id, itemId),
+    onMutate: (itemId) => editChecklist((list) => list.filter((entry) => entry.id !== itemId)),
+    onError: (_error, _itemId, context) => optimistic.rollback(context),
+    onSettled: optimistic.settle,
+  })
+
+  const submit = () => {
+    if (text.trim()) add.mutate(text.trim())
+  }
+
+  if (items.length === 0 && !canUpdate) return null
+
+  return (
+    <div className="grid gap-2 border-t pt-3 sm:pl-8">
+      {items.length > 0 ? (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium text-muted-foreground">
+            Checklist ({doneCount} of {items.length})
+          </span>
+          {canUpdate && !adding ? (
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => onAddingChange(true)}>
+              Add item
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {items.length > 0 ? (
+        <ul className="grid gap-1">
+          {items.map((item) => (
+            <li key={item.id} className="group flex items-center justify-between gap-2 text-sm">
+              <label className="flex flex-1 cursor-pointer items-center gap-2">
+                <Checkbox
+                  checked={item.completed}
+                  disabled={!canUpdate}
+                  onChange={(event) => toggle.mutate({ itemId: item.id, completed: event.target.checked })}
+                />
+                <span className={item.completed ? 'text-muted-foreground line-through' : undefined}>{item.itemText}</span>
+              </label>
+              {canUpdate ? (
+                <button
+                  type="button"
+                  onClick={() => removeItem.mutate(item.id)}
+                  aria-label={`Remove “${item.itemText}” from the checklist`}
+                  className="rounded px-1 text-xs text-muted-foreground opacity-0 transition-opacity outline-none group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                >
+                  Remove
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {adding ? (
+        <div className="flex items-center gap-2">
+          <Input
+            aria-label="New checklist item"
+            placeholder="What needs checking?"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            className="h-8 flex-1 text-sm md:h-8"
+            autoFocus
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                submit()
+              } else if (event.key === 'Escape') {
+                onAddingChange(false)
+                setText('')
+              }
+            }}
+          />
+          <Button size="sm" onClick={submit} loading={add.isPending}>
+            Add
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              onAddingChange(false)
+              setText('')
+            }}
+          >
+            Cancel
+          </Button>
+        </div>
+      ) : null}
+      {add.isError ? <p role="alert" className="text-xs text-destructive">Could not add the item. Try again.</p> : null}
     </div>
+  )
+}
+
+type AddTaskDialogProps = {
+  projectId: string
+  tasks: ProjectTask[]
+  milestones: ProjectMilestone[]
+  members: ProjectMember[]
+  onClose: () => void
+}
+
+function AddTaskDialog({ projectId, tasks, milestones, members, onClose }: AddTaskDialogProps) {
+  const queryClient = useQueryClient()
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { title: '', description: '', milestoneId: '', assignedToId: '', priority: 'MEDIUM', startDate: '', dueDate: '', estimatedHours: '', dependsOn: [] },
+  })
+
+  const add = useMutation({
+    mutationFn: (values: FormValues) =>
+      projectsApi.addTask(projectId, {
+        title: values.title.trim(),
+        description: values.description.trim() || undefined,
+        milestoneId: values.milestoneId || undefined,
+        assignedToId: values.assignedToId || undefined,
+        priority: values.priority,
+        startDate: values.startDate || undefined,
+        dueDate: values.dueDate || undefined,
+        estimatedHours: values.estimatedHours ? Number(values.estimatedHours) : undefined,
+        dependsOnTaskIds: values.dependsOn.length > 0 ? values.dependsOn : undefined,
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['projects', projectId] })
+      onClose()
+    },
+  })
+
+  return (
+    <Form {...form}>
+      <FormDialog
+        open
+        onOpenChange={(open) => (open ? undefined : onClose())}
+        title="Add a task"
+        description="A piece of work, optionally under a milestone."
+        submitLabel="Add task"
+        onSubmit={form.handleSubmit((values) => add.mutate(values))}
+        submitting={add.isPending}
+        error={add.error}
+        size="lg"
+      >
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Task</FormLabel>
+              <FormControl>
+                <Input placeholder="Procure the inverter units" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Details</FormLabel>
+              <FormControl>
+                <Textarea rows={2} placeholder="What needs to be done" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="milestoneId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Milestone</FormLabel>
+                <FormControl>
+                  <Select {...field}>
+                    <option value="">None</option>
+                    {milestones.map((milestone) => (
+                      <option key={milestone.id} value={milestone.id}>
+                        {milestone.title}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="assignedToId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assigned to</FormLabel>
+                <FormControl>
+                  <Select {...field}>
+                    <option value="">Nobody yet</option>
+                    {members.map((member) => (
+                      <option key={member.userId} value={member.userId}>
+                        {member.userName}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Priority</FormLabel>
+                <FormControl>
+                  <Select {...field}>
+                    {PROJECT_PRIORITIES.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Starts</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="dueDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Due</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="estimatedHours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hours</FormLabel>
+                <FormControl>
+                  <Input type="number" inputMode="decimal" min="0" step="0.5" placeholder="16" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        {tasks.length > 0 ? (
+          <FormField
+            control={form.control}
+            name="dependsOn"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Can only start once these are finished</FormLabel>
+                <div className="grid max-h-32 gap-1 overflow-y-auto rounded-xl border bg-muted/30 p-2">
+                  {tasks.map((existing) => (
+                    <label key={existing.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={field.value.includes(existing.id)}
+                        onChange={(event) =>
+                          field.onChange(event.target.checked ? [...field.value, existing.id] : field.value.filter((id) => id !== existing.id))
+                        }
+                      />
+                      <span className="truncate">{existing.title}</span>
+                    </label>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
+      </FormDialog>
+    </Form>
   )
 }

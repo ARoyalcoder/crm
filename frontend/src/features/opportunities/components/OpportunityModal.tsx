@@ -132,11 +132,11 @@ export function OpportunityModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center justify-between pb-3 border-b">
             <div>
-              <h2 className="text-lg font-semibold">{isEditing ? 'Edit Opportunity' : 'New Opportunity'}</h2>
+              <h2 className="text-lg font-semibold">{isEditing ? 'Edit opportunity' : 'New opportunity'}</h2>
               <p className="text-xs text-muted-foreground">
                 {isEditing
-                  ? 'Update opportunity details and forecast parameters.'
-                  : 'Track a new business deal in the sales pipeline.'}
+                  ? 'Update details and forecast.'
+                  : 'Track a new deal in the sales pipeline.'}
               </p>
             </div>
             <Button
@@ -152,13 +152,13 @@ export function OpportunityModal({
 
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-xs text-destructive">
-              {(error as Error).message || 'Failed to save opportunity'}
+              {(error as Error).message || 'Could not save opportunity'}
             </div>
           )}
 
           <div className="space-y-3">
             <div>
-              <Label htmlFor="opp-title">Opportunity Title *</Label>
+              <Label htmlFor="opp-title">Title *</Label>
               <Input
                 id="opp-title"
                 required
@@ -183,7 +183,7 @@ export function OpportunityModal({
               </div>
 
               <div>
-                <Label htmlFor="opp-prob">Win Probability (%)</Label>
+                <Label htmlFor="opp-prob">Win probability (%)</Label>
                 <Input
                   id="opp-prob"
                   type="number"
@@ -198,7 +198,7 @@ export function OpportunityModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="opp-close-date">Expected Close Date</Label>
+                <Label htmlFor="opp-close-date">Expected close date</Label>
                 <Input
                   id="opp-close-date"
                   type="date"
@@ -209,7 +209,7 @@ export function OpportunityModal({
 
               {!isEditing && (
                 <div>
-                  <Label htmlFor="opp-stage">Initial Stage</Label>
+                  <Label htmlFor="opp-stage">Initial stage</Label>
                   <Select
                     id="opp-stage"
                     value={stageId}
@@ -232,7 +232,7 @@ export function OpportunityModal({
 
             {/* Customer Picker */}
             <div>
-              <Label htmlFor="opp-customer">Associated Customer</Label>
+              <Label htmlFor="opp-customer">Customer</Label>
               <Select
                 id="opp-customer"
                 value={customerId}
@@ -254,7 +254,7 @@ export function OpportunityModal({
 
             {/* Lead Picker */}
             <div>
-              <Label htmlFor="opp-lead">Associated Lead</Label>
+              <Label htmlFor="opp-lead">Lead</Label>
               <Select
                 id="opp-lead"
                 value={leadId}
@@ -276,7 +276,7 @@ export function OpportunityModal({
 
             {/* Service Offering Picker */}
             <div>
-              <Label htmlFor="opp-service">Service Offering</Label>
+              <Label htmlFor="opp-service">Service</Label>
               <Select
                 id="opp-service"
                 value={serviceId}
@@ -307,7 +307,7 @@ export function OpportunityModal({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending || !title.trim()}>
-              {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Opportunity'}
+              {isPending ? 'Saving…' : isEditing ? 'Save changes' : 'Create opportunity'}
             </Button>
           </div>
         </form>

@@ -101,6 +101,95 @@ public final class Permissions {
     public static final String PROOF_OF_WORK_VERIFY = "PROOF_OF_WORK_VERIFY";
     public static final String PROOF_OF_WORK_DELETE = "PROOF_OF_WORK_DELETE";
 
+    public static final String WORKFORCE_VIEW = "WORKFORCE_VIEW";
+    public static final String WORKFORCE_CREATE = "WORKFORCE_CREATE";
+    public static final String WORKFORCE_UPDATE = "WORKFORCE_UPDATE";
+    public static final String WORKFORCE_DELETE = "WORKFORCE_DELETE";
+
+    public static final String WARRANTY_VIEW = "WARRANTY_VIEW";
+    /** Creating, updating and voiding warranties. */
+    public static final String WARRANTY_MANAGE = "WARRANTY_MANAGE";
+
+    public static final String AMC_VIEW = "AMC_VIEW";
+    /** Creating, editing, renewing AMC contracts and scheduling service visits. */
+    public static final String AMC_MANAGE = "AMC_MANAGE";
+
+    public static final String TICKET_VIEW = "TICKET_VIEW";
+    public static final String TICKET_CREATE = "TICKET_CREATE";
+    /** Assigning and re-assigning tickets to agents. */
+    public static final String TICKET_ASSIGN = "TICKET_ASSIGN";
+    /** Resolving and closing tickets. */
+    public static final String TICKET_RESOLVE = "TICKET_RESOLVE";
+    /** Full ticket management plus SLA configuration. */
+    public static final String TICKET_MANAGE = "TICKET_MANAGE";
+
+    public static final String VENDOR_VIEW = "VENDOR_VIEW";
+    public static final String VENDOR_CREATE = "VENDOR_CREATE";
+    public static final String VENDOR_UPDATE = "VENDOR_UPDATE";
+    public static final String VENDOR_DELETE = "VENDOR_DELETE";
+    /** Adding or updating scorecard ratings for a vendor. */
+    public static final String VENDOR_SCORE = "VENDOR_SCORE";
+
+    public static final String PARTNER_VIEW = "PARTNER_VIEW";
+    /** Creating, editing and deleting partner organisations. */
+    public static final String PARTNER_MANAGE = "PARTNER_MANAGE";
+
+    /** View the receivables dashboard, outstanding invoices, ageing and collection tasks. */
+    public static final String RECEIVABLES_VIEW = "RECEIVABLES_VIEW";
+    /** Create and update collection tasks and manage receivables configuration. */
+    public static final String RECEIVABLES_MANAGE = "RECEIVABLES_MANAGE";
+
+    /** View and manage own in-app notifications and notification preferences. */
+    public static final String NOTIFICATION_VIEW = "NOTIFICATION_VIEW";
+
+    public static final String DOCUMENT_VIEW = "DOCUMENT_VIEW";
+    public static final String DOCUMENT_UPLOAD = "DOCUMENT_UPLOAD";
+    public static final String DOCUMENT_DELETE = "DOCUMENT_DELETE";
+
+    /** View workflow rules and their execution logs. */
+    public static final String WORKFLOW_VIEW = "WORKFLOW_VIEW";
+    /** Create, update, delete, enable and disable workflow rules. */
+    public static final String WORKFLOW_MANAGE = "WORKFLOW_MANAGE";
+
+    /** View performance targets and actual-vs-target summaries for employees. */
+    public static final String PERFORMANCE_VIEW = "PERFORMANCE_VIEW";
+    /** Set and update performance targets for employees. */
+    public static final String PERFORMANCE_MANAGE = "PERFORMANCE_MANAGE";
+    /** View commission rules and commission records. */
+    public static final String COMMISSION_VIEW = "COMMISSION_VIEW";
+    /** Create/update commission rules; approve, pay and cancel commission records. */
+    public static final String COMMISSION_MANAGE = "COMMISSION_MANAGE";
+
+    /** View achievement rules, user achievements, leaderboard and customer reward balances. */
+    public static final String REWARDS_VIEW = "REWARDS_VIEW";
+    /** Create/update achievement rules; add, adjust and redeem customer points. */
+    public static final String REWARDS_MANAGE = "REWARDS_MANAGE";
+
+    /** View analytics dashboards across all business domains. */
+    public static final String ANALYTICS_VIEW = "ANALYTICS_VIEW";
+
+    /** View job openings, candidates, applications and interviews. */
+    public static final String RECRUITMENT_VIEW = "RECRUITMENT_VIEW";
+    /** Create and manage job openings, candidates, applications and interviews. */
+    public static final String RECRUITMENT_MANAGE = "RECRUITMENT_MANAGE";
+
+    /** View customer intelligence: health scores, CLV, segments and score explanations. */
+    public static final String INTELLIGENCE_VIEW = "INTELLIGENCE_VIEW";
+
+    /** View the PAWAN PULSE AI insight feed (achievements, opportunities, risks, next best actions). */
+    public static final String PULSE_VIEW = "PULSE_VIEW";
+
+    /** View the AI Daily Brief personalised to the user's role. */
+    public static final String BRIEF_VIEW = "BRIEF_VIEW";
+
+    /** Use the Ask PAWAN AI natural-language query interface. */
+    public static final String ASK_VIEW = "ASK_VIEW";
+
+    /** View external integration configurations and their status. */
+    public static final String INTEGRATION_VIEW = "INTEGRATION_VIEW";
+    /** Configure, enable, disable and test external integrations. */
+    public static final String INTEGRATION_MANAGE = "INTEGRATION_MANAGE";
+
     public static final Set<String> ALL = Set.of(
             USER_VIEW, USER_CREATE, USER_UPDATE, USER_DELETE,
             ROLE_VIEW, ROLE_UPDATE,
@@ -117,7 +206,27 @@ public final class Permissions {
             OPPORTUNITY_VIEW, OPPORTUNITY_CREATE, OPPORTUNITY_UPDATE, OPPORTUNITY_DELETE, OPPORTUNITY_CONFIGURE,
             QUOTATION_VIEW, QUOTATION_CREATE, QUOTATION_UPDATE, QUOTATION_APPROVE, QUOTATION_DELETE,
             ORDER_VIEW, ORDER_CREATE, ORDER_UPDATE, ORDER_CANCEL,
-            PROOF_OF_WORK_VIEW, PROOF_OF_WORK_CREATE, PROOF_OF_WORK_VERIFY, PROOF_OF_WORK_DELETE);
+            PROOF_OF_WORK_VIEW, PROOF_OF_WORK_CREATE, PROOF_OF_WORK_VERIFY, PROOF_OF_WORK_DELETE,
+            WORKFORCE_VIEW, WORKFORCE_CREATE, WORKFORCE_UPDATE, WORKFORCE_DELETE,
+            WARRANTY_VIEW, WARRANTY_MANAGE,
+            AMC_VIEW, AMC_MANAGE,
+            TICKET_VIEW, TICKET_CREATE, TICKET_ASSIGN, TICKET_RESOLVE, TICKET_MANAGE,
+            VENDOR_VIEW, VENDOR_CREATE, VENDOR_UPDATE, VENDOR_DELETE, VENDOR_SCORE,
+            PARTNER_VIEW, PARTNER_MANAGE,
+            RECEIVABLES_VIEW, RECEIVABLES_MANAGE,
+            NOTIFICATION_VIEW,
+            DOCUMENT_VIEW, DOCUMENT_UPLOAD, DOCUMENT_DELETE,
+            WORKFLOW_VIEW, WORKFLOW_MANAGE,
+            PERFORMANCE_VIEW, PERFORMANCE_MANAGE,
+            COMMISSION_VIEW, COMMISSION_MANAGE,
+            REWARDS_VIEW, REWARDS_MANAGE,
+            ANALYTICS_VIEW,
+            RECRUITMENT_VIEW, RECRUITMENT_MANAGE,
+            INTELLIGENCE_VIEW,
+            PULSE_VIEW,
+            INTEGRATION_VIEW, INTEGRATION_MANAGE,
+            BRIEF_VIEW,
+            ASK_VIEW);
 
     private Permissions() {
     }

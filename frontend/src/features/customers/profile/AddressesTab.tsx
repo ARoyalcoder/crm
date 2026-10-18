@@ -9,6 +9,7 @@ import { FormError } from '@/components/forms/FormParts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -83,7 +84,7 @@ export function AddressesTab({ customer }: CustomerTabProps) {
           <ErrorState title="Could not load addresses" error={addresses.error} onRetry={() => void addresses.refetch()} />
         ) : addresses.data.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No addresses yet. Add a billing address for invoices and a service address for where the work is done.
+            No addresses yet. Add a billing address for invoices and a service address for the work site.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2" aria-label="Addresses">
@@ -230,9 +231,7 @@ function AddressForm({ customerId, address, onDone, onCancel }: AddressFormProps
           render={({ field: input }) => (
             <FormItem className="flex items-center gap-2">
               <FormControl>
-                <input
-                  type="checkbox"
-                  className="size-4 accent-primary"
+                <Checkbox
                   checked={input.value}
                   onChange={(event) => input.onChange(event.target.checked)}
                   onBlur={input.onBlur}

@@ -62,11 +62,11 @@ export function ChangeStageModal({
 
           {isLost && (
             <div className="space-y-1.5">
-              <Label htmlFor="loss-reason">Loss Reason *</Label>
+              <Label htmlFor="loss-reason">Loss reason *</Label>
               <Textarea
                 id="loss-reason"
                 required
-                placeholder="Why was this opportunity lost? (e.g. Budget constraints, Competitor pricing)"
+                placeholder="Why was it lost? e.g. budget, competitor pricing"
                 value={lossReason}
                 onChange={(e) => setLossReason(e.target.value)}
                 rows={3}
@@ -75,10 +75,10 @@ export function ChangeStageModal({
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="stage-notes">Transition Notes (Optional)</Label>
+            <Label htmlFor="stage-notes">Notes (optional)</Label>
             <Textarea
               id="stage-notes"
-              placeholder="Add details about this stage transition..."
+              placeholder="Details about this stage change…"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
@@ -99,7 +99,7 @@ export function ChangeStageModal({
               disabled={isPending || (isLost && !lossReason.trim())}
               variant={isLost ? 'destructive' : 'default'}
             >
-              {isPending ? 'Updating...' : `Confirm Stage: ${targetStage.name}`}
+              {isPending ? 'Updating…' : `Confirm Stage: ${targetStage.name}`}
             </Button>
           </div>
         </form>

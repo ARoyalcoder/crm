@@ -26,14 +26,14 @@ export function allocationProblems(invoices: InvoiceSummary[], typed: TypedAlloc
   for (const invoice of invoices) {
     const paise = typedPaise(typed[invoice.id])
     if (paise === null) {
-      rows[invoice.id] = 'Enter an amount, with at most 2 decimals'
+      rows[invoice.id] = 'Enter an amount, up to 2 decimals'
     } else if (paise > toPaise(invoice.outstanding)) {
       rows[invoice.id] = 'More than this invoice is owed'
     } else {
       total += paise
     }
   }
-  const overall = availablePaise !== null && total > availablePaise ? 'The allocations add up to more than there is to allocate.' : null
+  const overall = availablePaise !== null && total > availablePaise ? 'Allocations exceed the amount available.' : null
   return { rows, overall, totalPaise: total, valid: Object.keys(rows).length === 0 && overall === null }
 }
 

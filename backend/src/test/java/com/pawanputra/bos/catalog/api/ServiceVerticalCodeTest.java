@@ -20,8 +20,8 @@ class ServiceVerticalCodeTest {
     }
 
     @Test
-    void realEstateIsNotAVertical() {
-        assertThat(ServiceVerticalCode.fromCode("REAL_ESTATE")).isEmpty();
+    void unknownCodeIsNotAVertical() {
+        assertThat(ServiceVerticalCode.fromCode("NONEXISTENT_CODE")).isEmpty();
     }
 
     @Test

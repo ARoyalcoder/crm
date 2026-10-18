@@ -262,7 +262,7 @@ test('a draft is prepared line by line, with totals worked out by the server', a
   // A value that is not a number is caught before anything is sent.
   await second.getByRole('textbox', { name: 'Quantity' }).fill('two')
   await form.getByRole('button', { name: 'Create draft' }).click()
-  await expect(second.getByText('More than zero, at most 3 decimals')).toBeVisible()
+  await expect(second.getByText('Above zero, up to 3 decimals')).toBeVisible()
   expect(created).toBeNull()
   await second.getByRole('textbox', { name: 'Quantity' }).fill('1')
 
@@ -290,7 +290,7 @@ test('a draft is issued with its dates, and from then on is corrected rather tha
   await page.goto(`/invoices/${INVOICE}`)
 
   await expect(page.getByRole('heading', { name: 'Draft invoice' })).toBeVisible()
-  await expect(page.getByText('This is a draft. It has no number')).toBeVisible()
+  await expect(page.getByText('Draft: no number')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Edit' })).toBeVisible()
   // A draft is not owed, cannot be paid and has no document to print.
   await expect(page.getByRole('link', { name: 'Record payment' })).toHaveCount(0)
@@ -305,7 +305,7 @@ test('a draft is issued with its dates, and from then on is corrected rather tha
   await issue.getByLabel('Issue date').fill('2026-10-01')
   await expect(issue.getByLabel('Due date')).toHaveValue('2026-10-16')
   await issue.getByLabel('Due date').fill('2026-09-30')
-  await expect(issue.getByRole('alert')).toHaveText('The due date cannot be before the issue date.')
+  await expect(issue.getByRole('alert')).toHaveText('Due date cannot be before issue date.')
   await expect(issue.getByRole('button', { name: 'Issue invoice' })).toBeDisabled()
   await issue.getByLabel('Due date').fill('2026-10-31')
   await issue.getByRole('button', { name: 'Issue invoice' }).click()
@@ -331,10 +331,10 @@ test('credit and debit notes change what is owed, each with a reason and an idem
   const credit = page.getByRole('form', { name: 'Credit note' })
   await expect(credit).toContainText('At most ₹1,18,000.00, which is what is outstanding.')
   await credit.getByRole('button', { name: 'Record credit note' }).click()
-  await expect(credit.getByRole('alert')).toHaveText('Enter an amount of more than zero, with at most 2 decimals.')
+  await expect(credit.getByRole('alert')).toHaveText('Enter an amount above zero, up to 2 decimals.')
   await credit.getByLabel('Amount (₹)').fill('12500')
   await credit.getByRole('button', { name: 'Record credit note' }).click()
-  await expect(credit.getByRole('alert')).toHaveText('Say why: the reason is kept with the note.')
+  await expect(credit.getByRole('alert')).toHaveText('Give a reason; it is kept with the note.')
   expect(log).toHaveLength(0)
 
   // The server refuses more than is owed, and says what to do instead.
@@ -378,7 +378,7 @@ test('an untouched invoice is cancelled with a reason and stays on record', asyn
   const cancel = page.getByRole('form', { name: 'Cancel invoice' })
   await expect(cancel).toContainText('keeps its number and stays on record')
   await cancel.getByRole('button', { name: 'Cancel this invoice' }).click()
-  await expect(cancel.getByRole('alert')).toHaveText('Say why: the reason is kept on record.')
+  await expect(cancel.getByRole('alert')).toHaveText('Give a reason; it is kept on record.')
   await cancel.getByLabel('Reason').fill('Raised twice')
   await cancel.getByRole('button', { name: 'Cancel this invoice' }).click()
 
@@ -475,7 +475,7 @@ test('a payment is recorded against what the customer owes, oldest first, exactl
 
   // A lakh arrives instead: the older invoice is settled first, and the rest goes to the newer one.
   await form.getByLabel('Amount received (₹)').fill('100000')
-  await expect(settles.getByRole('alert')).toHaveText('The allocations add up to more than there is to allocate.')
+  await expect(settles.getByRole('alert')).toHaveText('Allocations exceed the amount available.')
   await settles.getByRole('button', { name: 'Settle oldest first' }).click()
   await expect(form.getByRole('textbox', { name: 'Amount for INV-2627-000003' })).toHaveValue('60000.00')
   await expect(form.getByRole('textbox', { name: 'Amount for INV-2627-000007' })).toHaveValue('40000.00')
@@ -622,9 +622,9 @@ test('a bounced payment is reversed with a reason and kept on record', async ({ 
 
   await page.getByRole('button', { name: 'Reverse payment' }).click()
   const reverse = page.getByRole('form', { name: 'Reverse payment' })
-  await expect(reverse).toContainText('Every invoice this payment settled will be owed again')
+  await expect(reverse).toContainText('Every invoice this payment settled becomes owed again')
   await reverse.getByRole('button', { name: 'Reverse this payment' }).click()
-  await expect(reverse.getByRole('alert')).toHaveText('Say why: the reason is kept on record.')
+  await expect(reverse.getByRole('alert')).toHaveText('Give a reason; it is kept on record.')
   await reverse.getByLabel('Reason').fill('Cheque bounced')
   await reverse.getByRole('button', { name: 'Reverse this payment' }).click()
 

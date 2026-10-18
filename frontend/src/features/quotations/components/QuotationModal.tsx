@@ -1,322 +1,218 @@
-import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
+import { useForm, useWatch } from 'react-hook-form'
+import { z } from 'zod'
+import { EntityPickerField } from '@/components/shared/EntityPickerField'
+import { FormDialog } from '@/components/shared/FormDialog'
+import { pickedOption } from '@/components/shared/picker-schema'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { customersQuery } from '@/features/customers/api'
-import { leadsQuery } from '@/features/leads/api'
-import { opportunitiesQuery } from '@/features/opportunities/api'
-import {
-  createQuotation,
-  updateDraftQuotation,
-  type CreateQuotationPayload,
-  type ItemInput,
-  type QuotationDetail,
-} from '../api'
+import { CustomerPicker } from '@/features/customers/components/CustomerPicker'
+import { LeadPicker } from '@/features/leads/components/LeadPicker'
+import { OpportunityPicker } from '@/features/opportunities/components/OpportunityPicker'
+import { createQuotation, updateDraftQuotation, type CreateQuotationPayload, type QuotationDetail } from '../api'
+import { blankItem, itemFromSaved, itemToInput, itemsFormSchema, quotationTotals } from '../quotation-form'
 import { QuotationItemsEditor } from './QuotationItemsEditor'
+import { QuotationTotals } from './QuotationTotals'
 
-interface QuotationModalProps {
+const schema = z.object({
+  title: z.string().trim().min(1, 'Give the quotation a subject').max(250, 'Maximum 250 characters'),
+  validUntil: z.string(),
+  customer: pickedOption.nullable(),
+  lead: pickedOption.nullable(),
+  opportunity: pickedOption.nullable(),
+  items: itemsFormSchema,
+  discountPercentage: z.string().refine((value) => value === '' || (Number(value) >= 0 && Number(value) <= 100), 'Use 0 to 100'),
+  terms: z.string(),
+  notes: z.string(),
+  nextFollowUpDate: z.string(),
+})
+type FormValues = z.infer<typeof schema>
+
+const STANDARD_TERMS = 'Payment: 50% in advance, the balance on completion.'
+
+type QuotationModalProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** The draft being edited; leave out to write a new quotation. */
   quotation?: QuotationDetail | null
   onSuccess: (quotation: QuotationDetail) => void
 }
 
-export function QuotationModal({
-  open,
-  onOpenChange,
-  quotation,
-  onSuccess,
-}: QuotationModalProps) {
-  const isEditing = Boolean(quotation)
+/** Writes a new quotation or edits a draft: who it is for, what is sold, the terms and when to follow up. */
+export function QuotationModal({ open, onOpenChange, quotation, onSuccess }: QuotationModalProps) {
+  const editing = Boolean(quotation)
+  const version = quotation?.currentVersion
+  // A quotation-wide GST rate saved with an older quotation is kept; new ones take GST from their lines.
+  const fallbackTax = version?.taxPercentage ?? 0
 
-  const [title, setTitle] = useState(quotation?.title ?? '')
-  const [customerId, setCustomerId] = useState(quotation?.customerId ?? '')
-  const [customerName, setCustomerName] = useState(quotation?.customerName ?? '')
-  const [leadId, setLeadId] = useState(quotation?.leadId ?? '')
-  const [leadName, setLeadName] = useState(quotation?.leadName ?? '')
-  const [opportunityId, setOpportunityId] = useState(quotation?.opportunityId ?? '')
-  const [opportunityTitle, setOpportunityTitle] = useState(quotation?.opportunityTitle ?? '')
-  const [validUntil, setValidUntil] = useState(quotation?.validUntil ?? '')
-  const [nextFollowUpDate, setNextFollowUpDate] = useState(quotation?.nextFollowUpDate ?? '')
-  const [terms, setTerms] = useState(quotation?.currentVersion?.terms ?? 'Standard payment terms: 50% advance, balance on completion.')
-  const [notes, setNotes] = useState(quotation?.currentVersion?.notes ?? '')
-
-  // Overall discount & tax
-  const [discountPercentage] = useState<number>(
-    quotation?.currentVersion?.discountPercentage ?? 0
-  )
-  const [taxPercentage] = useState<number>(
-    quotation?.currentVersion?.taxPercentage ?? 18
-  )
-
-  // Items
-  const [items, setItems] = useState<ItemInput[]>(() => {
-    if (quotation?.currentVersion?.items && quotation.currentVersion.items.length > 0) {
-      return quotation.currentVersion.items.map((i) => ({
-        serviceId: i.serviceId,
-        serviceName: i.serviceName,
-        description: i.description,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        discountPercentage: i.discountPercentage,
-        taxPercentage: i.taxPercentage,
-      }))
-    }
-    return [
-      {
-        serviceId: null,
-        serviceName: '',
-        description: '',
-        quantity: 1,
-        unitPrice: 0,
-        discountPercentage: 0,
-        taxPercentage: 18,
-      },
-    ]
-  })
-
-  // Dropdown sources
-  const customersList = useQuery(customersQuery({}))
-  const leadsList = useQuery(leadsQuery({}))
-  const oppsList = useQuery(opportunitiesQuery({}))
-
-  const createMut = useMutation({
-    mutationFn: (payload: CreateQuotationPayload) => createQuotation(payload),
-    onSuccess: (created) => {
-      onSuccess(created)
-      onOpenChange(false)
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: quotation?.title ?? '',
+      validUntil: quotation?.validUntil ?? '',
+      customer: quotation?.customerId ? { id: quotation.customerId, name: quotation.customerName ?? 'Customer' } : null,
+      lead: quotation?.leadId ? { id: quotation.leadId, name: quotation.leadName ?? 'Lead' } : null,
+      opportunity: quotation?.opportunityId ? { id: quotation.opportunityId, name: quotation.opportunityTitle ?? 'Deal' } : null,
+      items: version?.items.length ? version.items.map(itemFromSaved) : [blankItem()],
+      discountPercentage: version?.discountPercentage ? String(version.discountPercentage) : '',
+      terms: version?.terms ?? (editing ? '' : STANDARD_TERMS),
+      notes: version?.notes ?? '',
+      nextFollowUpDate: quotation?.nextFollowUpDate ?? '',
     },
   })
 
-  const updateMut = useMutation({
-    mutationFn: (payload: { id: string; data: CreateQuotationPayload }) =>
-      updateDraftQuotation(payload.id, payload.data),
-    onSuccess: (updated) => {
-      onSuccess(updated)
+  const items = useWatch({ control: form.control, name: 'items' })
+  const discount = useWatch({ control: form.control, name: 'discountPercentage' })
+  const totals = quotationTotals(items ?? [], Number(discount) || 0, fallbackTax)
+
+  const save = useMutation({
+    mutationFn: (values: FormValues) => {
+      const payload: CreateQuotationPayload = {
+        title: values.title.trim(),
+        customerId: values.customer?.id ?? null,
+        customerName: values.customer?.name ?? null,
+        leadId: values.lead?.id ?? null,
+        leadName: values.lead?.name ?? null,
+        opportunityId: values.opportunity?.id ?? null,
+        opportunityTitle: values.opportunity?.name ?? null,
+        validUntil: values.validUntil || null,
+        nextFollowUpDate: values.nextFollowUpDate || null,
+        terms: values.terms.trim() || null,
+        notes: values.notes.trim() || null,
+        discountPercentage: Number(values.discountPercentage) || 0,
+        taxPercentage: fallbackTax,
+        items: values.items.map(itemToInput),
+      }
+      return editing && quotation ? updateDraftQuotation(quotation.id, payload) : createQuotation(payload)
+    },
+    onSuccess: (saved) => {
+      onSuccess(saved)
       onOpenChange(false)
     },
   })
-
-  const isPending = createMut.isPending || updateMut.isPending
-  const error = createMut.error || updateMut.error
-
-  if (!open) return null
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!title.trim() || items.length === 0) return
-
-    const payload: CreateQuotationPayload = {
-      title: title.trim(),
-      customerId: customerId || null,
-      customerName: customerName || null,
-      leadId: leadId || null,
-      leadName: leadName || null,
-      opportunityId: opportunityId || null,
-      opportunityTitle: opportunityTitle || null,
-      validUntil: validUntil || null,
-      nextFollowUpDate: nextFollowUpDate || null,
-      terms: terms || null,
-      notes: notes || null,
-      discountPercentage,
-      taxPercentage,
-      items: items.map((i) => ({
-        serviceId: i.serviceId || null,
-        serviceName: i.serviceName.trim() || 'Service Item',
-        description: i.description || null,
-        quantity: Number(i.quantity) || 1,
-        unitPrice: Number(i.unitPrice) || 0,
-        discountPercentage: Number(i.discountPercentage) || 0,
-        taxPercentage: Number(i.taxPercentage) || 0,
-      })),
-    }
-
-    if (isEditing && quotation) {
-      updateMut.mutate({ id: quotation.id, data: payload })
-    } else {
-      createMut.mutate(payload)
-    }
-  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="max-h-[90vh] w-full max-w-3xl overflow-y-auto p-6 shadow-xl">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b">
-            <div>
-              <h2 className="text-lg font-semibold">{isEditing ? `Edit Quotation ${quotation?.quotationNumber}` : 'New Quotation'}</h2>
-              <p className="text-xs text-muted-foreground">
-                {isEditing
-                  ? 'Modify draft quotation items, terms, and customer details.'
-                  : 'Create a formal price proposal with line items, tax, and terms.'}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-xs text-destructive">
-              {(error as Error).message || 'Failed to save quotation'}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="q-title">Quotation Subject / Title *</Label>
-              <Input
-                id="q-title"
-                required
-                placeholder="e.g. CCTV Surveillance and Access Control Setup"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="q-validity">Validity Date</Label>
-              <Input
-                id="q-validity"
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <Label htmlFor="q-cust">Customer</Label>
-              <Select
-                id="q-cust"
-                value={customerId}
-                onChange={(e) => {
-                  const val = e.target.value
-                  setCustomerId(val)
-                  const c = customersList.data?.items.find((item) => item.id === val)
-                  setCustomerName(c ? c.displayName : '')
-                }}
-              >
-                <option value="">None / Unlinked</option>
-                {customersList.data?.items.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.displayName}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="q-lead">Lead</Label>
-              <Select
-                id="q-lead"
-                value={leadId}
-                onChange={(e) => {
-                  const val = e.target.value
-                  setLeadId(val)
-                  const l = leadsList.data?.items.find((item) => item.id === val)
-                  setLeadName(l ? l.contactName : '')
-                }}
-              >
-                <option value="">None / Unlinked</option>
-                {leadsList.data?.items.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.contactName}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="q-opp">Opportunity</Label>
-              <Select
-                id="q-opp"
-                value={opportunityId}
-                onChange={(e) => {
-                  const val = e.target.value
-                  setOpportunityId(val)
-                  const o = oppsList.data?.items.find((item) => item.id === val)
-                  setOpportunityTitle(o ? o.title : '')
-                }}
-              >
-                <option value="">None / Unlinked</option>
-                {oppsList.data?.items.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.title}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
-
-          {/* Line items editor */}
-          <div className="rounded-lg border p-3 bg-muted/10">
-            <QuotationItemsEditor items={items} onChange={setItems} />
-          </div>
-
-          {/* Terms, Notes & Next Follow-up */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="q-terms">Commercial Terms & Conditions</Label>
-              <Textarea
-                id="q-terms"
-                placeholder="Payment terms, delivery schedule, warranty..."
-                value={terms}
-                onChange={(e) => setTerms(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="q-notes">Internal Notes</Label>
-              <Textarea
-                id="q-notes"
-                placeholder="Internal pricing rationale or instructions..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="q-follow-up">Scheduled Follow-up Date</Label>
-            <Input
-              id="q-follow-up"
-              type="date"
-              value={nextFollowUpDate}
-              onChange={(e) => setNextFollowUpDate(e.target.value)}
-              className="w-48"
+    <Form {...form}>
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={editing ? `Edit ${quotation?.quotationNumber}` : 'New quotation'}
+        description={editing ? 'Edit the draft: lines, terms and customer.' : 'A price proposal with its lines, GST and terms.'}
+        submitLabel={editing ? 'Save changes' : 'Create quotation'}
+        size="xl"
+        onSubmit={form.handleSubmit((values) => save.mutate(values))}
+        submitting={save.isPending}
+        error={save.error}
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subject</FormLabel>
+                  <FormControl>
+                    <Input placeholder="CCTV and access control for the Pune warehouse" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name="validUntil"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valid until</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending || !title.trim() || items.length === 0}>
-              {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Quotation'}
-            </Button>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <EntityPickerField control={form.control} name="customer" label="Customer">
+            {(field) => <CustomerPicker {...field} />}
+          </EntityPickerField>
+          <EntityPickerField control={form.control} name="lead" label="Lead">
+            {(field) => <LeadPicker {...field} />}
+          </EntityPickerField>
+          <EntityPickerField control={form.control} name="opportunity" label="Deal">
+            {(field) => <OpportunityPicker {...field} />}
+          </EntityPickerField>
+        </div>
+
+        <QuotationItemsEditor />
+
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="terms"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Terms the customer sees</FormLabel>
+                  <FormControl>
+                    <Textarea rows={4} placeholder="Payment, delivery, warranty" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Internal notes</FormLabel>
+                  <FormControl>
+                    <Textarea rows={4} placeholder="How the price was worked out. Hidden from the customer." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-        </form>
-      </Card>
-    </div>
+          <div className="grid gap-4 sm:w-64">
+            <FormField
+              control={form.control}
+              name="discountPercentage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Extra discount (%)</FormLabel>
+                  <FormControl>
+                    <Input type="number" inputMode="decimal" min="0" max="100" step="any" placeholder="0" {...field} />
+                  </FormControl>
+                  <FormDescription>Off the whole quotation, on top of line discounts.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <QuotationTotals totals={totals} />
+          </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="nextFollowUpDate"
+          render={({ field }) => (
+            <FormItem className="sm:max-w-xs">
+              <FormLabel>Follow up on</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </FormDialog>
+    </Form>
   )
 }

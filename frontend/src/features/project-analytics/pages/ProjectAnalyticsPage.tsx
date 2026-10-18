@@ -37,7 +37,7 @@ export function ProjectAnalyticsPage() {
   const firstName = user?.fullName.split(' ')[0]
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <header className="grid gap-1">
         <h1 className="text-3xl font-semibold tracking-tight">
           {greeting()}
@@ -62,41 +62,41 @@ function Dashboard({ data }: { data: ProjectAnalytics }) {
   return (
     <>
       <section aria-label="Overview" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-        <StatCard label="Active Projects" value={String(cards.activeProjects)} caption="In progress right now" emoji="📁" tone="violet" />
-        <StatCard label="Starting Today" value={String(cards.startingToday)} caption="Kick-offs scheduled for today" emoji="🚀" tone="sky" />
-        <StatCard label="Due Today" value={String(cards.dueToday)} caption="Expected to be delivered today" emoji="⏰" tone="amber" />
+        <StatCard label="Active projects" value={String(cards.activeProjects)} caption="In progress right now" emoji="📁" tone="violet" />
+        <StatCard label="Starting today" value={String(cards.startingToday)} caption="Kick-offs scheduled for today" emoji="🚀" tone="sky" />
+        <StatCard label="Due today" value={String(cards.dueToday)} caption="Expected to be delivered today" emoji="⏰" tone="amber" />
         <StatCard
-          label="Delayed Projects"
+          label="Delayed projects"
           value={String(cards.delayedProjects)}
           caption={cards.delayedProjects === 0 ? 'Nothing is past its date' : 'Past their expected date'}
           emoji="⚠️"
           tone="rose"
         />
-        <StatCard label="Completed This Month" value={String(cards.completedThisMonth)} caption="Delivered since the 1st" emoji="✅" tone="emerald" />
-        <StatCard label="Revenue in Progress" value={rupees.format(cards.revenueInProgress)} caption="Across active projects" emoji="💰" tone="emerald" />
+        <StatCard label="Completed this month" value={String(cards.completedThisMonth)} caption="Delivered since the 1st" emoji="✅" tone="emerald" />
+        <StatCard label="Revenue in progress" value={rupees.format(cards.revenueInProgress)} caption="Across active projects" emoji="💰" tone="emerald" />
         <StatCard
-          label="Completed Revenue"
+          label="Completed revenue"
           value={rupees.format(cards.completedRevenue)}
           caption={`${rupees.format(cards.completedRevenueThisMonth)} this month`}
           emoji="🏆"
           tone="amber"
         />
         <StatCard
-          label="Average Project Duration"
+          label="Average project duration"
           value={days(cards.averageProjectDurationDays, 'Not known yet')}
           caption="Start to delivery, completed projects"
           emoji="📅"
           tone="sky"
         />
         <StatCard
-          label="Average Delivery Delay"
+          label="Average delivery delay"
           value={days(cards.averageDeliveryDelayDays, 'No late deliveries')}
           caption="Among projects delivered late"
           emoji="🐢"
           tone="rose"
         />
         <StatCard
-          label="Client Satisfaction"
+          label="Client satisfaction"
           value={cards.clientSatisfaction === null || cards.clientSatisfaction === undefined ? 'No ratings yet' : `${cards.clientSatisfaction} / 5`}
           caption={cards.ratedProjects === 1 ? 'From 1 rated project' : `From ${cards.ratedProjects} rated projects`}
           emoji="😊"
@@ -104,25 +104,24 @@ function Dashboard({ data }: { data: ProjectAnalytics }) {
         />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <PipelineCard data={data} />
         <PipelineProjectsCard />
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <DeliveryCard delivery={data.delivery} />
         <ProductivityCard productivity={data.productivity} />
       </div>
-      <Insight data={data} />
     </>
   )
 }
 
 const TONES = {
-  violet: 'from-violet-200 to-violet-100',
-  sky: 'from-sky-200 to-sky-100',
-  amber: 'from-amber-200 to-amber-100',
-  rose: 'from-rose-200 to-rose-100',
-  emerald: 'from-emerald-200 to-emerald-100',
+  violet: 'from-primary to-primary',
+  sky: 'from-primary to-primary',
+  amber: 'from-primary to-primary',
+  rose: 'from-primary to-primary',
+  emerald: 'from-primary to-primary',
 } as const
 
 type StatCardProps = { label: string; value: string; caption: string; emoji: string; tone: keyof typeof TONES }
@@ -156,7 +155,7 @@ function PipelineCard({ data }: { data: ProjectAnalytics }) {
       <CardHeader>
         <CardTitle>Pipeline</CardTitle>
         <CardDescription>
-          Projects by the stage they are in. The stages are the ones defined in your{' '}
+          Projects by stage, as defined in your{' '}
           <Link className="underline underline-offset-2" to="/admin/project-templates">
             project templates
           </Link>
@@ -166,7 +165,7 @@ function PipelineCard({ data }: { data: ProjectAnalytics }) {
       <CardContent className="grid gap-4">
         {data.pipeline.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No project has been placed in a stage yet. Plan a project from its template and it enters the first stage.
+            No project is in a stage yet. Plan a project from its template to start.
           </p>
         ) : (
           <ul className="grid gap-3" aria-label="Projects by stage">
@@ -212,7 +211,7 @@ function PipelineProjectsCard() {
     <Card>
       <CardHeader>
         <CardTitle>Active projects</CardTitle>
-        <CardDescription>Most urgent first. Change a project's stage as it moves along.</CardDescription>
+        <CardDescription>Most urgent first. Change a project's stage as it moves.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         {move.error ? <ErrorState title="The project could not be moved" error={move.error} /> : null}
@@ -221,7 +220,7 @@ function PipelineProjectsCard() {
         ) : projects.isError ? (
           <ErrorState title="Could not load the projects" error={projects.error} onRetry={() => void projects.refetch()} />
         ) : projects.data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">There are no active projects.</p>
+          <p className="text-sm text-muted-foreground">No active projects.</p>
         ) : (
           <ul className="grid max-h-80 gap-2 overflow-y-auto pr-1" aria-label="Active projects">
             {projects.data.map((project) => (
@@ -233,7 +232,7 @@ function PipelineProjectsCard() {
                   <span className="text-xs text-muted-foreground">
                     {project.projectNumber} · {project.customerName}
                     {project.expectedCompletionDate ? ` · due ${dateFormat.format(new Date(project.expectedCompletionDate))}` : ''}
-                    {project.delayed ? <span className="font-medium text-red-700"> · Delayed</span> : null}
+                    {project.delayed ? <span className="font-medium text-destructive"> · Delayed</span> : null}
                   </span>
                 </div>
                 {project.stages.length === 0 ? (
@@ -292,12 +291,12 @@ function DeliveryCard({ delivery }: { delivery: ProjectAnalytics['delivery'] }) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Delivery Performance</CardTitle>
+        <CardTitle>Delivery performance</CardTitle>
         <CardDescription>Completed projects, by whether they met their expected date.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         {delivered === 0 ? (
-          <p className="text-sm text-muted-foreground">No project has been delivered yet.</p>
+          <p className="text-sm text-muted-foreground">No projects delivered yet.</p>
         ) : (
           <div className="grid gap-2">
             <p className="flex items-baseline gap-2">
@@ -318,18 +317,18 @@ function DeliveryCard({ delivery }: { delivery: ProjectAnalytics['delivery'] }) 
           </div>
         )}
         <dl className="grid gap-2 sm:grid-cols-2" aria-label="Delivery figures">
-          <Fact term="Delivered On Time">
+          <Fact term="Delivered on time">
             <span aria-hidden="true">✓ </span>
             {delivery.deliveredOnTime}
           </Fact>
-          <Fact term="Delivered Late">
+          <Fact term="Delivered late">
             <span aria-hidden="true">⚠ </span>
             {delivery.deliveredLate}
           </Fact>
-          <Fact term="Average Delay">{days(delivery.averageDelayDays, 'No late deliveries')}</Fact>
-          <Fact term="Average Completion Time">{days(delivery.averageCompletionDays, 'Not known yet')}</Fact>
-          <Fact term="Fastest Delivery">{extreme(delivery.fastestDelivery)}</Fact>
-          <Fact term="Longest Delivery">{extreme(delivery.longestDelivery)}</Fact>
+          <Fact term="Average delay">{days(delivery.averageDelayDays, 'No late deliveries')}</Fact>
+          <Fact term="Average completion time">{days(delivery.averageCompletionDays, 'Not known yet')}</Fact>
+          <Fact term="Fastest delivery">{extreme(delivery.fastestDelivery)}</Fact>
+          <Fact term="Longest delivery">{extreme(delivery.longestDelivery)}</Fact>
         </dl>
       </CardContent>
     </Card>
@@ -347,16 +346,16 @@ function ProductivityCard({ productivity }: { productivity: ProjectAnalytics['pr
       </CardHeader>
       <CardContent className="grid gap-4">
         <dl className="grid gap-2 sm:grid-cols-2" aria-label="Productivity figures">
-          <Fact term="Projects Completed">
+          <Fact term="Projects completed">
             {productivity.projectsCompleted}{' '}
             <span className="font-normal text-muted-foreground">· {productivity.projectsCompletedThisMonth} this month</span>
           </Fact>
-          <Fact term="Average Hours">{average(productivity.averageHours, 'hours per project', 'No hours logged yet')}</Fact>
-          <Fact term="Average Deliverables">{average(productivity.averageDeliverables, 'per project', 'Not known yet')}</Fact>
-          <Fact term="Average Drawings">{average(productivity.averageDrawings, 'per project', 'Not tracked yet')}</Fact>
+          <Fact term="Average hours">{average(productivity.averageHours, 'hours per project', 'No hours logged yet')}</Fact>
+          <Fact term="Average deliverables">{average(productivity.averageDeliverables, 'per project', 'Not known yet')}</Fact>
+          <Fact term="Average drawings">{average(productivity.averageDrawings, 'per project', 'Not tracked yet')}</Fact>
         </dl>
         {productivity.employees.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No tasks have been assigned to anyone yet.</p>
+          <p className="text-sm text-muted-foreground">No tasks assigned yet.</p>
         ) : (
           <Table aria-label="Employee productivity">
             <TableHeader>
@@ -386,28 +385,3 @@ function ProductivityCard({ productivity }: { productivity: ProjectAnalytics['pr
   )
 }
 
-/** One plain sentence drawn from the figures above: what most deserves a look today. */
-function Insight({ data }: { data: ProjectAnalytics }) {
-  const { cards } = data
-  const message =
-    cards.delayedProjects > 0
-      ? `${cards.delayedProjects} ${cards.delayedProjects === 1 ? 'project is' : 'projects are'} past the expected date. They are at the top of the active list.`
-      : cards.dueToday > 0
-        ? `${cards.dueToday} ${cards.dueToday === 1 ? 'project is' : 'projects are'} due today, and nothing is overdue.`
-        : cards.activeProjects > 0
-          ? 'Nothing is overdue. Keep it up!'
-          : 'No projects are running at the moment.'
-  return (
-    <Card className="bg-gradient-to-r from-amber-50 to-emerald-50 py-4" role="note" aria-label="Today">
-      <CardContent className="flex items-center gap-3 px-4">
-        <span aria-hidden="true" className="text-3xl">
-          💡
-        </span>
-        <div className="grid gap-0.5">
-          <p className="text-sm font-semibold">Today</p>
-          <p className="text-sm text-muted-foreground">{message}</p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}

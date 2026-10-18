@@ -7,6 +7,7 @@ import { RecordLoadState } from '@/components/forms/FormParts'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -157,7 +158,7 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
         {detail.instructions ? (
           <p className="text-sm whitespace-pre-wrap">{detail.instructions}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">No instructions were given for this job.</p>
+          <p className="text-sm text-muted-foreground">No instructions for this job.</p>
         )}
       </Section>
 
@@ -169,9 +170,7 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
             {detail.checklist.map((item) => (
               <li key={item.id}>
                 <label className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm hover:bg-muted/60">
-                  <input
-                    type="checkbox"
-                    className="size-5 accent-primary"
+                  <Checkbox
                     checked={ticking[item.id] ?? item.done}
                     disabled={!working || act.isPending}
                     onChange={(event) => {
@@ -189,7 +188,7 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
           </ul>
         )}
         {detail.canAct && job.status === 'ASSIGNED' ? (
-          <p className="text-xs text-muted-foreground">Accept the job to start ticking things off.</p>
+          <p className="text-xs text-muted-foreground">Accept the job to start the checklist.</p>
         ) : null}
       </Section>
 
@@ -197,7 +196,7 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
       <MaterialsSection detail={detail} working={working} busy={act.isPending} run={run} />
       <NotesSection detail={detail} canAdd={detail.canAct && !closed} busy={act.isPending} run={run} />
 
-      <Section title="Proof of Work Timeline">
+      <Section title="Proof of work timeline">
         <JobProofSection jobId={id} />
       </Section>
 
@@ -223,7 +222,7 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
       ) : null}
 
       {canManage && !closed ? (
-        <Button variant="ghost" className="w-fit text-red-700" disabled={act.isPending} onClick={() => run(() => cancelJob(id))}>
+        <Button variant="ghost" className="w-fit text-destructive" disabled={act.isPending} onClick={() => run(() => cancelJob(id))}>
           Cancel this job
         </Button>
       ) : null}
@@ -272,7 +271,7 @@ function PhotosSection({ detail, working, busy, run }: SectionProps) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       setProblem('Choose a JPEG, PNG or WebP picture.')
     } else if (file.size > 10 * 1024 * 1024) {
-      setProblem('The picture must be at most 10 MB.')
+      setProblem('Maximum picture size is 10 MB.')
     } else {
       setProblem(null)
       const text = caption.trim()
@@ -463,7 +462,7 @@ function NextStep({ detail, busy, onAdvance }: { detail: JobDetail; busy: boolea
         ) : null}
         {open && next === 'CUSTOMER_CONFIRMED' ? (
           <div className="grid gap-2" role="group" aria-label="Customer confirmation">
-            <p className="text-sm text-muted-foreground">Hand the phone to the customer to confirm the work.</p>
+            <p className="text-sm text-muted-foreground">Hand the phone to the customer to confirm.</p>
             <Input aria-label="Name of the person confirming" placeholder="Name of the person confirming" className="h-11" maxLength={200} value={signedByName} onChange={(event) => setSignedByName(event.target.value)} />
             <Input aria-label="Remarks" placeholder="Remarks (optional)" className="h-11" maxLength={1000} value={remarks} onChange={(event) => setRemarks(event.target.value)} />
             <SignaturePad onChange={setSignature} />

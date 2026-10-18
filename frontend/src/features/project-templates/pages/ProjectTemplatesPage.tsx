@@ -32,10 +32,10 @@ export function ProjectTemplatesPage() {
   const remove = useMutation({ mutationFn: (id: string) => deleteTemplate(id), onSuccess: refresh })
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader
         title="Project templates"
-        description="The stages a project goes through, defined per service. A new project of a service can be planned from its template."
+        description="The stages a project goes through, per service. Plan new projects from a template."
         action={
           canConfigure ? (
             <Button asChild>

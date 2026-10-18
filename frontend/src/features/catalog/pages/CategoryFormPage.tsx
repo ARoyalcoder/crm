@@ -45,7 +45,7 @@ export function CategoryFormPage() {
   const existing = useQuery({ ...categoryQuery(id ?? ''), enabled: id !== undefined })
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title={id ? 'Edit category' : 'New category'} back={{ to: LIST, label: 'Service categories' }} />
       {id && !existing.data ? (
         <RecordLoadState
@@ -124,7 +124,7 @@ function CategoryForm({ category }: { category?: Category }) {
                     ))}
                   </Select>
                 </FormControl>
-                {category ? <FormDescription>A category stays in the vertical it was created in.</FormDescription> : null}
+                {category ? <FormDescription>A category stays in its vertical.</FormDescription> : null}
                 <FormMessage />
               </FormItem>
             )}
@@ -159,7 +159,7 @@ function CategoryForm({ category }: { category?: Category }) {
                   />
                 </FormControl>
                 <FormDescription>
-                  {category ? 'The code cannot be changed.' : 'A short identifier such as INSTALLATION. It cannot be changed later.'}
+                  {category ? 'The code cannot be changed.' : 'Short identifier, e.g. INSTALLATION. Fixed once saved.'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

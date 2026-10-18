@@ -11,7 +11,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   assigneesQuery,
   checkDuplicates,
@@ -86,7 +93,7 @@ export function CustomerFormPage() {
   const back = id ? { to: `/customers/${id}`, label: 'Customer' } : { to: '/customers', label: 'Customers' }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <PageHeader title={id ? 'Edit customer' : 'New customer'} back={back} />
       {id && !existing.data ? (
         <RecordLoadState
@@ -205,17 +212,28 @@ function CustomerForm({ customer, cancelTo }: { customer?: CustomerDetail; cance
               <FormItem>
                 <FormLabel>Customer type</FormLabel>
                 <FormControl>
-                  <Select {...field}>
-                    {CUSTOMER_TYPES.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
+                  <Select
+                    items={CUSTOMER_TYPES.map((o) => ({ label: o.label, value: o.value }))}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select customer type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {CUSTOMER_TYPES.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
                   </Select>
                 </FormControl>
                 <FormDescription>
                   {type === 'BUSINESS'
-                    ? 'A company. Add the people you deal with as contacts after saving.'
+                    ? 'A company. Add contacts after saving.'
                     : 'A person.'}
                 </FormDescription>
               </FormItem>
@@ -303,7 +321,7 @@ function CustomerForm({ customer, cancelTo }: { customer?: CustomerDetail; cance
                 ))}
               </ul>
               <p className="text-sm text-muted-foreground">
-                Open the existing customer to check. If this really is a different customer, you can save it anyway.
+                Open the existing customer to check. If this is a different customer, save anyway.
               </p>
               <div className="flex gap-2">
                 <Button
@@ -363,6 +381,10 @@ function SelectField({
   options,
   emptyLabel,
 }: FieldProps & { options: { value: string; label: string }[]; emptyLabel?: string }) {
+  const items = [
+    ...(emptyLabel ? [{ value: '', label: emptyLabel }] : []),
+    ...options,
+  ]
   return (
     <FormField
       control={form.control}
@@ -371,13 +393,19 @@ function SelectField({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Select {...field}>
-              {emptyLabel ? <option value="">{emptyLabel}</option> : null}
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+            <Select items={items} value={field.value ?? ''} onValueChange={field.onChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={emptyLabel || `Select ${label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {items.map((item) => (
+                    <SelectItem key={item.value || '__empty'} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
             </Select>
           </FormControl>
           <FormMessage />

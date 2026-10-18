@@ -41,21 +41,21 @@ export function StageStepper({
 
           if (isSelected) {
             if (status === 'WON') {
-              bgClasses = 'bg-emerald-600 text-white font-semibold shadow'
-              borderClasses = 'border-emerald-600'
+              bgClasses = 'bg-success text-white font-semibold shadow'
+              borderClasses = 'border-success'
             } else if (status === 'LOST') {
-              bgClasses = 'bg-rose-600 text-white font-semibold shadow'
-              borderClasses = 'border-rose-600'
+              bgClasses = 'bg-destructive-solid text-white font-semibold shadow'
+              borderClasses = 'border-destructive'
             } else {
               bgClasses = 'bg-primary text-primary-foreground font-semibold shadow'
               borderClasses = 'border-primary'
             }
           } else if (isCompleted) {
-            bgClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+            bgClasses = 'bg-success-soft text-success border-success/30'
           } else if (isLostStage) {
-            bgClasses = 'bg-rose-50/50 text-rose-700/80 hover:bg-rose-50 dark:bg-rose-950/20'
+            bgClasses = 'bg-destructive-soft/50 text-destructive/80 hover:bg-destructive-soft '
           } else if (isWonStage) {
-            bgClasses = 'bg-emerald-50/50 text-emerald-700/80 hover:bg-emerald-50 dark:bg-emerald-950/20'
+            bgClasses = 'bg-success-soft/50 text-success/80 hover:bg-success-soft '
           }
 
           return (
@@ -82,7 +82,7 @@ export function StageStepper({
 
       {/* Lost Reason alert if lost */}
       {status === 'LOST' && (
-        <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
+        <div className="rounded-md border border-destructive/30 bg-destructive-soft p-2.5 text-xs text-destructive">
           <span className="font-semibold">Opportunity Closed as Lost: </span>
           {lossReason ? lossReason : 'No reason specified'}
         </div>

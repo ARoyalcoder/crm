@@ -76,10 +76,11 @@ const MOCK_PROJECT = {
     {
       id: 'mem-1',
       userId: 'user-pm-1',
-      name: 'Vikram PM',
-      email: 'vikram@example.com',
+      userName: 'Vikram PM',
+      userEmail: 'vikram@example.com',
       role: 'PROJECT_MANAGER',
-      addedAt: '2026-10-10T09:00:00Z',
+      joinedAt: '2026-10-10T09:00:00Z',
+      assignedBy: 'admin',
     },
   ],
   milestones: [

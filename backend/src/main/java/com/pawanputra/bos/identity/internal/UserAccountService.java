@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Switching accounts on and off. Callers must already hold {@code USER_UPDATE}. */
+/** Switching accounts on and off, and creating new users. Callers must hold USER_CREATE or USER_UPDATE. */
 @Service
 public class UserAccountService {
 
@@ -20,10 +20,73 @@ public class UserAccountService {
 
     private final UserRepository users;
     private final SessionService sessionService;
+    private final RoleRepository roles;
+    private final OrganizationRepository organizations;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserAccountService(UserRepository users, SessionService sessionService) {
+    public UserAccountService(
+            UserRepository users,
+            SessionService sessionService,
+            RoleRepository roles,
+            OrganizationRepository organizations,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.users = users;
         this.sessionService = sessionService;
+        this.roles = roles;
+        this.organizations = organizations;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    /** Creates a new active user with an encoded password and assigns the given role. */
+    @Transactional
+    public User create(String email, String fullName, String password, String roleCode, CurrentUser actor) {
+        String normalizedEmail = User.normalizeEmail(email);
+        if (users.existsByEmail(normalizedEmail)) {
+            throw new BusinessRuleException("A user with email " + email + " already exists.");
+        }
+        Role role = roles.findByCode(roleCode)
+                .orElseThrow(() -> new BusinessRuleException("Role not found: " + roleCode));
+        Organization org = organizations.findById(actor.organizationId())
+                .orElseThrow(() -> new ResourceNotFoundException("Organization", actor.organizationId()));
+
+        User user = new User(org, email, fullName);
+        user.changePassword(passwordEncoder.encode(password), java.time.Instant.now());
+        user.setStatus(UserStatus.ACTIVE);
+        user.assignRole(role);
+        User saved = users.save(user);
+        log.info("User created: id={} email={} role={} by={}", saved.getId(), saved.getEmail(), roleCode, actor.id());
+        return saved;
+    }
+
+    /** Lists all users in the organization ordered by name. */
+    @Transactional(readOnly = true)
+    public java.util.List<User> list(CurrentUser actor) {
+        return users.findAllByOrganizationIdOrderByFullNameAsc(actor.organizationId());
+    }
+
+    /** Updates an existing user's details and/or reassigns their role. */
+    @Transactional
+    public User update(UUID userId, String roleCode, String fullName, CurrentUser actor) {
+        User user = loadManageable(userId, actor);
+
+        if (RoleCodes.SUPER_ADMIN.equals(roleCode) && !actor.hasRole(RoleCodes.SUPER_ADMIN)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Only a super admin can assign the SUPER_ADMIN role");
+        }
+
+        if (fullName != null && !fullName.trim().isEmpty()) {
+            user.setFullName(fullName.trim());
+        }
+
+        if (roleCode != null && !roleCode.trim().isEmpty()) {
+            Role role = roles.findByCode(roleCode.trim())
+                    .orElseThrow(() -> new BusinessRuleException("Role not found: " + roleCode));
+            user.reassignSingleRole(role);
+        }
+
+        User saved = users.save(user);
+        log.info("User updated: id={} role={} by={}", saved.getId(), roleCode, actor.id());
+        return saved;
     }
 
     /** Lets the user sign in again. */

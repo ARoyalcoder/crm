@@ -46,7 +46,7 @@ class ApplicationIT extends AbstractIntegrationTest {
 
     @Test
     void unknownVerticalReturnsStandardErrorBody() {
-        given().when().get("/api/v1/service-verticals/REAL_ESTATE")
+        given().when().get("/api/v1/service-verticals/NONEXISTENT_CODE")
                 .then().statusCode(404)
                 .contentType("application/problem+json")
                 .body("code", equalTo("RESOURCE_NOT_FOUND"))

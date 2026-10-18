@@ -42,9 +42,9 @@ export function UploadAttachmentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-md rounded-xl border p-6 shadow-xl space-y-4">
+      <div className="bg-card w-full max-w-md rounded-xl border p-4 shadow-xl space-y-4">
         <div className="flex items-center justify-between pb-3 border-b">
-          <h2 className="text-lg font-semibold">Upload Photo or Document</h2>
+          <h2 className="text-lg font-semibold">Upload photo or document</h2>
           <Button variant="ghost" size="sm" onClick={onClose} disabled={isUploading}>
             <X className="h-4 w-4" />
           </Button>
@@ -52,7 +52,7 @@ export function UploadAttachmentModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Attachment Type *</label>
+            <label className="text-xs font-medium">Type *</label>
             <Select
               value={attachmentType}
               onChange={(e) =>
@@ -71,7 +71,7 @@ export function UploadAttachmentModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Select File *</label>
+            <label className="text-xs font-medium">File *</label>
             <Input
               type="file"
               accept="image/*,application/pdf"
@@ -87,7 +87,7 @@ export function UploadAttachmentModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Caption / Description</label>
+            <label className="text-xs font-medium">Caption</label>
             <Input
               placeholder="e.g. Main breaker panel prior to disassembly"
               value={caption}
@@ -102,7 +102,7 @@ export function UploadAttachmentModal({
             </Button>
             <Button type="submit" disabled={isUploading || !file}>
               <Upload className="h-4 w-4 mr-1.5" />
-              {isUploading ? 'Uploading...' : 'Upload'}
+              {isUploading ? 'Uploading…' : 'Upload'}
             </Button>
           </div>
         </form>
