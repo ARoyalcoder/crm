@@ -110,12 +110,32 @@ export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob>
   return response.blob()
 }
 
+function resolveUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path
+  }
+
+  const base = env.apiBaseUrl.replace(/\/+$/, '')
+  let cleanPath = path.startsWith('/') ? path : `/${path}`
+
+  // Strip duplicate /api/v1 if base already has it
+  if (base.endsWith('/api/v1')) {
+    if (cleanPath.startsWith('/api/v1/')) {
+      cleanPath = cleanPath.slice('/api/v1'.length)
+    } else if (cleanPath === '/api/v1') {
+      cleanPath = ''
+    }
+  } else if (!base.includes('/api/v1') && !cleanPath.startsWith('/api/v1') && !cleanPath.startsWith('/actuator')) {
+    cleanPath = `/api/v1${cleanPath}`
+  }
+
+  return `${base}${cleanPath}`
+}
+
 async function send(path: string, options: RequestOptions): Promise<Response> {
   const { method = 'GET', body, signal, authenticated = true, idempotencyKey } = options
   const upload = body instanceof FormData
-  const normalizedPath = path.startsWith(env.apiBaseUrl)
-    ? path
-    : `${env.apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`
+  const normalizedPath = resolveUrl(path)
   try {
     return await fetch(normalizedPath, {
       method,

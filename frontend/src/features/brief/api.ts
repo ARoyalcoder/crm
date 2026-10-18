@@ -31,7 +31,7 @@ export const briefApi = {
   dailyQuery: () =>
     queryOptions({
       queryKey: ['brief', 'daily'],
-      queryFn: ({ signal }) => apiRequest('/api/v1/brief/daily', briefResponseSchema, { signal }),
+      queryFn: ({ signal }) => apiRequest('/brief/daily', briefResponseSchema, { signal }),
       staleTime: 5 * 60 * 1000,
     }),
 }
