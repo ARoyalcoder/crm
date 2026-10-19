@@ -309,6 +309,20 @@ const ROLE_PRESETS: Record<string, RolePreset> = {
   },
 }
 
+function sanitizeSafePath(url?: string | null): string | null {
+  if (!url || typeof url !== 'string') return null
+  const trimmed = url.trim()
+  // Must start with '/' and not '//' or '/\' to prevent protocol-relative redirects
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.startsWith('/\\')) {
+    return null
+  }
+  // Reject control characters, quotes, angle brackets, or pseudo-protocol payloads
+  if (/[<>'"\s\x00-\x1f]/.test(trimmed) || /^\/(?:javascript|data|vbscript):/i.test(trimmed)) {
+    return null
+  }
+  return trimmed
+}
+
 function Answer({ turn }: { turn: Turn }) {
   if (turn.state === 'pending') {
     return (
@@ -333,6 +347,7 @@ function Answer({ turn }: { turn: Turn }) {
   }
   const response = turn.response!
   const shown = response.supportingRecords.length
+  const safeActionUrl = sanitizeSafePath(response.recommendedActionUrl)
 
   return (
     <div className="grid gap-3.5">
@@ -370,20 +385,21 @@ function Answer({ turn }: { turn: Turn }) {
           </div>
           <ul className="divide-y divide-border/50">
             {response.supportingRecords.map((record, index) => {
+              const safeRecordUrl = sanitizeSafePath(record.url)
               const body = (
                 <>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs sm:text-sm font-medium text-foreground">{record.title}</span>
                     {record.detail ? <span className="block truncate text-[11px] text-muted-foreground">{record.detail}</span> : null}
                   </span>
-                  {record.url ? <ArrowRight className="size-3.5 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" aria-hidden="true" /> : null}
+                  {safeRecordUrl ? <ArrowRight className="size-3.5 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" aria-hidden="true" /> : null}
                 </>
               )
               return (
                 <li key={record.id ?? index}>
-                  {record.url ? (
+                  {safeRecordUrl ? (
                     <Link
-                      to={record.url}
+                      to={safeRecordUrl}
                       className="group flex items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-primary/5 focus-visible:bg-primary/5"
                     >
                       {body}
@@ -404,14 +420,14 @@ function Answer({ turn }: { turn: Turn }) {
       ) : null}
 
       {/* Recommended Role Action CTA Button */}
-      {response.recommendedActionUrl ? (
+      {safeActionUrl ? (
         <div className="pt-1">
           <Button
             asChild
             size="sm"
             className="gap-2 bg-primary hover:bg-primary/95 text-white shadow-soft transition-all active:scale-[0.98]"
           >
-            <Link to={response.recommendedActionUrl}>
+            <Link to={safeActionUrl}>
               <CheckCircle2 className="size-3.5" />
               <span>{response.recommendedAction ?? 'Perform Recommended Action'}</span>
               <ArrowRight className="size-3.5 ml-0.5" />

@@ -115,6 +115,12 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(unauthenticated)
                         .accessDeniedHandler(forbidden))
+                .headers(headers -> headers
+                        .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults())
+                        .frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::deny)
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)))
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(unauthenticated)
                         .accessDeniedHandler(forbidden));
