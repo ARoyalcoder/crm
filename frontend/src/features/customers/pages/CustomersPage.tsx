@@ -40,12 +40,9 @@ const columns = column.columns([
   column.accessor('displayName', {
     header: 'Customer',
     cell: ({ row }) => (
-      <div className="grid">
-        <Link to={`/customers/${row.original.id}`} className="font-medium underline-offset-2 hover:underline">
-          {row.original.displayName}
-        </Link>
-        <span className="font-mono text-xs text-muted-foreground">{row.original.customerNumber}</span>
-      </div>
+      <Link to={`/customers/${row.original.id}`} className="font-medium underline-offset-2 hover:underline">
+        {row.original.displayName}
+      </Link>
     ),
   }),
   column.accessor('type', { header: 'Type', cell: ({ getValue }) => labelOf(CUSTOMER_TYPES, getValue()) }),
