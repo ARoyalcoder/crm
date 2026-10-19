@@ -22,7 +22,6 @@ import {
   LayoutDashboard,
   ListTodo,
   MessageSquareText,
-  PieChart as PieChartIcon,
   PlugZap,
   ReceiptText,
   ScrollText,
@@ -198,7 +197,6 @@ export const navigation: NavSection[] = [
       { label: 'Finance', to: '/analytics/finance', icon: Banknote, requires: ['ANALYTICS_VIEW'], permission: 'FINANCE_VIEW' },
       { label: 'Service', to: '/analytics/service', icon: Headphones, requires: ['ANALYTICS_VIEW'], anyPermission: ['TICKET_VIEW', 'AMC_VIEW'] },
       { label: 'Workforce', to: '/analytics/workforce', icon: UsersRound, requires: ['ANALYTICS_VIEW'], permission: 'WORKFORCE_VIEW' },
-      { label: 'Titanic statistics', to: '/analytics/titanic', icon: PieChartIcon },
     ],
   },
   {

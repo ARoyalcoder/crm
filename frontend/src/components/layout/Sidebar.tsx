@@ -146,7 +146,6 @@ const NAV_ICON_COLORS: Record<string, string> = {
   '/analytics/finance': 'text-teal-500 dark:text-teal-400',
   '/analytics/service': 'text-rose-500 dark:text-rose-400',
   '/analytics/workforce': 'text-violet-500 dark:text-violet-400',
-  '/analytics/titanic': 'text-rose-500 dark:text-rose-400',
 
   // Administration
   '/admin': 'text-slate-500 dark:text-slate-400',

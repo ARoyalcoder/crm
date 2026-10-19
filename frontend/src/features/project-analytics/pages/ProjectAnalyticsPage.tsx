@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ErrorState } from '@/components/feedback/ErrorState'
-import { TitanicPie } from '@/components/charts/TitanicPie'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -112,9 +111,6 @@ function Dashboard({ data }: { data: ProjectAnalytics }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <DeliveryCard delivery={data.delivery} />
         <ProductivityCard productivity={data.productivity} />
-      </div>
-      <div className="w-full">
-        <TitanicPie />
       </div>
     </>
   )

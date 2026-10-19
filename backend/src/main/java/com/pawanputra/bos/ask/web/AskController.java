@@ -8,10 +8,12 @@ import com.pawanputra.bos.ask.web.AskDtos.AskRequest;
 import com.pawanputra.bos.identity.api.Permissions;
 import com.pawanputra.bos.platform.config.OpenApiConfig;
 import com.pawanputra.bos.platform.security.CurrentUser;
+import com.pawanputra.bos.platform.security.InputSanitizer;
 import com.pawanputra.bos.platform.web.ApiPaths;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,8 +46,12 @@ public class AskController {
     @PostMapping({"", "/"})
     @PreAuthorize(CAN_ASK)
     @Operation(summary = "Ask a question about your data. Requires ASK_VIEW; each question also needs the permission of the records it reads.")
-    public AskResponse ask(@RequestBody AskRequest request) {
-        String question = request != null && request.question() != null ? request.question().strip() : "";
+    public AskResponse ask(@Valid @RequestBody AskRequest request) {
+        String rawQuestion = request != null && request.question() != null ? request.question() : "";
+        String question = InputSanitizer.stripHtml(InputSanitizer.normalizeText(rawQuestion));
+        if (question.length() > 500) {
+            question = question.substring(0, 500);
+        }
         CurrentUser user = CurrentUser.require();
         AskTool tool = queryMatcher.match(question);
         if (tool == AskTool.UNKNOWN && geminiAiService != null && geminiAiService.isEnabled()) {
