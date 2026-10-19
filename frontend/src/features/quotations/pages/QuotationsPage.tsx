@@ -22,23 +22,15 @@ const columns = column.columns([
   column.accessor('quotationNumber', {
     header: 'Quotation',
     cell: ({ row }) => (
-      <Link to={`/quotations/${row.original.id}`} className="grid gap-0.5 underline-offset-2 hover:underline">
-        <span className="font-medium">{row.original.title}</span>
-        <span className="font-mono text-xs text-muted-foreground">
-          {row.original.quotationNumber} · v{row.original.currentVersionNumber}
-        </span>
+      <Link to={`/quotations/${row.original.id}`} className="font-medium underline-offset-2 hover:underline">
+        {row.original.title}
       </Link>
     ),
   }),
   column.accessor((quotation) => quotation.customerName ?? quotation.leadName ?? '', {
     id: 'for',
     header: 'For',
-    cell: ({ row }) => (
-      <span className="grid gap-0.5">
-        <span>{row.original.customerName ?? row.original.leadName ?? 'Not linked'}</span>
-        <span className="text-xs text-muted-foreground">{row.original.customerName ? 'Customer' : row.original.leadName ? 'Lead' : ''}</span>
-      </span>
-    ),
+    cell: ({ row }) => <span>{row.original.customerName ?? row.original.leadName ?? 'Not linked'}</span>,
   }),
   column.accessor('status', { header: 'Status', cell: ({ getValue }) => <QuotationStatusBadge status={getValue()} /> }),
   column.accessor('finalAmount', {
