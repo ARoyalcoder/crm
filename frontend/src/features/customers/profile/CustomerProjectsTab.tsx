@@ -40,7 +40,7 @@ export function CustomerProjectsTab({ customer }: CustomerTabProps) {
             <Link to={`/projects/${project.id}`} className="grid min-w-0 gap-0.5 underline-offset-2 hover:underline">
               <span className="text-sm font-medium">{project.title}</span>
               <span className="text-xs text-muted-foreground">
-                <span className="font-mono">{project.projectNumber}</span> · {project.projectManagerName} · due {formatDate(project.expectedCompletionDate)}
+                {project.projectManagerName} · due {formatDate(project.expectedCompletionDate)}
               </span>
             </Link>
             <span className="flex flex-wrap items-center gap-3">

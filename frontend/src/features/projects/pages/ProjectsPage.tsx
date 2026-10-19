@@ -64,7 +64,7 @@ export function ProjectsPage() {
             <Link to={`/projects/${row.original.id}`} className="grid gap-0.5 underline-offset-2 hover:underline">
               <span className="font-medium">{row.original.title}</span>
               <span className="text-xs text-muted-foreground">
-                <span className="font-mono">{row.original.projectNumber}</span> · {row.original.customerName}
+                {row.original.customerName}
               </span>
             </Link>
           ),

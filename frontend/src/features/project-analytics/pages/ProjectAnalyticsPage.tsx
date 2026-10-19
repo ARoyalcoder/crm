@@ -230,7 +230,7 @@ function PipelineProjectsCard() {
                     {project.title}
                   </Link>
                   <span className="text-xs text-muted-foreground">
-                    {project.projectNumber} · {project.customerName}
+                    {project.customerName}
                     {project.expectedCompletionDate ? ` · due ${dateFormat.format(new Date(project.expectedCompletionDate))}` : ''}
                     {project.delayed ? <span className="font-medium text-destructive"> · Delayed</span> : null}
                   </span>

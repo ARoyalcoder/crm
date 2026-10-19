@@ -288,7 +288,7 @@ function MyWorkBody({ data }: { data: MyWork }) {
                         icon={Briefcase}
                         tone={late ? 'danger' : project.progressPct >= 100 ? 'success' : 'primary'}
                         href={`/projects/${project.id}`}
-                        detail={[project.number, project.customer].filter(Boolean).join(' · ')}
+                        detail={project.customer}
                         footer={
                           <span className={cn('flex flex-wrap items-center gap-x-2', late && 'text-destructive')}>
                             <StatusBadge status={project.status} domain="project" plain />

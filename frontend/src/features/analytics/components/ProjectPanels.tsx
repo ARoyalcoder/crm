@@ -102,7 +102,6 @@ const delayedColumns = delayedColumn.columns([
     cell: ({ row }) => (
       <Link to={`/projects/${row.original.id}`} className="grid min-w-0 gap-0.5 underline-offset-2 hover:underline">
         <span className="truncate font-medium">{row.original.title}</span>
-        <span className="font-mono text-xs text-muted-foreground">{row.original.number}</span>
       </Link>
     ),
   }),

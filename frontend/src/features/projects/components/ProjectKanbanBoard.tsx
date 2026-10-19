@@ -90,10 +90,7 @@ function KanbanProjectCard({ project, columns, currentStatus, canMove, moving, o
   return (
     <Card className={cn('gap-0 py-0', moving && 'pointer-events-none opacity-50')} aria-busy={moving || undefined}>
       <CardContent className="grid gap-2.5 p-3.5">
-        <div className="flex items-start justify-between gap-2">
-          <Link to={`/projects/${project.id}`} className="font-mono text-xs font-medium text-primary underline-offset-2 hover:underline">
-            {project.projectNumber}
-          </Link>
+        <div className="flex items-start justify-end gap-2">
           <PriorityBadge priority={project.priority} />
         </div>
 

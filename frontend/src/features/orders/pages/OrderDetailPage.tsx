@@ -270,7 +270,7 @@ export function OrderDetailPage() {
                 ) : null}
                 {project ? (
                   <Link to={`/projects/${project.id}`} className="inline-flex w-fit items-center gap-1.5 font-medium text-primary underline-offset-2 hover:underline">
-                    Project {project.projectNumber}
+                    Project: {project.title}
                     <ExternalLink className="size-3.5" aria-hidden="true" />
                   </Link>
                 ) : null}

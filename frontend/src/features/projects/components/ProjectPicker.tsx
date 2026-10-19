@@ -5,7 +5,7 @@ import { projectsApi } from '@/features/projects/api'
 function useProjectMatches(term: string, enabled: boolean): PickerMatches {
   const query = useQuery({ ...projectsApi.listQuery({ search: term, size: 8 }), enabled })
   return {
-    options: query.data?.items.map((project) => ({ id: project.id, name: project.title, hint: `${project.projectNumber} · ${project.customerName}` })),
+    options: query.data?.items.map((project) => ({ id: project.id, name: project.title, hint: project.customerName })),
     isPending: query.isPending,
     error: query.error,
   }
@@ -19,7 +19,7 @@ type ProjectPickerProps = {
   disabled?: boolean
 }
 
-/** Finds a project by typing part of its title or number. */
+/** Finds a project by typing part of its title or customer. */
 export function ProjectPicker(props: ProjectPickerProps) {
-  return <EntityPicker noun="project" placeholder="Type a title or project number" useMatches={useProjectMatches} {...props} />
+  return <EntityPicker noun="project" placeholder="Type a title or customer" useMatches={useProjectMatches} {...props} />
 }
