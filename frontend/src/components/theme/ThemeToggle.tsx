@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Monitor, Moon, Sun } from 'lucide-react'
+import { Check } from 'lucide-react'
+import { Sun } from '@/components/animate-ui/icons/sun'
+import { Moon } from '@/components/animate-ui/icons/moon'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useTheme, type Theme } from './theme-context'
 import { originOf } from './theme-transition'
@@ -43,27 +45,25 @@ export function ThemeToggle() {
               className="relative z-10 flex items-center justify-center"
             >
               {theme === 'dark' ? (
-                <Moon className="size-4.5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" aria-hidden="true" />
-              ) : theme === 'light' ? (
-                <Sun className="size-4.5 text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" aria-hidden="true" />
+                <Moon animateOnHover className="size-4.5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" aria-hidden="true" />
               ) : (
-                <Monitor className="size-4.5 text-slate-600 dark:text-slate-300" aria-hidden="true" />
+                <Sun animateOnHover className="size-4.5 text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" aria-hidden="true" />
               )}
             </motion.div>
           </AnimatePresence>
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-38 p-1.5 rounded-2xl shadow-pop border border-border/80 dark:border-slate-800/80 bg-popover/95 backdrop-blur-xl">
+      <DropdownMenuContent align="end" className="w-36 p-1.5 rounded-2xl shadow-pop border border-border/80 dark:border-slate-800/80 bg-popover/95 backdrop-blur-xl">
         <DropdownMenuItem
           onSelect={() => handleSelect('light')}
           className={cn(
-            'flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer transition-colors',
+            'flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer transition-colors group/item',
             theme === 'light' ? 'bg-primary/10 text-primary font-semibold dark:bg-blue-500/15 dark:text-blue-400' : 'text-foreground hover:bg-accent/60'
           )}
         >
           <span className="flex items-center gap-2">
-            <Sun className="size-4 text-amber-500" aria-hidden="true" />
+            <Sun animateOnHover className="size-4 text-amber-500" aria-hidden="true" />
             <span>Light</span>
           </span>
           {theme === 'light' && <Check className="size-3.5 text-primary dark:text-blue-400" aria-hidden="true" />}
@@ -72,29 +72,15 @@ export function ThemeToggle() {
         <DropdownMenuItem
           onSelect={() => handleSelect('dark')}
           className={cn(
-            'flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer transition-colors',
+            'flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer transition-colors group/item',
             theme === 'dark' ? 'bg-primary/10 text-primary font-semibold dark:bg-blue-500/15 dark:text-blue-400' : 'text-foreground hover:bg-accent/60'
           )}
         >
           <span className="flex items-center gap-2">
-            <Moon className="size-4 text-blue-400" aria-hidden="true" />
+            <Moon animateOnHover className="size-4 text-blue-400" aria-hidden="true" />
             <span>Dark</span>
           </span>
           {theme === 'dark' && <Check className="size-3.5 text-primary dark:text-blue-400" aria-hidden="true" />}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onSelect={() => handleSelect('system')}
-          className={cn(
-            'flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer transition-colors',
-            theme === 'system' ? 'bg-primary/10 text-primary font-semibold dark:bg-blue-500/15 dark:text-blue-400' : 'text-foreground hover:bg-accent/60'
-          )}
-        >
-          <span className="flex items-center gap-2">
-            <Monitor className="size-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
-            <span>System</span>
-          </span>
-          {theme === 'system' && <Check className="size-3.5 text-primary dark:text-blue-400" aria-hidden="true" />}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

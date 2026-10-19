@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { ThemeOrigin } from './theme-transition'
 
-export type Theme = 'light' | 'dark' | 'system'
+export type Theme = 'light' | 'dark'
 
 export const ThemeContext = createContext<{
   theme: Theme

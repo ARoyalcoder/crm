@@ -9,14 +9,14 @@ const DARK_QUERY = '(prefers-color-scheme: dark)'
 function readStoredTheme(): Theme {
   try {
     const value = localStorage.getItem(STORAGE_KEY)
-    return value === 'light' || value === 'dark' || value === 'system' ? value : 'system'
+    return value === 'light' || value === 'dark' ? value : 'dark'
   } catch {
-    return 'system'
+    return 'dark'
   }
 }
 
 function isDark(theme: Theme) {
-  return theme === 'dark' || (theme === 'system' && window.matchMedia(DARK_QUERY).matches)
+  return theme === 'dark'
 }
 
 /** Puts the page in the theme's colours. Synchronous and repeatable: the animation relies on both. */
@@ -25,10 +25,9 @@ function applyTheme(theme: Theme) {
 }
 
 /**
- * Light / dark / follow-the-system, remembered per browser. Toggles the `dark` class on <html>.
+ * Light / dark, remembered per browser. Toggles the `dark` class on <html>.
  *
- * Every change goes through `setTheme`, which plays the animation (see theme-transition.ts), so the
- * header menu, the sign-in page and an operating-system switch all look the same.
+ * Every change goes through `setTheme`, which plays the animation (see theme-transition.ts).
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(readStoredTheme)
@@ -37,15 +36,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // First paint, and any state that arrives without going through setTheme: no animation.
   useLayoutEffect(() => {
     applyTheme(theme)
-  }, [theme])
-
-  // "System" follows the operating system, and fades when it changes.
-  useEffect(() => {
-    if (theme !== 'system') return
-    const media = window.matchMedia(DARK_QUERY)
-    const onChange = () => runThemeTransition(() => applyTheme('system'))
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
   }, [theme])
 
   const setTheme = useCallback((next: Theme, origin?: ThemeOrigin) => {
