@@ -68,9 +68,9 @@ test.describe('Charts Quick Insights & Table Scrollbars', () => {
 
     await page.goto('/analytics/finance', { waitUntil: 'domcontentloaded' })
 
-    // 1. Verify Quick Insights ribbon is visible with Peak and Total
-    await expect(page.getByText(/Peak:/i).first()).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText(/Total:/i).first()).toBeVisible()
+    // 1. Verify Peak and Total insight badges are removed from charts
+    await expect(page.getByText(/Peak:/i)).toHaveCount(0)
+    await expect(page.getByText(/Total:/i)).toHaveCount(0)
 
     // 2. Find ChartCard view toggle group
     const viewGroup = page.locator('[role="group"][aria-label*="view"]').first()

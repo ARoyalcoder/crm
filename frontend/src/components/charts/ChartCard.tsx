@@ -1,5 +1,5 @@
-import { useState, useMemo, type ReactNode } from 'react'
-import { ArrowRight, BarChart3, Table2, TrendingUp, Info } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { ArrowRight, BarChart3, Table2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChartLegend, type LegendItem } from '@/components/charts/ChartLegend'
@@ -8,7 +8,6 @@ import { ErrorState } from '@/components/feedback/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 export type ChartCardProps = {
@@ -30,77 +29,8 @@ export type ChartCardProps = {
   children: ReactNode
 }
 
-type ChartDatum = {
-  label: string
-  value: number
-  formatted?: string
-}
-
 /**
- * Extracts numeric values and formatted labels from a ChartTableModel
- * to compute automated high-level insights (Peak, Total, Average) for customer understanding.
- */
-function extractInsightsData(table?: ChartTableModel): ChartDatum[] {
-  if (!table || !table.rows || table.rows.length === 0 || !table.columns || table.columns.length === 0) return []
-
-  const columns = table.columns
-  const labelCol = columns.find((c) => c.align !== 'right') || columns[0]
-  const preferredKeys = ['amount', 'invoiced', 'collected', 'total', 'revenue', 'count', 'value', 'payments', 'outstanding']
-  const valueCol =
-    columns.find((c) => preferredKeys.includes(c.key.toLowerCase())) ||
-    columns.find((c) => c.align === 'right') ||
-    (columns.length > 1 ? columns[1] : columns[0])
-
-  if (!labelCol || !valueCol) return []
-
-  const result: ChartDatum[] = []
-  for (const row of table.rows) {
-    const rawLabel = row[labelCol.key]
-    const rawVal = row[valueCol.key]
-
-    let numVal: number | null = null
-    let formattedVal: string | undefined
-
-    if (typeof rawVal === 'number') {
-      numVal = isNaN(rawVal) ? null : rawVal
-      formattedVal = rawVal.toLocaleString('en-IN')
-    } else if (typeof rawVal === 'string') {
-      formattedVal = rawVal
-      const cleaned = rawVal.replace(/[^0-9.-]/g, '')
-      const parsed = parseFloat(cleaned)
-      if (!isNaN(parsed)) {
-        numVal = parsed
-      }
-    }
-
-    if (numVal !== null && numVal >= 0) {
-      result.push({
-        label: typeof rawLabel === 'string' || typeof rawLabel === 'number' ? String(rawLabel) : 'Item',
-        value: numVal,
-        formatted: formattedVal,
-      })
-    }
-  }
-
-  return result
-}
-
-function formatDerivedNumber(num: number, sampleFormatted?: string): string {
-  if (sampleFormatted && sampleFormatted.includes('₹')) {
-    return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: num % 1 === 0 ? 0 : 2 })}`
-  }
-  if (sampleFormatted && sampleFormatted.includes('$')) {
-    return `$${num.toLocaleString('en-US', { maximumFractionDigits: num % 1 === 0 ? 0 : 2 })}`
-  }
-  if (sampleFormatted && sampleFormatted.includes('%')) {
-    return `${num.toLocaleString('en-IN', { maximumFractionDigits: 1 })}%`
-  }
-  return num.toLocaleString('en-IN', { maximumFractionDigits: num % 1 === 0 ? 0 : 2 })
-}
-
-/**
- * A chart in an interactive glass card with dynamic sheen, dual-mode toggle pills
- * (2D Chart / Data Table), and human-friendly quick insight badges for instant customer understanding.
+ * A chart in an interactive card with dual-mode toggle pills (2D Chart / Data Table).
  */
 export function ChartCard({
   title,
@@ -108,43 +38,20 @@ export function ChartCard({
   actions,
   legend,
   table,
-  hideInsights = false,
+  hideInsights: _hideInsights,
   loading,
   error,
   onRetry,
   empty,
   stale,
   drillDown,
-  footer,
+  footer: _footer,
   height = 200,
   className,
   children,
 }: ChartCardProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart')
   const ready = !loading && !error && !empty
-
-  // High-level insights for user/customer clarity
-  const chartItems = useMemo(() => extractInsightsData(table), [table])
-
-  const insights = useMemo(() => {
-    if (hideInsights || !chartItems.length) return null
-    const validValues = chartItems.map((d) => d.value).filter((v) => !isNaN(v))
-    if (!validValues.length) return null
-
-    const total = validValues.reduce((acc, curr) => acc + curr, 0)
-    const maxVal = Math.max(...validValues, 0)
-    const maxItem = chartItems.find((d) => d.value === maxVal)
-    const avg = total / validValues.length
-    const sample = chartItems.find((d) => d.formatted)?.formatted
-
-    return {
-      totalFormatted: formatDerivedNumber(total, sample),
-      peakLabel: maxItem?.label ?? 'N/A',
-      peakFormatted: maxItem?.formatted ?? formatDerivedNumber(maxVal, sample),
-      avgFormatted: formatDerivedNumber(avg, sample),
-      count: validValues.length,
-    }
-  }, [chartItems, hideInsights])
 
   return (
     <Card className={cn('w-full min-w-0 overflow-hidden bg-card border border-border/80 dark:border-slate-800/80 shadow-soft hover:shadow-pop hover:border-primary/40 dark:hover:border-blue-500/40 transition-all duration-200', className)}>
@@ -155,44 +62,8 @@ export function ChartCard({
               <span className="size-1.5 rounded-full bg-primary/70 animate-pulse" aria-hidden="true" />
               <CardTitle>{title}</CardTitle>
             </div>
-            {footer && (
-              <TooltipProvider delay={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="text-muted-foreground/60 hover:text-foreground transition-colors p-0.5 rounded-full"
-                      aria-label="Chart details"
-                    >
-                      <Info className="size-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs text-xs">
-                    {footer}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
           {description ? <CardDescription>{description}</CardDescription> : null}
-
-          {/* Quick Insights Ribbon for Instant User & Customer Comprehension */}
-          {ready && insights && (
-            <div className="flex flex-wrap items-center gap-1 pt-0.5 text-[10.5px] font-medium">
-              <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-md bg-blue-50/90 dark:bg-blue-950/60 text-[#2B66FE] dark:text-blue-400 font-semibold border border-blue-200/60 dark:border-blue-900/40">
-                <TrendingUp className="size-3" />
-                Peak: <strong>{insights.peakLabel}</strong> ({insights.peakFormatted})
-              </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-md bg-slate-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                Total: <strong>{insights.totalFormatted}</strong>
-              </span>
-              {insights.count > 2 && (
-                <span className="hidden 2xl:inline-flex items-center gap-1 px-1.5 py-px rounded-md bg-slate-100/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
-                  Avg: <strong>{insights.avgFormatted}</strong>
-                </span>
-              )}
-            </div>
-          )}
         </div>
 
         {(actions || (table && ready)) ? (
