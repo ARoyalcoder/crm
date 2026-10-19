@@ -70,7 +70,7 @@ export function DataTable<TData extends RowData>({
   onRowClick,
   density = 'comfortable',
   striped = true,
-  showCount = true,
+  showCount = false,
   className,
 }: DataTableProps<TData>) {
   const table = useTable({ features: dataTableFeatures, columns, data })

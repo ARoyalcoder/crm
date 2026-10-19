@@ -46,7 +46,7 @@ const SCROLLBAR_CLASSNAME =
 // The ::before reaches the track's outer edge, so the whole track thickness
 // grabs the thumb rather than only its painted 7px.
 const SCROLLBAR_THUMB_CLASSNAME =
-  "bg-border rounded-full relative flex-1 before:absolute before:-inset-0.5"
+  "bg-gradient-to-br from-[#2b66fe] to-[#3872ff] hover:from-[#1e50e2] hover:to-[#2563eb] shadow-xs rounded-full relative flex-1 before:absolute before:-inset-0.5"
 
 type DataGridScrollAreaOrientation = "horizontal" | "vertical" | "both"
 
@@ -535,7 +535,7 @@ function DataGridScrollArea({
             >
               <div
                 className={cn(
-                  "bg-border absolute end-px w-[calc(var(--data-grid-scrollbar-size,0.625rem)-0.1875rem)]",
+                  "bg-gradient-to-br from-[#2b66fe] to-[#3872ff] hover:from-[#1e50e2] hover:to-[#2563eb] shadow-xs absolute end-px w-[calc(var(--data-grid-scrollbar-size,0.625rem)-0.1875rem)]",
                   "top-(--data-grid-scrollbar-thumb-top) h-(--data-grid-scrollbar-thumb-height)",
                   "rounded-full before:absolute before:-inset-0.5"
                 )}

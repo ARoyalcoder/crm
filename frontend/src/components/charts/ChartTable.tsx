@@ -224,7 +224,7 @@ export function ChartTable({ caption, columns, rows }: ChartTableModel) {
                   )}
                 >
                   {idx === 0
-                    ? `Total (${sortedRows.length})`
+                    ? 'Total'
                     : columnTotals[column.key] ?? '—'}
                 </TableCell>
               ))}
