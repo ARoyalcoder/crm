@@ -189,9 +189,6 @@ export function DataTable<TData extends RowData>({
           <span>
             Showing <strong className="text-foreground font-semibold">{rows.length}</strong> {rows.length === 1 ? 'record' : 'records'}
           </span>
-          <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            Click row to view details
-          </span>
         </div>
       )}
     </div>
