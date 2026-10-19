@@ -194,7 +194,6 @@ export function AmcRenewalsCard({ service, state }: Omit<Panel, 'period'>) {
   return (
     <ChartCard
       title="AMC renewals"
-      description={amc ? `${formatNumber(amc.expiring90)} contracts worth ${formatRupees(amc.expiring90Value)} end in the next 90 days` : undefined}
       empty={amc && amc.upcoming.length === 0 ? { title: 'No contract ends in the next 90 days', description: `${formatNumber(amc.active)} contracts are in force.` } : false}
       drillDown={{ to: '/amc-contracts', label: 'View AMC contracts' }}
       {...state}
