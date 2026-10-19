@@ -178,13 +178,6 @@ export function KanbanBoardView({
                         </div>
                       )}
 
-                      {/* Service */}
-                      {opp.serviceName && (
-                        <div className="mt-1 truncate text-[11px] font-medium text-muted-foreground ">
-                          {opp.serviceName}
-                        </div>
-                      )}
-
                       {/* Deal Value & Probability */}
                       <div className="mt-2.5 flex items-center justify-between border-t border-dashed pt-2">
                         <span className="text-xs font-bold text-foreground">

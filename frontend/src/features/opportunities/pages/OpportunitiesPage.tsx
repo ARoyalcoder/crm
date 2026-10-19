@@ -389,11 +389,6 @@ export function OpportunitiesPage() {
                             >
                               {opp.title}
                             </Link>
-                            {opp.serviceName && (
-                              <div className="text-xs text-muted-foreground">
-                                {opp.serviceName}
-                              </div>
-                            )}
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
