@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { TitanicPie } from '@/components/charts/TitanicPie'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -111,6 +112,9 @@ function Dashboard({ data }: { data: ProjectAnalytics }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <DeliveryCard delivery={data.delivery} />
         <ProductivityCard productivity={data.productivity} />
+      </div>
+      <div className="w-full">
+        <TitanicPie />
       </div>
     </>
   )
@@ -229,11 +233,12 @@ function PipelineProjectsCard() {
                   <Link to={`/projects/${project.id}`} className="truncate font-medium underline-offset-2 hover:underline">
                     {project.title}
                   </Link>
-                  <span className="text-xs text-muted-foreground">
-                    {project.customerName}
-                    {project.expectedCompletionDate ? ` · due ${dateFormat.format(new Date(project.expectedCompletionDate))}` : ''}
-                    {project.delayed ? <span className="font-medium text-destructive"> · Delayed</span> : null}
-                  </span>
+                  {project.expectedCompletionDate || project.delayed ? (
+                    <span className="text-xs text-muted-foreground">
+                      {project.expectedCompletionDate ? `Due ${dateFormat.format(new Date(project.expectedCompletionDate))}` : ''}
+                      {project.delayed ? <span className="font-medium text-destructive">{project.expectedCompletionDate ? ' · ' : ''}Delayed</span> : null}
+                    </span>
+                  ) : null}
                 </div>
                 {project.stages.length === 0 ? (
                   <span className="text-xs text-muted-foreground">No template for its service</span>

@@ -61,11 +61,8 @@ export function ProjectsPage() {
         column.accessor('title', {
           header: 'Project',
           cell: ({ row }) => (
-            <Link to={`/projects/${row.original.id}`} className="grid gap-0.5 underline-offset-2 hover:underline">
-              <span className="font-medium">{row.original.title}</span>
-              <span className="text-xs text-muted-foreground">
-                {row.original.customerName}
-              </span>
+            <Link to={`/projects/${row.original.id}`} className="font-medium underline-offset-2 hover:underline">
+              {row.original.title}
             </Link>
           ),
         }),

@@ -104,6 +104,7 @@ const ProjectsDashboardPage = lazy(() => import('@/features/analytics/pages/Proj
 const FinanceDashboardPage = lazy(() => import('@/features/analytics/pages/FinanceDashboardPage').then((m) => ({ default: m.FinanceDashboardPage })))
 const ServiceDashboardPage = lazy(() => import('@/features/analytics/pages/ServiceDashboardPage').then((m) => ({ default: m.ServiceDashboardPage })))
 const WorkforceDashboardPage = lazy(() => import('@/features/analytics/pages/WorkforceDashboardPage').then((m) => ({ default: m.WorkforceDashboardPage })))
+const TitanicAnalyticsPage = lazy(() => import('@/features/analytics/pages/TitanicAnalyticsPage').then((m) => ({ default: m.TitanicAnalyticsPage })))
 const PulseFeedPage = lazy(() => import('@/features/pulse/pages/PulseFeedPage').then((m) => ({ default: m.PulseFeedPage })))
 const PulseRisksPage = lazy(() => import('@/features/pulse/pages/PulseRisksPage').then((m) => ({ default: m.PulseRisksPage })))
 const PulseOpportunitiesPage = lazy(() => import('@/features/pulse/pages/PulseOpportunitiesPage').then((m) => ({ default: m.PulseOpportunitiesPage })))
@@ -274,6 +275,7 @@ export const router = createBrowserRouter([
           { path: 'analytics/finance', element: needs('ANALYTICS_VIEW', needs('FINANCE_VIEW', <FinanceDashboardPage />)) },
           { path: 'analytics/service', element: needs('ANALYTICS_VIEW', needsAny(['TICKET_VIEW', 'AMC_VIEW'], <ServiceDashboardPage />)) },
           { path: 'analytics/workforce', element: needs('ANALYTICS_VIEW', needs('WORKFORCE_VIEW', <WorkforceDashboardPage />)) },
+          { path: 'analytics/titanic', element: <TitanicAnalyticsPage /> },
 
           { path: 'intelligence', element: needs('INTELLIGENCE_VIEW', <CustomerIntelligencePage />) },
           { path: 'customers/:id/intelligence', element: needs('INTELLIGENCE_VIEW', <CustomerIntelligenceDetailPage />) },

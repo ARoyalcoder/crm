@@ -96,7 +96,6 @@ function KanbanProjectCard({ project, columns, currentStatus, canMove, moving, o
 
         <Link to={`/projects/${project.id}`} className="grid gap-0.5">
           <span className="line-clamp-2 text-sm font-semibold hover:text-primary">{project.title}</span>
-          <span className="truncate text-xs text-muted-foreground">{project.customerName}</span>
         </Link>
 
         <div className="grid gap-1">

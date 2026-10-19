@@ -105,7 +105,6 @@ const delayedColumns = delayedColumn.columns([
       </Link>
     ),
   }),
-  delayedColumn.accessor('customer', { header: 'Customer', cell: ({ getValue }) => getValue() ?? '—' }),
   delayedColumn.accessor('progressPct', {
     header: 'Progress',
     cell: ({ getValue }) => (
