@@ -273,9 +273,6 @@ export function ChartCard({
             </motion.div>
           </AnimatePresence>
         )}
-        {footer && ready && view !== 'table' ? (
-          <p className="text-xs text-muted-foreground dark:text-slate-400 font-medium">{footer}</p>
-        ) : null}
         {drillDown && ready ? (
           <Link to={drillDown.to} className="group/link inline-flex w-fit items-center gap-1 text-xs font-semibold text-primary hover:text-primary/90 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
             {drillDown.label}

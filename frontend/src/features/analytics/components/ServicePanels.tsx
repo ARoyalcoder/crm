@@ -197,7 +197,6 @@ export function AmcRenewalsCard({ service, state }: Omit<Panel, 'period'>) {
       description={amc ? `${formatNumber(amc.expiring90)} contracts worth ${formatRupees(amc.expiring90Value)} end in the next 90 days` : undefined}
       empty={amc && amc.upcoming.length === 0 ? { title: 'No contract ends in the next 90 days', description: `${formatNumber(amc.active)} contracts are in force.` } : false}
       drillDown={{ to: '/amc-contracts', label: 'View AMC contracts' }}
-      footer={amc ? `In this period ${formatNumber(amc.renewedInPeriod)} renewed and ${formatNumber(amc.lapsedInPeriod)} lapsed.` : undefined}
       {...state}
     >
       {ready && amc ? <DataTable columns={renewalColumns} data={amc.upcoming} caption="AMC contracts ending in the next 90 days" density="compact" /> : null}

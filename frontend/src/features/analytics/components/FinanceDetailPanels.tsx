@@ -69,7 +69,6 @@ export function InvoicedByVerticalCard({ finance, state }: { finance?: FinanceOv
         rows: rows.map((row) => ({ name: row.name, amount: formatRupees(row.amount) })),
       }}
       empty={nothing ? { title: 'Nothing invoiced in this period' } : false}
-      footer="Invoice lines not linked to a catalog service are listed separately."
       {...state}
     >
       <BarsChart
@@ -153,7 +152,6 @@ export function ProjectEconomicsCard({ economics, state }: { economics?: Project
         })),
       }}
       empty={economics && economics.projects === 0 ? { title: 'No projects finished in this period', description: 'Revenue and cost appear once a project is completed.' } : false}
-      footer="Margin per project: revenue minus entered costs (material, labour, vendors, travel, other). Salaries and overheads are not recorded, so this is not profit and loss."
       {...state}
     >
       {economics ? (

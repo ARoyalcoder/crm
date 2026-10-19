@@ -86,7 +86,6 @@ export function LeadFunnelCard({ sales, state }: Omit<Panel, 'period'>) {
       }}
       empty={sales && created === 0 ? { title: 'No leads created in this period', description: 'New leads appear here and move down the funnel as they are worked.' } : false}
       drillDown={{ to: '/leads', label: 'View leads' }}
-      footer="Each step includes every later step, so the funnel only narrows. Worked: an activity was logged, or the lead was qualified, won or lost."
       height={160}
       {...state}
     >
@@ -114,7 +113,6 @@ export function PipelineByStageCard({ sales, state }: Omit<Panel, 'period'>) {
       }}
       empty={sales && sales.pipeline && sales.pipeline.deals === 0 ? { title: 'No open deals', description: 'Create an opportunity from a qualified lead to start a pipeline.' } : false}
       drillDown={{ to: '/opportunities', label: 'Open the pipeline' }}
-      footer={sales?.weightedPipeline != null ? `Weighted by each deal's own win probability: ${formatRupees(sales.weightedPipeline)}. A forecast, not revenue.` : undefined}
       {...state}
     >
       <BarsChart

@@ -130,7 +130,6 @@ export function SalesDashboardPage() {
           title="Who is selling"
           description="Orders created and deals won, by salesperson"
           empty={orders.topSalespeople.length === 0 ? { title: 'No orders or wins in this period' } : false}
-          footer="Ranked by order value."
           {...state}
         >
           {ready ? <DataTable columns={personColumns} data={orders.topSalespeople} caption="Salespeople ranked by order value" density="compact" alignRight={['orders', 'orderValue', 'wonDeals']} /> : null}

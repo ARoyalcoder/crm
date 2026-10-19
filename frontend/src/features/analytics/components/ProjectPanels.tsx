@@ -81,7 +81,6 @@ export function ProjectStatusCard({ projects, state }: Omit<Panel, 'period'>) {
       }}
       empty={projects && total === 0 ? { title: 'No projects yet', description: 'Projects created from orders appear here, with status.' } : false}
       drillDown={{ to: '/projects', label: 'View projects' }}
-      footer="In project workflow order. Finished and cancelled statuses come from your project status settings."
       {...state}
     >
       <BarsChart
@@ -169,7 +168,6 @@ export function DeliveryTrendCard({ delivery, period, state }: { delivery?: Deli
         rows: rows.filter((r) => r.onTime + r.late > 0).map((r) => ({ bucket: bucketTitle(granularity, r.bucket), onTime: formatNumber(r.onTime), late: formatNumber(r.late) })),
       }}
       empty={delivery && total === 0 ? { title: 'No projects finished in this period' } : false}
-      footer="On time: finished on or before the expected completion date."
       {...state}
     >
       <TrendChart
@@ -229,7 +227,6 @@ export function CostComparisonCard({
         })),
       }}
       empty={rows && data.length === 0 ? { title: 'No project costs to compare', description: 'Running projects and those finished this period appear here.' } : false}
-      footer="Expected is the expected cost, or the budget if none is set. Recorded is the sum of entered material, labour, vendor, travel and other costs, or the single cost figure if none are itemised."
       {...state}
     >
       <BarsChart

@@ -113,7 +113,6 @@ export function WorkforceDashboardPage() {
               rows: attendance.filter((p) => p.rate !== null).map((p) => ({ bucket: bucketTitle(granularity, p.bucket), rate: formatPercent(p.rate), records: formatNumber(p.records) })),
             }}
             empty={data && !hasAttendance ? { title: 'No attendance recorded in this period', description: 'Attendance marked on the Attendance page appears here.' } : false}
-            footer="Days without recorded attendance are excluded, not counted as zero."
             {...state}
           >
             <TrendChart

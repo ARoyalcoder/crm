@@ -82,7 +82,6 @@ export function RevenueTrendCard({ finance, period, state }: Panel) {
       }}
       empty={nothing ? { title: 'No invoices or payments in this period', description: 'Issue an invoice or record a payment to see it here.' } : false}
       drillDown={{ to: '/invoices', label: 'View invoices' }}
-      footer="Invoiced: invoices issued in the period, cancelled ones left out. Collected: payments received, reversed ones left out."
       {...state}
     >
       <TrendChart
@@ -131,7 +130,6 @@ export function AgeingCard({ finance, state }: Omit<Panel, 'period'>) {
       }}
       empty={finance && total === 0 ? { title: 'Nothing is owed', description: 'All issued invoices are paid.' } : false}
       drillDown={{ to: canReceivables ? '/receivables/outstanding' : '/finance/ageing', label: canReceivables ? 'View outstanding invoices' : 'View the ageing report' }}
-      footer="Bars show days past due, as of today. Outstanding is the invoice total after payments, credit notes and debit notes."
       {...state}
     >
       <BarsChart
