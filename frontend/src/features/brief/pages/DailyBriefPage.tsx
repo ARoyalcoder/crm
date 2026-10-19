@@ -45,7 +45,7 @@ const SECTION_LOOK: Record<string, { icon: LucideIcon; tone: Tone }> = {
 
 function BriefRow({ item }: { item: BriefItem }) {
   return (
-    <li className="flex items-start gap-3 px-5 py-3">
+    <li className="flex items-start gap-3 px-3.5 sm:px-5 py-2.5 sm:py-3">
       <div className="grid min-w-0 flex-1 gap-0.5">
         <span className="text-xs text-muted-foreground">{item.label}</span>
         <span className="text-sm font-semibold">{item.value}</span>
@@ -59,7 +59,7 @@ function BriefRow({ item }: { item: BriefItem }) {
                 <Info className="text-muted-foreground" aria-hidden="true" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 text-sm">
+            <PopoverContent align="end" className="w-[calc(100vw-2rem)] sm:w-72 max-w-72 text-sm">
               <p className="font-medium">Why you are seeing this</p>
               <p className="mt-1 text-muted-foreground">{item.reason}</p>
             </PopoverContent>
@@ -82,7 +82,7 @@ function Section({ section }: { section: BriefSection }) {
   const Icon = look.icon
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="border-b py-4">
+      <CardHeader className="border-b px-4 sm:px-6 py-3 sm:py-4">
         <CardTitle className="flex items-center gap-3 text-base">
           <span className={cn('flex size-8 items-center justify-center rounded-lg', toneChip[look.tone])}>
             <Icon className="size-4" aria-hidden="true" />

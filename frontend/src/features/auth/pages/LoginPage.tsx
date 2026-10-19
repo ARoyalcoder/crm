@@ -134,7 +134,7 @@ export function LoginPage() {
 
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-[#EEF3FA] dark:bg-[#0A0F1D] text-slate-800 dark:text-slate-100 flex flex-col justify-between select-none transition-colors duration-500">
+    <main className="relative min-h-[100dvh] w-full overflow-x-hidden bg-[#EEF3FA] dark:bg-[#0A0F1D] text-slate-800 dark:text-slate-100 flex flex-col justify-between select-none transition-colors duration-500">
       {/* ----------------- Ambient GSAP Background Spheres ----------------- */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Soft radial background glow */}

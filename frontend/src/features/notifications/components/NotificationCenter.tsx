@@ -62,7 +62,7 @@ export function NotificationCenter() {
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[22rem]" aria-label="Notifications">
+      <PopoverContent className="w-[calc(100vw-1.5rem)] sm:w-[22rem] max-w-[22rem]" align="end" aria-label="Notifications">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-sm font-semibold">Notifications</h2>
           {unreadCount > 0 ? (

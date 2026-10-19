@@ -33,7 +33,7 @@ function DialogContent({
           'fixed z-50 flex flex-col gap-4 border border-border/70 bg-card text-card-foreground shadow-pop outline-none',
           side === 'left' && 'inset-y-0 left-0 h-full w-72 max-w-[85vw] border-y-0 border-l-0 p-0',
           side === 'right' && 'inset-y-0 right-0 h-full w-full max-w-md overflow-y-auto border-y-0 border-r-0 p-6',
-          !side && 'top-1/2 left-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl p-6',
+          !side && 'top-1/2 left-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl p-4 sm:p-6',
           className,
         )}
         {...props}

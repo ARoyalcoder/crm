@@ -212,7 +212,7 @@ export function GlobalSearchBar() {
       {showDropdown && (
         <div
           id={listId}
-          className="absolute top-full left-0 z-50 mt-2 w-full min-w-[min(26rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-border/70 bg-popover shadow-pop"
+          className="absolute top-full right-0 sm:left-0 sm:right-auto z-50 mt-2 w-[calc(100vw-2rem)] sm:w-full sm:min-w-[26rem] max-w-[calc(100vw-2rem)] sm:max-w-md overflow-hidden rounded-2xl border border-border/70 bg-popover shadow-pop"
         >
           {debouncedQuery.trim().length < 2 && recentSearches.length > 0 && (
             <div>
