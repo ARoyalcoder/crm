@@ -42,15 +42,9 @@ const columns = column.columns([
   column.accessor('contactName', {
     header: 'Lead',
     cell: ({ row }) => (
-      <div className="grid">
-        <Link to={`/leads/${row.original.id}`} className="font-medium underline-offset-2 hover:underline">
-          {row.original.contactName}
-        </Link>
-        <span className="text-xs text-muted-foreground">
-          <span className="font-mono">{row.original.leadNumber}</span>
-          {row.original.companyName ? ` · ${row.original.companyName}` : ''}
-        </span>
-      </div>
+      <Link to={`/leads/${row.original.id}`} className="font-medium underline-offset-2 hover:underline">
+        {row.original.contactName}
+      </Link>
     ),
   }),
   column.accessor((lead) => lead.service.name, { id: 'service', header: 'Service' }),
