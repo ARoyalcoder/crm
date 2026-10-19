@@ -38,6 +38,7 @@ const LeadFormPage = lazy(() => import('@/features/leads/pages/LeadFormPage').th
 const LeadsPage = lazy(() => import('@/features/leads/pages/LeadsPage').then((m) => ({ default: m.LeadsPage })))
 const QualificationQuestionsPage = lazy(() => import('@/features/leads/pages/QualificationQuestionsPage').then((m) => ({ default: m.QualificationQuestionsPage })))
 const ActivitiesPage = lazy(() => import('@/features/activities/pages/ActivitiesPage').then((m) => ({ default: m.ActivitiesPage })))
+const ActivityDetailPage = lazy(() => import('@/features/activities/pages/ActivityDetailPage').then((m) => ({ default: m.ActivityDetailPage })))
 const OpportunitiesPage = lazy(() => import('@/features/opportunities/pages/OpportunitiesPage').then((m) => ({ default: m.OpportunitiesPage })))
 const QuotationsPage = lazy(() => import('@/features/quotations/pages/QuotationsPage').then((m) => ({ default: m.QuotationsPage })))
 const QuotationDetailPage = lazy(() => import('@/features/quotations/pages/QuotationDetailPage').then((m) => ({ default: m.QuotationDetailPage })))
@@ -143,6 +144,7 @@ export const router = createBrowserRouter([
           { path: 'my-work', element: <MyWorkPage /> },
 
           { path: 'activities', element: needs('ACTIVITY_VIEW', <ActivitiesPage />) },
+          { path: 'activities/:id', element: needs('ACTIVITY_VIEW', <ActivityDetailPage />) },
 
           { path: 'customers', element: needs('CUSTOMER_VIEW', <CustomersPage />) },
           { path: 'customers/new', element: needs('CUSTOMER_CREATE', <CustomerFormPage />) },
