@@ -48,12 +48,7 @@ const columns = column.columns([
   column.accessor('type', { header: 'Type', cell: ({ getValue }) => labelOf(CUSTOMER_TYPES, getValue()) }),
   column.accessor('phone', {
     header: 'Contact',
-    cell: ({ row }) => (
-      <div className="grid text-sm">
-        <span>{row.original.phone ?? '—'}</span>
-        {row.original.email ? <span className="text-xs text-muted-foreground">{row.original.email}</span> : null}
-      </div>
-    ),
+    cell: ({ row }) => <span className="text-sm">{row.original.phone ?? '—'}</span>,
   }),
   column.accessor('status', { header: 'Status', cell: ({ getValue }) => <CustomerStatusBadge status={getValue()} /> }),
   column.accessor((customer) => customer.assignedTo?.name ?? '', {
