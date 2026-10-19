@@ -20,6 +20,7 @@ import {
   verticalsQuery,
   type Service,
 } from '@/features/catalog/api'
+import { CatalogNavTabs } from '@/features/catalog/components/CatalogNavTabs'
 import { useListParams } from '@/lib/use-list-params'
 
 const column = dataTableColumns<Service>()
@@ -137,6 +138,7 @@ export function ServicesPage() {
           ) : null
         }
       />
+      <CatalogNavTabs />
       <AdminList
         noun="services"
         singular="service"

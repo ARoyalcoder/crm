@@ -17,6 +17,7 @@ import {
   verticalsQuery,
   type Category,
 } from '@/features/catalog/api'
+import { CatalogNavTabs } from '@/features/catalog/components/CatalogNavTabs'
 import { useListParams } from '@/lib/use-list-params'
 
 const column = dataTableColumns<Category>()
@@ -104,6 +105,7 @@ export function CategoriesPage() {
           ) : null
         }
       />
+      <CatalogNavTabs />
       <AdminList
         noun="categories"
         singular="category"

@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHasPermission } from '@/features/auth/auth-context'
 import { catalogKeys, setVerticalActive, verticalsQuery, type Vertical } from '@/features/catalog/api'
+import { CatalogNavTabs } from '@/features/catalog/components/CatalogNavTabs'
 
 const column = dataTableColumns<Vertical>()
 
@@ -91,6 +92,7 @@ export function VerticalsPage() {
         title="Verticals"
         description="The six lines of business. Rename, reorder or switch them off; the set itself is fixed."
       />
+      <CatalogNavTabs />
       <Card>
         <CardContent className="grid gap-4">
           {toggle.error ? <ErrorState title="That change could not be saved" error={toggle.error} /> : null}
