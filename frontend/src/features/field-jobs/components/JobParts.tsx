@@ -43,10 +43,26 @@ export function JobStatusBadge({ status }: { status: string }) {
   )
 }
 
+const TECH_AVATAR_TONES = [
+  'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
+  'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+  'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
+  'bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30',
+  'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
+  'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30',
+]
+
+export function getTechTone(name?: string | null) {
+  if (!name) return 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20'
+  let sum = 0
+  for (let i = 0; i < name.length; i++) sum += name.charCodeAt(i)
+  return TECH_AVATAR_TONES[sum % TECH_AVATAR_TONES.length]
+}
+
 export function DelayedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-[11px] font-medium text-rose-600 dark:text-rose-400 whitespace-nowrap">
-      <Clock className="size-3 shrink-0" aria-hidden="true" />
+    <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[11px] font-medium text-rose-600 dark:text-rose-400 whitespace-nowrap">
+      <Clock className="size-3 shrink-0 text-rose-500 dark:text-rose-400" aria-hidden="true" />
       Overdue
     </span>
   )
@@ -66,10 +82,10 @@ export function JobCard({ job }: { job: JobSummary }) {
         {/* Top Header: Job ID, Type & Status */}
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-mono text-xs font-semibold text-primary bg-primary/10 rounded px-1.5 py-0.5">
+            <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded px-1.5 py-0.5">
               {job.jobNumber}
             </span>
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 rounded px-1.5 py-0.5 uppercase tracking-wider">
               {labelOf(JOB_TYPES, job.jobType)}
             </span>
           </div>
@@ -88,8 +104,8 @@ export function JobCard({ job }: { job: JobSummary }) {
         </h3>
 
         {/* Customer */}
-        <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Building2 className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Building2 className="size-3.5 shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true" />
           <span className="font-medium text-foreground/80 truncate" title={job.customerName}>
             {job.customerName}
           </span>
@@ -98,11 +114,11 @@ export function JobCard({ job }: { job: JobSummary }) {
         {/* Compact Schedule & Location */}
         <div className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5 shrink-0">
-            <CalendarClock className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
-            <span>{formatCompactSchedule(job.scheduledStart, job.scheduledEnd)}</span>
+            <CalendarClock className="size-3.5 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden="true" />
+            <span className="text-foreground/90 font-medium">{formatCompactSchedule(job.scheduledStart, job.scheduledEnd)}</span>
           </div>
           <div className="flex items-center gap-1.5 min-w-0" title={job.siteAddress}>
-            <MapPin className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+            <MapPin className="size-3.5 shrink-0 text-rose-500 dark:text-rose-400" aria-hidden="true" />
             <span className="truncate">{shortLoc}</span>
           </div>
         </div>
@@ -111,15 +127,15 @@ export function JobCard({ job }: { job: JobSummary }) {
       {/* Integrated Technician Footer */}
       <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 min-w-0">
-          <div className="size-4.5 rounded-full bg-muted flex items-center justify-center font-bold text-[9px] text-muted-foreground shrink-0">
+          <div className={cn('size-5 rounded-full flex items-center justify-center font-bold text-[10px] border shrink-0', getTechTone(job.technicianName))}>
             {job.technicianName ? job.technicianName.charAt(0).toUpperCase() : '?'}
           </div>
-          <span className="truncate text-muted-foreground text-[11.5px]" title={job.technicianName || 'Unassigned'}>
+          <span className="truncate text-foreground/80 font-medium text-[11.5px]" title={job.technicianName || 'Unassigned'}>
             {job.technicianName || 'Unassigned'}
           </span>
         </div>
-        <span className="text-[11px] font-medium text-primary flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform shrink-0">
-          Open <ChevronRight className="size-3" aria-hidden="true" />
+        <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform shrink-0">
+          Open <ChevronRight className="size-3 text-blue-600 dark:text-blue-400" aria-hidden="true" />
         </span>
       </div>
     </Link>

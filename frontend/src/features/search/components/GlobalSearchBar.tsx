@@ -20,32 +20,32 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn } from '@/lib/utils'
 import { searchApi, type SearchResult, type EntityType } from '../api'
 
-// Map entity types to icons
+// Map entity types to colorful icons
 function EntityIcon({ type, className }: { type: string; className?: string }) {
-  const props = { className: cn('size-4 shrink-0', className), 'aria-hidden': true as const }
+  const base = cn('size-4 shrink-0', className)
   switch (type as EntityType) {
     case 'Customer':
-      return <Users {...props} />
+      return <Users className={cn(base, 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
     case 'Lead':
-      return <Target {...props} />
+      return <Target className={cn(base, 'text-orange-500 dark:text-orange-400')} aria-hidden="true" />
     case 'Opportunity':
-      return <TrendingUp {...props} />
+      return <TrendingUp className={cn(base, 'text-emerald-500 dark:text-emerald-400')} aria-hidden="true" />
     case 'Quotation':
-      return <FileSpreadsheet {...props} />
+      return <FileSpreadsheet className={cn(base, 'text-sky-500 dark:text-sky-400')} aria-hidden="true" />
     case 'Order':
-      return <ShoppingBag {...props} />
+      return <ShoppingBag className={cn(base, 'text-indigo-500 dark:text-indigo-400')} aria-hidden="true" />
     case 'Project':
-      return <FolderKanban {...props} />
+      return <FolderKanban className={cn(base, 'text-cyan-500 dark:text-cyan-400')} aria-hidden="true" />
     case 'Ticket':
-      return <Headphones {...props} />
+      return <Headphones className={cn(base, 'text-rose-500 dark:text-rose-400')} aria-hidden="true" />
     case 'Invoice':
-      return <ReceiptText {...props} />
+      return <ReceiptText className={cn(base, 'text-teal-500 dark:text-teal-400')} aria-hidden="true" />
     case 'Employee':
-      return <UserCheck {...props} />
+      return <UserCheck className={cn(base, 'text-violet-500 dark:text-violet-400')} aria-hidden="true" />
     case 'Vendor':
-      return <Store {...props} />
+      return <Store className={cn(base, 'text-amber-500 dark:text-amber-400')} aria-hidden="true" />
     default:
-      return <Search {...props} />
+      return <Search className={cn(base, 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
   }
 }
 
@@ -162,7 +162,7 @@ export function GlobalSearchBar() {
   return (
     <div ref={containerRef} className="relative min-w-0 max-w-md flex-1">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-blue-500 dark:text-blue-400" aria-hidden="true" />
         <input
           ref={inputRef}
           type="search"

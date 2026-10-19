@@ -41,7 +41,7 @@ export function SearchInput({ value, onChange, label }: SearchInputProps) {
   return (
     <div className="relative w-full sm:w-52 lg:w-56 xl:w-64">
       <Search
-        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-blue-500 dark:text-blue-400"
         aria-hidden="true"
       />
       <Input
@@ -62,7 +62,7 @@ export function SearchInput({ value, onChange, label }: SearchInputProps) {
           }}
           className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
         >
-          <X className="size-3.5" aria-hidden="true" />
+          <X className="size-3.5 text-rose-500 hover:text-rose-600" aria-hidden="true" />
         </button>
       ) : null}
     </div>
@@ -159,12 +159,12 @@ export function Pagination({ page, totalPages, totalItems, noun, singular, onPag
       {totalPages > 1 ? (
         <div className="flex gap-2">
           <Button variant="outline" size="sm" disabled={page <= 0} onClick={() => onPageChange(page - 1)}>
-            <ChevronLeft aria-hidden="true" />
+            <ChevronLeft className="text-primary size-4" aria-hidden="true" />
             Previous
           </Button>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>
             Next
-            <ChevronRight aria-hidden="true" />
+            <ChevronRight className="text-primary size-4" aria-hidden="true" />
           </Button>
         </div>
       ) : null}

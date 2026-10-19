@@ -43,20 +43,20 @@ export function UserMenu() {
         {canSeeProfile ? (
           <DropdownMenuItem asChild>
             <Link to="/workforce/my-profile">
-              <UserCheck aria-hidden="true" /> My profile
+              <UserCheck className="size-4 text-blue-500 dark:text-blue-400" aria-hidden="true" /> My profile
             </Link>
           </DropdownMenuItem>
         ) : null}
         {canSeeNotifications ? (
           <DropdownMenuItem asChild>
             <Link to="/notifications/preferences">
-              <BellRing aria-hidden="true" /> Notification preferences
+              <BellRing className="size-4 text-amber-500 dark:text-amber-400" aria-hidden="true" /> Notification preferences
             </Link>
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>
-          <LogOut aria-hidden="true" /> Sign out
+          <LogOut className="size-4 text-rose-500 dark:text-rose-400" aria-hidden="true" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

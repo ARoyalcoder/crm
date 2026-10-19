@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   AlertCircle,
   Briefcase,
+  Building2,
   CalendarClock,
   CheckCircle2,
   ChevronRight,
@@ -27,7 +28,7 @@ import {
   techniciansQuery,
   type JobFilters,
 } from '@/features/field-jobs/api'
-import { DelayedBadge, JobCard, JobStatusBadge } from '@/features/field-jobs/components/JobParts'
+import { DelayedBadge, getTechTone, JobCard, JobStatusBadge } from '@/features/field-jobs/components/JobParts'
 import { useListParams } from '@/lib/use-list-params'
 import { cn } from '@/lib/utils'
 
@@ -66,7 +67,7 @@ export function FieldJobsPage() {
           canManage ? (
             <Button asChild className="gap-1.5 shadow-sm">
               <Link to="/field-jobs/new">
-                <Plus className="size-4" aria-hidden="true" />
+                <Plus className="size-4 text-white" aria-hidden="true" />
                 New job
               </Link>
             </Button>
@@ -80,12 +81,12 @@ export function FieldJobsPage() {
           type="button"
           onClick={() => params.set('status', '')}
           className={cn(
-            'flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:border-primary/40 hover:shadow-xs cursor-pointer',
-            !currentStatus ? 'border-primary/50 bg-primary/5' : 'border-border/70 bg-card'
+            'flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:border-indigo-500/40 hover:shadow-xs cursor-pointer',
+            !currentStatus ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20' : 'border-border/70 bg-card'
           )}
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Briefcase className="size-4.5" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25">
+            <Briefcase className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
             <div className="text-xl font-bold tracking-tight text-foreground">{stats.total}</div>
@@ -97,12 +98,12 @@ export function FieldJobsPage() {
           type="button"
           onClick={() => params.set('status', currentStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS')}
           className={cn(
-            'flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:border-sky-500/40 hover:shadow-xs cursor-pointer',
-            currentStatus === 'IN_PROGRESS' ? 'border-sky-500/50 bg-sky-500/5' : 'border-border/70 bg-card'
+            'flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:border-amber-500/40 hover:shadow-xs cursor-pointer',
+            currentStatus === 'IN_PROGRESS' ? 'border-amber-500/50 bg-amber-500/5 ring-1 ring-amber-500/20' : 'border-border/70 bg-card'
           )}
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-            <Clock className="size-4.5" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+            <Clock className="size-5 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
             <div className="text-xl font-bold tracking-tight text-foreground">{stats.inProgress}</div>
@@ -115,11 +116,11 @@ export function FieldJobsPage() {
           onClick={() => params.set('status', '')}
           className={cn(
             'flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:border-rose-500/40 hover:shadow-xs cursor-pointer',
-            stats.overdue > 0 ? 'border-rose-500/30 bg-rose-500/5' : 'border-border/70 bg-card'
+            stats.overdue > 0 ? 'border-rose-500/40 bg-rose-500/5 ring-1 ring-rose-500/20' : 'border-border/70 bg-card'
           )}
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
-            <AlertCircle className="size-4.5" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+            <AlertCircle className="size-5 text-rose-600 dark:text-rose-400" />
           </div>
           <div>
             <div className="text-xl font-bold tracking-tight text-foreground">{stats.overdue}</div>
@@ -132,11 +133,11 @@ export function FieldJobsPage() {
           onClick={() => params.set('status', currentStatus === 'COMPLETED' ? '' : 'COMPLETED')}
           className={cn(
             'flex items-center gap-3 rounded-xl border p-3 text-left transition-all hover:border-emerald-500/40 hover:shadow-xs cursor-pointer',
-            currentStatus === 'COMPLETED' ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-border/70 bg-card'
+            currentStatus === 'COMPLETED' ? 'border-emerald-500/50 bg-emerald-500/5 ring-1 ring-emerald-500/20' : 'border-border/70 bg-card'
           )}
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="size-4.5" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+            <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
             <div className="text-xl font-bold tracking-tight text-foreground">{stats.completed}</div>
@@ -177,7 +178,7 @@ export function FieldJobsPage() {
             onClick={() => setViewMode('grid')}
             title="Grid view"
           >
-            <LayoutGrid className="size-3.5" />
+            <LayoutGrid className="size-3.5 text-blue-600 dark:text-blue-400" />
             <span className="hidden sm:inline">Grid</span>
           </Button>
           <Button
@@ -188,7 +189,7 @@ export function FieldJobsPage() {
             onClick={() => setViewMode('table')}
             title="Table view"
           >
-            <List className="size-3.5" />
+            <List className="size-3.5 text-purple-600 dark:text-purple-400" />
             <span className="hidden sm:inline">Table</span>
           </Button>
         </div>
@@ -234,7 +235,7 @@ export function FieldJobsPage() {
               {jobs.data.items.map((job) => (
                 <tr key={job.id} className="transition-colors hover:bg-muted/30">
                   <td className="py-2.5 px-3.5 whitespace-nowrap">
-                    <span className="font-mono text-xs font-semibold text-primary bg-primary/10 rounded px-1.5 py-0.5">
+                    <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded px-1.5 py-0.5">
                       {job.jobNumber}
                     </span>
                   </td>
@@ -242,28 +243,30 @@ export function FieldJobsPage() {
                     <div className="font-medium text-foreground truncate" title={job.title}>
                       {job.title}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate" title={job.customerName}>
-                      {job.customerName}
+                    <div className="text-xs text-muted-foreground flex items-center gap-1.5 truncate mt-0.5" title={job.customerName}>
+                      <Building2 className="size-3 text-amber-500 dark:text-amber-400 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{job.customerName}</span>
                     </div>
                   </td>
                   <td className="py-2.5 px-3 whitespace-nowrap text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <CalendarClock className="size-3.5 text-muted-foreground/70 shrink-0" />
+                    <div className="flex items-center gap-1.5 font-medium text-foreground/90">
+                      <CalendarClock className="size-3.5 text-sky-500 dark:text-sky-400 shrink-0" />
                       <span>{formatCompactSchedule(job.scheduledStart, job.scheduledEnd)}</span>
                     </div>
                   </td>
                   <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[180px]">
                     <div className="flex items-center gap-1.5" title={job.siteAddress}>
-                      <MapPin className="size-3.5 text-muted-foreground/70 shrink-0" />
+                      <MapPin className="size-3.5 text-rose-500 dark:text-rose-400 shrink-0" />
                       <span className="truncate">{formatShortLocation(job.siteAddress)}</span>
                     </div>
                   </td>
                   <td className="py-2.5 px-3 whitespace-nowrap text-xs">
-                    {job.technicianName ? (
-                      <span className="font-medium text-foreground/80">{job.technicianName}</span>
-                    ) : (
-                      <span className="text-muted-foreground italic">Unassigned</span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn('size-5 rounded-full flex items-center justify-center font-bold text-[10px] border shrink-0', getTechTone(job.technicianName))}>
+                        {job.technicianName ? job.technicianName.charAt(0).toUpperCase() : '?'}
+                      </div>
+                      <span className="font-medium text-foreground/80">{job.technicianName || 'Unassigned'}</span>
+                    </div>
                   </td>
                   <td className="py-2.5 px-3 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
@@ -274,9 +277,9 @@ export function FieldJobsPage() {
                     </div>
                   </td>
                   <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
-                    <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary gap-0.5">
+                    <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 gap-0.5">
                       <Link to={`/field-jobs/${job.id}`}>
-                        View <ChevronRight className="size-3" />
+                        View <ChevronRight className="size-3 text-blue-600 dark:text-blue-400" />
                       </Link>
                     </Button>
                   </td>

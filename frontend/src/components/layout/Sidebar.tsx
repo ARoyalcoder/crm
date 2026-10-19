@@ -78,6 +78,100 @@ const itemClass = (active: boolean, collapsed?: boolean) =>
     collapsed && 'justify-center px-0 py-1.5',
   )
 
+const NAV_ICON_COLORS: Record<string, string> = {
+  // Workspace
+  '/': 'text-blue-500 dark:text-blue-400',
+  '/my-work': 'text-indigo-500 dark:text-indigo-400',
+  '/brief': 'text-amber-500 dark:text-amber-400',
+  '/ask': 'text-violet-500 dark:text-violet-400',
+  '/pulse': 'text-rose-500 dark:text-rose-400',
+
+  // CRM
+  '/leads': 'text-orange-500 dark:text-orange-400',
+  '/admin/qualification-questions': 'text-amber-500 dark:text-amber-400',
+  '/customers': 'text-blue-500 dark:text-blue-400',
+  '/intelligence': 'text-purple-500 dark:text-purple-400',
+  '/activities': 'text-emerald-500 dark:text-emerald-400',
+
+  // Sales
+  '/opportunities': 'text-emerald-500 dark:text-emerald-400',
+  '/quotations': 'text-sky-500 dark:text-sky-400',
+  '/orders': 'text-indigo-500 dark:text-indigo-400',
+
+  // Projects & Field work
+  '/projects': 'text-cyan-500 dark:text-cyan-400',
+  '/project-analytics': 'text-indigo-500 dark:text-indigo-400',
+  '/field-jobs': 'text-blue-500 dark:text-blue-400',
+  '/my-jobs': 'text-amber-500 dark:text-amber-400',
+
+  // Finance
+  '/invoices': 'text-emerald-500 dark:text-emerald-400',
+  '/payments': 'text-teal-500 dark:text-teal-400',
+  '/receivables': 'text-amber-500 dark:text-amber-400',
+  '/finance/ageing': 'text-rose-500 dark:text-rose-400',
+
+  // Service
+  '/support/tickets': 'text-rose-500 dark:text-rose-400',
+  '/amc-contracts': 'text-blue-500 dark:text-blue-400',
+  '/warranties': 'text-teal-500 dark:text-teal-400',
+
+  // Workforce
+  '/workforce/employees': 'text-violet-500 dark:text-violet-400',
+  '/workforce/attendance': 'text-sky-500 dark:text-sky-400',
+  '/workforce/my-profile': 'text-indigo-500 dark:text-indigo-400',
+  '/performance/dashboard': 'text-amber-500 dark:text-amber-400',
+  '/performance/commissions': 'text-emerald-500 dark:text-emerald-400',
+
+  // Recruitment
+  '/recruitment/jobs': 'text-blue-500 dark:text-blue-400',
+  '/recruitment/candidates': 'text-purple-500 dark:text-purple-400',
+
+  // Rewards
+  '/rewards/leaderboard': 'text-amber-500 dark:text-amber-400',
+  '/rewards/customer': 'text-rose-500 dark:text-rose-400',
+  '/rewards/achievement-rules': 'text-indigo-500 dark:text-indigo-400',
+
+  // Partners
+  '/vendors': 'text-orange-500 dark:text-orange-400',
+  '/partners': 'text-teal-500 dark:text-teal-400',
+
+  // Documents
+  '/documents': 'text-sky-500 dark:text-sky-400',
+  '/documents/mine': 'text-indigo-500 dark:text-indigo-400',
+
+  // Analytics
+  '/analytics/sales': 'text-emerald-500 dark:text-emerald-400',
+  '/analytics/projects': 'text-cyan-500 dark:text-cyan-400',
+  '/analytics/finance': 'text-teal-500 dark:text-teal-400',
+  '/analytics/service': 'text-rose-500 dark:text-rose-400',
+  '/analytics/workforce': 'text-violet-500 dark:text-violet-400',
+
+  // Administration
+  '/admin': 'text-slate-500 dark:text-slate-400',
+  '/admin/users': 'text-blue-500 dark:text-blue-400',
+  '/admin/roles': 'text-amber-500 dark:text-amber-400',
+  '/admin/branches': 'text-emerald-500 dark:text-emerald-400',
+  '/admin/services': 'text-cyan-500 dark:text-cyan-400',
+  '/admin/workflow-rules': 'text-purple-500 dark:text-purple-400',
+  '/admin/integrations': 'text-indigo-500 dark:text-indigo-400',
+  '/admin/audit': 'text-rose-500 dark:text-rose-400',
+}
+
+const SECTION_ICON_COLORS: Record<string, string> = {
+  crm: 'text-orange-500 dark:text-orange-400',
+  sales: 'text-emerald-500 dark:text-emerald-400',
+  projects: 'text-cyan-500 dark:text-cyan-400',
+  finance: 'text-teal-500 dark:text-teal-400',
+  service: 'text-rose-500 dark:text-rose-400',
+  workforce: 'text-violet-500 dark:text-violet-400',
+  recruitment: 'text-blue-500 dark:text-blue-400',
+  rewards: 'text-amber-500 dark:text-amber-400',
+  partners: 'text-orange-500 dark:text-orange-400',
+  documents: 'text-sky-500 dark:text-sky-400',
+  analytics: 'text-indigo-500 dark:text-indigo-400',
+  admin: 'text-purple-500 dark:text-purple-400',
+}
+
 type SidebarNavProps = {
   /** Icon-only rail (desktop, collapsed). */
   collapsed?: boolean
@@ -115,6 +209,7 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
         return (
           <div key={section.id} className={cn('flex flex-col gap-0.5', sectionIndex > 0 && 'mt-1')}>
             {collapsed && sectionIndex > 0 ? <div aria-hidden="true" className="mx-3 my-1.5 h-px bg-border" /> : null}
+
             {collapsible ? (
               <button
                 type="button"
@@ -123,13 +218,19 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                 aria-controls={listId}
                 className="flex w-full items-center justify-between rounded-lg px-2 py-0.5 text-[9.5px] xl:text-[10px] font-semibold tracking-wider text-muted-foreground uppercase outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40"
               >
-                {section.title}
-                <ChevronDown className={cn('size-3 transition-transform', !open && '-rotate-90')} aria-hidden="true" />
+                <span className="flex items-center gap-1.5">
+                  {section.icon ? (
+                    <section.icon className={cn('size-3.5 shrink-0', SECTION_ICON_COLORS[section.id] ?? 'text-primary')} aria-hidden="true" />
+                  ) : null}
+                  <span>{section.title}</span>
+                </span>
+                <ChevronDown className={cn('size-3 transition-transform text-muted-foreground', !open && '-rotate-90')} aria-hidden="true" />
               </button>
             ) : null}
             <ul id={listId} className={cn('flex flex-col gap-0.5', !open && 'hidden')}>
               {section.items.map((item) => {
                 const active = isActivePath(item, pathname)
+                const iconColor = active ? 'text-white' : (NAV_ICON_COLORS[item.to] ?? 'text-primary')
                 const link = (
                   <NavLink
                     to={item.to}
@@ -141,7 +242,7 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                     aria-current={active ? 'page' : undefined}
                     className={itemClass(active, collapsed)}
                   >
-                    <item.icon className="size-3.5 xl:size-4 shrink-0" aria-hidden="true" />
+                    <item.icon className={cn('size-3.5 xl:size-4 shrink-0 transition-colors', iconColor)} aria-hidden="true" />
                     {collapsed ? null : <span className="truncate">{item.label}</span>}
                   </NavLink>
                 )

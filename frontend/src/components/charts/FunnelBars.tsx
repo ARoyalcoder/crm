@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ordinalColors } from '@/components/charts/colors'
-import { formatNumber, formatPercent, percentOf } from '@/lib/format'
+import { formatNumber, percentOf } from '@/lib/format'
 
 export type FunnelStage = {
   key: string
@@ -34,9 +34,7 @@ export function FunnelBars({ stages, label }: FunnelBarsProps) {
   return (
     <ol aria-label={label} className="grid gap-1">
       {stages.map((stage, index) => {
-        const previous = index > 0 ? stages[index - 1]!.value : null
         const width = top > 0 ? Math.max(stage.value > 0 ? 2 : 0, percentOf(stage.value, top)) : 0
-        const overallRate = top > 0 ? formatPercent(percentOf(stage.value, top), 0) : '0%'
 
         const name = stage.href ? (
           <Link to={stage.href} className="font-semibold text-foreground hover:text-primary transition-colors hover:underline">
@@ -54,24 +52,12 @@ export function FunnelBars({ stages, label }: FunnelBarsProps) {
                   {index + 1}
                 </span>
                 <span className="truncate">{name}</span>
-                <span className="hidden sm:inline-block px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-muted-foreground">
-                  {overallRate} of start
-                </span>
               </div>
 
               <div className="flex items-baseline gap-2 shrink-0">
                 <span className="font-bold tabular text-foreground dark:text-white">
                   {stage.display ?? formatNumber(stage.value)}
                 </span>
-                {previous !== null && previous > 0 ? (
-                  <span className="w-24 text-right text-[11px] font-semibold text-muted-foreground dark:text-slate-400">
-                    {formatPercent(percentOf(stage.value, previous), 0)} retained
-                  </span>
-                ) : (
-                  <span className="w-24 text-right text-[11px] font-semibold text-primary dark:text-blue-400">
-                    Baseline
-                  </span>
-                )}
               </div>
             </div>
 

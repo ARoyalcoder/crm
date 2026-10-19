@@ -48,7 +48,7 @@ export function NotificationCenter() {
           className="relative rounded-full"
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         >
-          <Bell className="size-4" aria-hidden="true" />
+          <Bell className={cn('size-4 transition-colors', unreadCount > 0 ? 'text-amber-500 fill-amber-500/20' : 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
           {unreadCount > 0 ? (
             <span
               aria-hidden="true"

@@ -103,7 +103,7 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
             {canManage && !closed ? (
               <Button asChild variant="outline" size="sm">
                 <Link to={`/field-jobs/${id}/edit`}>
-                  <Pencil aria-hidden="true" />
+                  <Pencil className="size-3.5 text-amber-500" aria-hidden="true" />
                   Edit
                 </Link>
               </Button>
@@ -115,32 +115,32 @@ function JobView({ detail, back }: { detail: JobDetail; back: { to: string; labe
 
       <Section title="Customer and site">
         <p className="flex items-center gap-2 text-sm">
-          <CalendarClock className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <CalendarClock className="size-4 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden="true" />
           {formatSchedule(job.scheduledStart, job.scheduledEnd)}
         </p>
         <p className="flex items-center gap-2 text-sm">
-          <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <UserRound className="size-4 shrink-0 text-indigo-500 dark:text-indigo-400" aria-hidden="true" />
           <span>
             {job.customerName}
             {detail.siteContactName ? <span className="text-muted-foreground"> · ask for {detail.siteContactName}</span> : null}
           </span>
         </p>
         <p className="flex items-start gap-2 text-sm">
-          <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <MapPin className="mt-0.5 size-4 shrink-0 text-rose-500 dark:text-rose-400" aria-hidden="true" />
           {job.siteAddress}
         </p>
         <div className="flex flex-wrap gap-2">
           {detail.siteContactPhone ? (
             <Button asChild variant="outline" className="h-11">
               <a href={`tel:${detail.siteContactPhone.replace(/[^+0-9]/g, '')}`}>
-                <Phone aria-hidden="true" />
+                <Phone className="size-4 text-emerald-500" aria-hidden="true" />
                 Call {detail.siteContactPhone}
               </a>
             </Button>
           ) : null}
           <Button asChild variant="outline" className="h-11">
             <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.siteAddress)}`} target="_blank" rel="noreferrer">
-              <MapPin aria-hidden="true" />
+              <MapPin className="size-4 text-rose-500" aria-hidden="true" />
               Open in Maps
             </a>
           </Button>
@@ -301,7 +301,7 @@ function PhotosSection({ detail, working, busy, run }: SectionProps) {
           <Input aria-label="Photo caption" placeholder="Caption (optional), e.g. Before" maxLength={300} value={caption} onChange={(event) => setCaption(event.target.value)} />
           {/* On a phone, capture="environment" opens the back camera; elsewhere it is a file picker. */}
           <label className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-secondary text-sm font-medium text-secondary-foreground">
-            <Camera className="size-4" aria-hidden="true" />
+            <Camera className="size-4 text-purple-500" aria-hidden="true" />
             {busy ? 'Working…' : 'Take or choose a photo'}
             <input
               type="file"
