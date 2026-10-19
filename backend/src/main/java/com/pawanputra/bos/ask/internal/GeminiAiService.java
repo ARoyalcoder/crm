@@ -3,6 +3,7 @@ package com.pawanputra.bos.ask.internal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pawanputra.bos.platform.security.CurrentUser;
+import com.pawanputra.bos.platform.security.InputSanitizer;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -56,8 +57,12 @@ public class GeminiAiService {
         }
 
         try {
+            String sanitizedQuestion = InputSanitizer.stripHtml(InputSanitizer.normalizeText(question));
+            if (sanitizedQuestion.length() > 500) {
+                sanitizedQuestion = sanitizedQuestion.substring(0, 500);
+            }
             String systemPrompt = buildSystemPrompt(user);
-            String fullPrompt = systemPrompt + "\n\nUser Question: " + question;
+            String fullPrompt = systemPrompt + "\n\n<user_query>\n" + sanitizedQuestion + "\n</user_query>";
 
             Map<String, Object> requestBody = Map.of(
                     "contents", List.of(
