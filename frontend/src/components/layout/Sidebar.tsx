@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Sparkles } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+import { Sparkles } from '@/components/animate-ui/icons/sparkles'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Tooltip } from '@/components/ui/tooltip'
 import { canSee, isActivePath, navigation, type NavSection } from '@/config/navigation'
@@ -54,7 +55,7 @@ function Brand({ compact }: { compact?: boolean }) {
         aria-hidden="true"
         className="flex size-7 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#2B66FE] via-[#3872FF] to-[#1E40AF] text-xs font-bold text-white shadow-[0_3px_10px_rgba(43,102,254,0.3)] group-hover:scale-105 transition-transform"
       >
-        <Sparkles className="size-3.5 xl:size-4 text-white" />
+        <Sparkles animateOnHover className="size-3.5 xl:size-4 text-white" />
       </span>
       {compact ? null : (
         <span className="leading-tight">
@@ -277,7 +278,7 @@ export function AskPawanPromo({ onNavigate, compact }: { onNavigate?: () => void
           aria-label="Ask PAWAN AI Assistant"
           className="flex size-8 xl:size-8.5 items-center justify-center rounded-xl bg-gradient-to-br from-[#8075ff] to-[#5e56e8] text-white shadow-md shadow-[#5e56e8]/25 hover:scale-105 active:scale-95 transition-all"
         >
-          <Sparkles className="size-4 text-white" />
+          <Sparkles animateOnHover className="size-4 text-white" />
         </Link>
       </Tooltip>
     )
@@ -287,7 +288,7 @@ export function AskPawanPromo({ onNavigate, compact }: { onNavigate?: () => void
     <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#8075ff] to-[#5e56e8] p-2.5 xl:p-3 text-white shadow-md shadow-[#5e56e8]/25">
       <div className="flex items-center gap-1.5 mb-0.5">
         <span className="flex size-4.5 xl:size-5 items-center justify-center rounded-md bg-white/20 backdrop-blur-sm">
-          <Sparkles className="size-2.5 xl:size-3 text-white" />
+          <Sparkles animateOnHover className="size-2.5 xl:size-3 text-white" />
         </span>
         <p className="text-[9.5px] xl:text-[10px] font-bold uppercase tracking-wider text-white/90">Ask PAWAN</p>
       </div>

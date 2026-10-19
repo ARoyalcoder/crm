@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Search,
   Users,
   Target,
   TrendingUp,
@@ -16,6 +15,7 @@ import {
   Clock,
   X,
 } from 'lucide-react'
+import { Search as AnimatedSearch } from '@/components/animate-ui/icons/search'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn } from '@/lib/utils'
 import { searchApi, type SearchResult, type EntityType } from '../api'
@@ -45,7 +45,7 @@ function EntityIcon({ type, className }: { type: string; className?: string }) {
     case 'Vendor':
       return <Store className={cn(base, 'text-amber-500 dark:text-amber-400')} aria-hidden="true" />
     default:
-      return <Search className={cn(base, 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
+      return <AnimatedSearch className={cn(base, 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
   }
 }
 
@@ -162,7 +162,12 @@ export function GlobalSearchBar() {
   return (
     <div ref={containerRef} className="relative min-w-0 max-w-md flex-1">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-blue-500 dark:text-blue-400" aria-hidden="true" />
+        <AnimatedSearch
+          animateOnHover
+          animate={open}
+          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-blue-500 dark:text-blue-400"
+          aria-hidden="true"
+        />
         <input
           ref={inputRef}
           type="search"

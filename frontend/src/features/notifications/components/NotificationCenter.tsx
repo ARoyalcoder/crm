@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bell, BellOff, CheckCheck } from 'lucide-react'
+import { BellOff } from 'lucide-react'
+import { Bell } from '@/components/animate-ui/icons/bell'
+import { CheckCheck } from '@/components/animate-ui/icons/check-check'
 import { Link, useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
@@ -48,7 +50,13 @@ export function NotificationCenter() {
           className="relative rounded-full"
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         >
-          <Bell className={cn('size-4 transition-colors', unreadCount > 0 ? 'text-amber-500 fill-amber-500/20' : 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
+          <Bell
+            animateOnHover
+            loop={unreadCount > 0}
+            loopDelay={4}
+            className={cn('size-4 transition-colors', unreadCount > 0 ? 'text-amber-500 fill-amber-500/20' : 'text-blue-500 dark:text-blue-400')}
+            aria-hidden="true"
+          />
           {unreadCount > 0 ? (
             <span
               aria-hidden="true"
@@ -67,7 +75,7 @@ export function NotificationCenter() {
           <h2 className="text-sm font-semibold">Notifications</h2>
           {unreadCount > 0 ? (
             <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={() => markAll.mutate()} loading={markAll.isPending}>
-              <CheckCheck aria-hidden="true" />
+              <CheckCheck animateOnHover className="size-3.5" aria-hidden="true" />
               Mark all read
             </Button>
           ) : null}

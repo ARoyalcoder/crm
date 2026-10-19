@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sun } from '@/components/animate-ui/icons/sun'
-import { Moon } from '@/components/animate-ui/icons/moon'
+import { Sun, Moon } from 'lucide-react'
 import { useTheme } from './theme-context'
 import { originOf } from './theme-transition'
 import { cn } from '@/lib/utils'
@@ -46,9 +45,9 @@ export function ThemeToggle() {
           className="relative z-10 flex items-center justify-center pointer-events-none"
         >
           {theme === 'dark' ? (
-            <Moon animateOnHover className="size-4.5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" aria-hidden="true" />
+            <Moon className="size-4.5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" aria-hidden="true" />
           ) : (
-            <Sun animateOnHover className="size-4.5 text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" aria-hidden="true" />
+            <Sun className="size-4.5 text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" aria-hidden="true" />
           )}
         </motion.div>
       </AnimatePresence>

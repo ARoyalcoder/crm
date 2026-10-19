@@ -4,22 +4,12 @@ import { Link, useParams } from 'react-router-dom'
 import {
   ChevronLeft,
   ChevronRight,
-  User,
-  Mail,
   Building2,
   Briefcase,
-  Calendar,
-  Clock,
-  Sparkles,
-  Copy,
-  Check,
-  Share2,
   Edit3,
   PlusCircle,
-  Users,
   CheckCircle2,
   AlertCircle,
-  TrendingUp,
   BarChart2,
   PieChart,
   ShieldCheck,
@@ -28,9 +18,21 @@ import {
   AlertOctagon,
   Search,
   ExternalLink,
-  Phone,
   Layers,
 } from 'lucide-react'
+import {
+  User,
+  Mail,
+  Calendar,
+  Clock,
+  Sparkles,
+  Copy,
+  Check,
+  Share2,
+  Users,
+  TrendingUp,
+  Phone,
+} from '@/components/animate-ui/icons'
 import { toast } from 'sonner'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { ChartCard } from '@/components/charts/ChartCard'
@@ -374,7 +376,7 @@ export function EmployeeProfilePage() {
         </Button>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleShareProfile} className="gap-1.5 text-xs">
-            <Share2 className="size-3.5" />
+            <Share2 animateOnHover className="size-3.5" />
             <span className="hidden sm:inline">Share</span>
           </Button>
           {canUpdate && (
@@ -395,7 +397,7 @@ export function EmployeeProfilePage() {
 
         <CardContent className="relative pt-12 pb-6 px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:left">
               {/* Profile Avatar with Status Pulse */}
               <div className="relative group">
                 <Avatar className="size-24 sm:size-28 border-4 border-card bg-slate-100 dark:bg-slate-800 shadow-md">
@@ -439,7 +441,7 @@ export function EmployeeProfilePage() {
                     title="Click to copy employee code"
                   >
                     <span>{emp.employeeCode}</span>
-                    {copiedCode ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3 opacity-60" />}
+                    {copiedCode ? <Check animate className="size-3 text-emerald-600" /> : <Copy animateOnHover className="size-3 opacity-60" />}
                   </button>
                 </p>
 
@@ -447,7 +449,7 @@ export function EmployeeProfilePage() {
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
                   {emp.email && (
                     <div className="inline-flex items-center gap-1.5 hover:text-foreground">
-                      <Mail className="size-3.5 opacity-70" />
+                      <Mail animateOnHover className="size-3.5 opacity-70" />
                       <a href={`mailto:${emp.email}`} className="hover:underline">
                         {emp.email}
                       </a>
@@ -457,12 +459,12 @@ export function EmployeeProfilePage() {
                         className="opacity-60 hover:opacity-100 p-0.5 cursor-pointer"
                         title="Copy email"
                       >
-                        {copiedEmail ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                        {copiedEmail ? <Check animate className="size-3 text-emerald-600" /> : <Copy animateOnHover className="size-3" />}
                       </button>
                     </div>
                   )}
                   <div className="inline-flex items-center gap-1.5">
-                    <Calendar className="size-3.5 opacity-70" />
+                    <Calendar animateOnHover className="size-3.5 opacity-70" />
                     <span>
                       Joined {new Date(emp.joiningDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}{' '}
                       <span className="opacity-75">({tenure})</span>
@@ -470,7 +472,7 @@ export function EmployeeProfilePage() {
                   </div>
                   {manager && (
                     <div className="inline-flex items-center gap-1.5">
-                      <User className="size-3.5 opacity-70" />
+                      <User animateOnHover className="size-3.5 opacity-70" />
                       <span>Manager: </span>
                       <Link
                         to={`/workforce/employees/${manager.id}`}
@@ -529,7 +531,7 @@ export function EmployeeProfilePage() {
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">Hours logged</span>
             <span className="p-1.5 rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
-              <Clock className="size-4" />
+              <Clock animateOnHover className="size-4" />
             </span>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
@@ -571,7 +573,7 @@ export function EmployeeProfilePage() {
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">Team</span>
             <span className="p-1.5 rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
-              <Users className="size-4" />
+              <Users animateOnHover className="size-4" />
             </span>
           </div>
           <div className="mt-2 flex items-baseline justify-between">

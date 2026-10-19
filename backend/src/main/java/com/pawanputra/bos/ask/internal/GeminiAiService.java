@@ -85,14 +85,59 @@ public class GeminiAiService {
             }
 
             if (answerText != null && !answerText.isBlank()) {
+                String cleanAnswer = answerText.trim();
+                String recAction = null;
+                String recUrl = null;
+
+                // Extract any Recommended Action: <Label> | <Url> from the end of the text
+                java.util.regex.Pattern actionPattern = java.util.regex.Pattern.compile(
+                        "(?i)(?:recommended\\s*action|action\\s*link|action):\\s*([^|\\n\\r]+)(?:\\|\\s*([^\\n\\r]+))?");
+                java.util.regex.Matcher matcher = actionPattern.matcher(cleanAnswer);
+                if (matcher.find()) {
+                    recAction = matcher.group(1) != null ? matcher.group(1).trim() : null;
+                    recUrl = matcher.group(2) != null ? matcher.group(2).trim() : null;
+                    cleanAnswer = cleanAnswer.substring(0, matcher.start()).trim();
+                }
+
+                // If no explicit action was specified, deduce the most relevant action from context
+                if (recAction == null || recUrl == null) {
+                    String lowerQ = question.toLowerCase();
+                    String lowerA = cleanAnswer.toLowerCase();
+                    if (lowerQ.contains("lead") || lowerA.contains("lead")) {
+                        recAction = "View Leads";
+                        recUrl = "/leads";
+                    } else if (lowerQ.contains("invoice") || lowerQ.contains("bill") || lowerA.contains("overdue invoice")) {
+                        recAction = "Review Invoices";
+                        recUrl = "/invoices";
+                    } else if (lowerQ.contains("receivable") || lowerQ.contains("payment") || lowerA.contains("receivables")) {
+                        recAction = "View Receivables";
+                        recUrl = "/receivables";
+                    } else if (lowerQ.contains("project") || lowerA.contains("project")) {
+                        recAction = "Check Projects";
+                        recUrl = "/projects";
+                    } else if (lowerQ.contains("ticket") || lowerA.contains("support ticket")) {
+                        recAction = "Open Tickets";
+                        recUrl = "/support/tickets";
+                    } else if (lowerQ.contains("amc") || lowerA.contains("amc contract")) {
+                        recAction = "View AMC Contracts";
+                        recUrl = "/amc-contracts";
+                    } else if (lowerQ.contains("deal") || lowerQ.contains("pipeline") || lowerQ.contains("opportunit")) {
+                        recAction = "Open Deals Pipeline";
+                        recUrl = "/opportunities";
+                    } else if (lowerQ.contains("attend") || lowerQ.contains("leave") || lowerQ.contains("employee")) {
+                        recAction = "Workforce Directory";
+                        recUrl = "/workforce/employees";
+                    }
+                }
+
                 return new AskResponse(
                         question,
-                        answerText.trim(),
-                        "Answered by PAWAN AI (" + successfulModel + ")",
+                        cleanAnswer,
+                        "Actionable guidance by PAWAN AI (" + successfulModel + ") based on your authorized role",
                         List.of(),
                         0,
-                        null,
-                        null
+                        recAction,
+                        recUrl
                 );
             }
         } catch (Exception ex) {
@@ -129,12 +174,72 @@ public class GeminiAiService {
     }
 
     private String buildSystemPrompt(CurrentUser user) {
-        String userRole = user != null && user.roles() != null && !user.roles().isEmpty()
+        String userRoles = user != null && user.roles() != null && !user.roles().isEmpty()
                 ? String.join(", ", user.roles())
-                : "Staff";
+                : "STAFF";
         String userEmail = user != null ? user.email() : "Team Member";
+
+        StringBuilder roleFocus = new StringBuilder();
+        if (user != null) {
+            if (user.hasRole("SUPER_ADMIN") || user.hasRole("ADMIN") || user.hasRole("DIRECTOR")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: EXECUTIVE / DIRECTOR / ADMIN]
+                        - Scope: Enterprise-wide oversight across all 6 business verticals.
+                        - Primary Focus: Strategic KPIs, revenue vs expense, cross-department risks, high-level pipeline health, receivables aging, delivery velocity.
+                        - Permitted CRM Actions: Full system access (/dashboard, /opportunities, /invoices, /projects, /receivables, /workforce/employees).
+                        - Action Advice: Suggest high-leverage executive actions, approvals, and strategic interventions.
+                        """);
+            } else if (user.hasRole("SALES_MANAGER") || user.hasRole("SALES_EXECUTIVE")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: SALES & BUSINESS DEVELOPMENT]
+                        - Scope: Lead conversion, quotations, pipeline acceleration, customer accounts.
+                        - Primary Focus: Uncontacted leads, quotation follow-ups, opportunity deal stages, closing timelines, customer qualification.
+                        - Permitted CRM Actions: /leads, /opportunities, /quotations, /customers, /activities.
+                        - Strict Role Boundary: Do NOT disclose internal payroll, accounting ledger details, or unrelated administrative files. Focus on client acquisition and deal closure.
+                        """);
+            } else if (user.hasRole("FINANCE")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: FINANCE & ACCOUNTS]
+                        - Scope: Invoicing, payment reconciliation, receivables collection, tax invoices, aging.
+                        - Primary Focus: Overdue invoices, 30/60/90+ day debtors, unallocated bank payments, collections performance.
+                        - Permitted CRM Actions: /invoices, /payments, /receivables, /finance/ageing.
+                        - Action Advice: Guide the user to prioritize high-risk debts and record receipt allocations.
+                        """);
+            } else if (user.hasRole("PROJECT_MANAGER") || user.hasRole("DESIGNER")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: PROJECT MANAGEMENT & TECHNICAL DESIGN]
+                        - Scope: Project delivery milestones, site drawings, BOQs, client signoffs.
+                        - Primary Focus: Delayed milestones, pending site surveys, material preparation, CAD execution.
+                        - Permitted CRM Actions: /projects, /project-analytics, /field-jobs.
+                        - Strict Role Boundary: Focus on project deadlines and technical delivery rather than company balance sheets.
+                        """);
+            } else if (user.hasRole("TECHNICIAN")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: FIELD TECHNICIAN / SERVICE ENGINEER]
+                        - Scope: Assigned site jobs, equipment installations, repair checklists, proof of work.
+                        - Primary Focus: Today's scheduled visits, site directions, installation tools, completion sign-off.
+                        - Permitted CRM Actions: /my-jobs, /activities.
+                        - Strict Role Boundary: Do NOT disclose company-wide financial metrics or revenue data. Emphasize site execution and safety.
+                        """);
+            } else if (user.hasRole("SUPPORT_AGENT")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: CUSTOMER SUPPORT & AMC SERVICE]
+                        - Scope: Customer service tickets, SLA compliance, warranty verification, AMC renewals.
+                        - Primary Focus: Resolving escalated tickets, preventing SLA breaches, scheduling service visits.
+                        - Permitted CRM Actions: /support/tickets, /amc-contracts, /warranties.
+                        """);
+            } else if (user.hasRole("HR")) {
+                roleFocus.append("""
+                        [ROLE CONTEXT: HUMAN RESOURCES & WORKFORCE]
+                        - Scope: Employee records, attendance tracking, leave requests, shift adherence.
+                        - Primary Focus: Daily staff presence, pending leave approvals, workforce onboarding.
+                        - Permitted CRM Actions: /workforce/employees, /workforce/attendance, /performance/dashboard.
+                        """);
+            }
+        }
+
         return """
-                You are PAWAN, the official conversational AI assistant for Pawan Putra Akhand Bharat Pvt. Ltd. (Head Office: Lucknow, Uttar Pradesh, India).
+                You are PAWAN, the official AI Business OS Copilot for Pawan Putra Akhand Bharat Pvt. Ltd. (Lucknow, Uttar Pradesh, India).
                 Company Business Verticals:
                 1. CCTV & Security (Camera supply, installation, networking, repair, AMC)
                 2. Digital Marketing (SEO, social media, paid ads, website development, lead generation)
@@ -143,24 +248,32 @@ public class GeminiAiService {
                 5. Solar (Rooftop solar survey, BOQ, installation, maintenance, DISCOM approvals)
                 6. IT Support (Hardware/software support, networking, cloud setup, IT AMC)
 
-                User asking: %s (Role: %s).
-                Guidelines:
-                - Be helpful, polite, professional, and clear.
-                - Keep answers concise and direct (around 2-4 sentences or short bullet points).
-                - If the question is in Hindi or Hinglish, answer in natural Hindi/Hinglish. If in English, answer in English.
-                - Where relevant, guide the user to relevant CRM sections: Leads (/leads), Pipeline (/pipeline), Quotations (/quotations), Projects (/projects), Invoices (/finance/invoices), or Tickets (/service-contracts/tickets).
-                """.formatted(userEmail, userRole);
+                USER CONTEXT:
+                User: %s
+                Assigned Roles: %s
+
+                %s
+
+                OPERATIONAL GUIDELINES:
+                1. Always tailor your analysis, guidance, and tone according to the user's specific role described above.
+                2. Respect role boundaries: if a user asks about data or actions outside their department/permission scope, politely explain the boundary and guide them toward relevant actions within their role.
+                3. Keep answers concise, clear, and actionable (2-4 sentences or structured bullets).
+                4. Languages: If asked in Hindi or Hinglish, answer in natural conversational Hindi/Hinglish. If in English, answer in English.
+                5. Whenever appropriate, end your answer with an actionable next step in the format:
+                   Recommended Action: <Action Label> | <CRM URL>
+                   (Examples: Recommended Action: View Leads | /leads, Recommended Action: Check Receivables | /receivables, Recommended Action: My Field Jobs | /my-jobs)
+                """.formatted(userEmail, userRoles, roleFocus.toString());
     }
 
     private AskResponse fallbackResponse(String question) {
         return new AskResponse(
                 question,
-                "I am here to help you navigate Pawan Putra CRM. Try asking about open leads, delayed projects, overdue invoices, or today's tasks.",
-                "Ask PAWAN answers questions about your business records and services across all 6 verticals.",
+                "I am PAWAN, your role-aware Business OS Assistant. I provide targeted operational guidance and actions tailored to your department and permissions.",
+                "Ask PAWAN answers questions and initiates CRM actions according to your authorized role.",
                 List.of(),
                 0,
-                null,
-                null
+                "Explore CRM",
+                "/"
         );
     }
 
