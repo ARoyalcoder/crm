@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/auth/auth-context'
 import { humanize, initials } from '@/lib/format'
+import { Icon3D } from '@/components/ui/icon-3d'
 
 /** The signed-in person: avatar, name and role, and the account menu (profile, notification preferences, sign out). */
 export function UserMenu() {
@@ -23,9 +24,9 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Account menu"
-        className="flex items-center gap-2 rounded-full py-0.5 pr-0.5 pl-0.5 outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/40 lg:pr-2.5"
+        className="flex items-center gap-2 rounded-full py-0.5 pr-0.5 pl-0.5 outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/40 lg:pr-2.5 cursor-pointer"
       >
-        <span className="flex size-7.5 sm:size-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] sm:text-xs font-semibold text-primary-foreground">
+        <span className="flex size-7.5 sm:size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-indigo-600 to-violet-700 text-[11px] sm:text-xs font-bold text-white shadow-[0_2px_8px_rgba(99,102,241,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)]">
           {initials(user.fullName)}
         </span>
         <span className="hidden min-w-0 text-left leading-tight lg:block">
@@ -42,21 +43,21 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         {canSeeProfile ? (
           <DropdownMenuItem asChild>
-            <Link to="/workforce/my-profile">
-              <UserCheck className="size-4 text-blue-500 dark:text-blue-400" aria-hidden="true" /> My profile
+            <Link to="/workforce/my-profile" className="flex items-center gap-2">
+              <Icon3D icon={UserCheck} size="xs" tone="blue" variant="solid-3d" /> My profile
             </Link>
           </DropdownMenuItem>
         ) : null}
         {canSeeNotifications ? (
           <DropdownMenuItem asChild>
-            <Link to="/notifications/preferences">
-              <BellRing className="size-4 text-amber-500 dark:text-amber-400" aria-hidden="true" /> Notification preferences
+            <Link to="/notifications/preferences" className="flex items-center gap-2">
+              <Icon3D icon={BellRing} size="xs" tone="amber" variant="solid-3d" /> Notification preferences
             </Link>
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => void signOut()}>
-          <LogOut className="size-4 text-rose-500 dark:text-rose-400" aria-hidden="true" /> Sign out
+        <DropdownMenuItem onSelect={() => void signOut()} className="flex items-center gap-2 text-destructive focus:text-destructive">
+          <Icon3D icon={LogOut} size="xs" tone="rose" variant="solid-3d" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

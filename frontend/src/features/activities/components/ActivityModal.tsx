@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, Calendar, Repeat, X } from 'lucide-react'
+import { Bell, Calendar, CalendarCheck, Repeat, Sparkles, X } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { FormError } from '@/components/forms/FormParts'
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { StatusSelect, type StatusOption } from '@/components/ui/status-select'
 import { Textarea } from '@/components/ui/textarea'
+import { Icon3D } from '@/components/ui/icon-3d'
 import {
   ACTIVITY_TYPES,
   ENTITY_TYPES,
@@ -146,11 +147,20 @@ export function ActivityModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6 shadow-xl">
         <div className="flex items-center justify-between pb-4 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">{initial ? 'Edit activity' : 'New activity'}</h2>
-            <p className="text-xs text-muted-foreground">
-              Log touchpoints, assign tasks, schedule follow-ups, set reminders
-            </p>
+          <div className="flex items-center gap-3">
+            <Icon3D
+              icon={initial ? CalendarCheck : Sparkles}
+              size="md"
+              tone={initial ? 'blue' : 'emerald'}
+              variant="solid-3d"
+              float
+            />
+            <div>
+              <h2 className="text-lg font-semibold">{initial ? 'Edit activity' : 'New activity'}</h2>
+              <p className="text-xs text-muted-foreground">
+                Log touchpoints, assign tasks, schedule follow-ups, set reminders
+              </p>
+            </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />

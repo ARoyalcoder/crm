@@ -4,12 +4,22 @@ import { Link } from 'react-router-dom'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
-import { toneChip } from '@/components/shared/tones'
 import { Card } from '@/components/ui/card'
 import { pulseFeedQuery } from '@/features/pulse/api'
 import { insightLook } from '@/features/pulse/insight-look'
 import { entityPath } from '@/lib/entity-links'
 import { cn } from '@/lib/utils'
+import { Icon3D, type Icon3DTone } from '@/components/ui/icon-3d'
+import type { Tone } from '@/lib/status'
+
+const TONE_TO_3D: Record<Tone, Icon3DTone> = {
+  neutral: 'neutral',
+  primary: 'primary',
+  success: 'emerald',
+  warning: 'amber',
+  danger: 'rose',
+  info: 'blue',
+}
 
 const SHOWN = 5
 
@@ -43,9 +53,13 @@ export function AttentionCard() {
             const href = entityPath(insight.entityType, insight.entityId)
             const body = (
               <>
-                <span className={cn('mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg', toneChip[look.tone])}>
-                  <Icon className="size-4" aria-hidden="true" />
-                </span>
+                <Icon3D
+                  icon={look.icon}
+                  size="sm"
+                  tone={TONE_TO_3D[look.tone] ?? 'primary'}
+                  variant="solid-3d"
+                  className="mt-0.5 shrink-0"
+                />
                 <span className="grid min-w-0 flex-1 gap-0.5">
                   <span className="flex flex-wrap items-baseline gap-x-2">
                     <span className="text-[13px] font-medium">{insight.title}</span>

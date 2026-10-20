@@ -40,6 +40,7 @@ import { ask, askSuggestionsQuery, type AskResponse } from '@/features/ask/api'
 import { formatNumber } from '@/lib/format'
 import { useAuth } from '@/features/auth/auth-context'
 import { cn } from '@/lib/utils'
+import { Icon3D, type Icon3DTone } from '@/components/ui/icon-3d'
 
 type Turn = {
   id: number
@@ -66,6 +67,16 @@ type RolePreset = {
     actionName?: string
     icon: LucideIcon
   }[]
+}
+
+const ROLE_PRESET_TONES: Record<string, Icon3DTone> = {
+  EXECUTIVE: 'blue',
+  SALES: 'orange',
+  FINANCE: 'emerald',
+  PROJECTS: 'cyan',
+  OPERATIONS: 'amber',
+  SUPPORT: 'rose',
+  HR: 'purple',
 }
 
 const ROLE_PRESETS: Record<string, RolePreset> = {
@@ -519,7 +530,12 @@ export function AskPawanPage() {
         {/* Current Active Role Badge */}
         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-xs', activePreset.colorClass)}>
-            <PresetIcon className="size-4" />
+            <Icon3D
+              icon={activePreset.icon}
+              size="xs"
+              tone={ROLE_PRESET_TONES[activeRoleKey] ?? 'blue'}
+              variant="solid-3d"
+            />
             <span>Active Role: {activePreset.label}</span>
           </div>
         </div>
@@ -536,6 +552,7 @@ export function AskPawanPage() {
               {Object.values(ROLE_PRESETS).map((preset) => {
                 const Icon = preset.icon
                 const isSelected = activeRoleKey === preset.key
+                const presetTone = ROLE_PRESET_TONES[preset.key] ?? 'blue'
                 return (
                   <button
                     key={preset.key}
@@ -548,7 +565,13 @@ export function AskPawanPage() {
                         : 'bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground',
                     )}
                   >
-                    <Icon className="size-3.5" />
+                    <Icon3D
+                      icon={Icon}
+                      size="xs"
+                      tone={presetTone}
+                      variant="solid-3d"
+                      active={isSelected}
+                    />
                     <span>{preset.shortTitle}</span>
                   </button>
                 )
@@ -565,9 +588,13 @@ export function AskPawanPage() {
           {turns.length === 0 ? (
             <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft">
               <div className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <PresetIcon className="size-5" />
-                </span>
+                <Icon3D
+                  icon={activePreset.icon}
+                  size="lg"
+                  tone={ROLE_PRESET_TONES[activeRoleKey] ?? 'blue'}
+                  variant="floating-3d"
+                  float
+                />
                 <div>
                   <h2 className="text-base font-bold text-foreground">
                     Hello {user?.fullName?.split(' ')[0] ?? 'there'}, how can I assist your {activePreset.shortTitle} today?
@@ -584,6 +611,7 @@ export function AskPawanPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {activePreset.actions.map((act) => {
                     const ActIcon = act.icon
+                    const tone = ROLE_PRESET_TONES[activeRoleKey] ?? 'blue'
                     return (
                       <button
                         key={act.label}
@@ -591,9 +619,12 @@ export function AskPawanPage() {
                         onClick={() => void send(act.prompt)}
                         className="flex items-start gap-2.5 p-2.5 rounded-xl border border-border/70 hover:border-primary/50 bg-background/60 hover:bg-primary/5 text-left transition-all hover:scale-[1.01] active:scale-[0.99] group cursor-pointer"
                       >
-                        <span className="p-1 rounded-md bg-muted text-muted-foreground group-hover:text-primary transition-colors">
-                          <ActIcon className="size-4" />
-                        </span>
+                        <Icon3D
+                          icon={ActIcon}
+                          size="sm"
+                          tone={tone}
+                          variant="solid-3d"
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                             {act.label}
@@ -671,7 +702,7 @@ export function AskPawanPage() {
           <Card className="p-0 border border-border/80 shadow-soft overflow-hidden">
             <CardHeader className="border-b bg-muted/30 py-3 px-4">
               <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                <Sparkles className="size-4 text-primary" aria-hidden="true" />
+                <Icon3D icon={Sparkles} size="xs" tone="primary" variant="solid-3d" float className="shrink-0" />
                 <span>{activePreset.shortTitle} Actions</span>
               </CardTitle>
               <CardDescription className="text-xs">
@@ -690,9 +721,15 @@ export function AskPawanPage() {
                       type="button"
                       onClick={() => void send(act.prompt)}
                       disabled={busy}
-                      className="flex items-center gap-2.5 text-left text-xs font-medium text-foreground group-hover:text-primary transition-colors flex-1 cursor-pointer disabled:opacity-50"
+                      className="flex items-center gap-2 text-left text-xs font-medium text-foreground group-hover:text-primary transition-colors flex-1 cursor-pointer disabled:opacity-50"
                     >
-                      <ActIcon className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
+                      <Icon3D
+                        icon={act.icon}
+                        size="xs"
+                        tone={ROLE_PRESET_TONES[activeRoleKey] ?? 'blue'}
+                        variant="solid-3d"
+                        className="shrink-0"
+                      />
                       <span className="truncate">{act.label}</span>
                     </button>
                     {act.actionUrl && (

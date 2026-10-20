@@ -18,34 +18,34 @@ import {
 import { Search as AnimatedSearch } from '@/components/animate-ui/icons/search'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn } from '@/lib/utils'
+import { Icon3D } from '@/components/ui/icon-3d'
 import { searchApi, type SearchResult, type EntityType } from '../api'
 
-// Map entity types to colorful icons
+// Map entity types to colorful 3D animated icons
 function EntityIcon({ type, className }: { type: string; className?: string }) {
-  const base = cn('size-4 shrink-0', className)
   switch (type as EntityType) {
     case 'Customer':
-      return <Users className={cn(base, 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
+      return <Icon3D icon={Users} size="xs" tone="blue" variant="solid-3d" className={className} />
     case 'Lead':
-      return <Target className={cn(base, 'text-orange-500 dark:text-orange-400')} aria-hidden="true" />
+      return <Icon3D icon={Target} size="xs" tone="orange" variant="solid-3d" className={className} />
     case 'Opportunity':
-      return <TrendingUp className={cn(base, 'text-emerald-500 dark:text-emerald-400')} aria-hidden="true" />
+      return <Icon3D icon={TrendingUp} size="xs" tone="emerald" variant="solid-3d" className={className} />
     case 'Quotation':
-      return <FileSpreadsheet className={cn(base, 'text-sky-500 dark:text-sky-400')} aria-hidden="true" />
+      return <Icon3D icon={FileSpreadsheet} size="xs" tone="cyan" variant="solid-3d" className={className} />
     case 'Order':
-      return <ShoppingBag className={cn(base, 'text-indigo-500 dark:text-indigo-400')} aria-hidden="true" />
+      return <Icon3D icon={ShoppingBag} size="xs" tone="indigo" variant="solid-3d" className={className} />
     case 'Project':
-      return <FolderKanban className={cn(base, 'text-cyan-500 dark:text-cyan-400')} aria-hidden="true" />
+      return <Icon3D icon={FolderKanban} size="xs" tone="cyan" variant="solid-3d" className={className} />
     case 'Ticket':
-      return <Headphones className={cn(base, 'text-rose-500 dark:text-rose-400')} aria-hidden="true" />
+      return <Icon3D icon={Headphones} size="xs" tone="rose" variant="solid-3d" className={className} />
     case 'Invoice':
-      return <ReceiptText className={cn(base, 'text-teal-500 dark:text-teal-400')} aria-hidden="true" />
+      return <Icon3D icon={ReceiptText} size="xs" tone="teal" variant="solid-3d" className={className} />
     case 'Employee':
-      return <UserCheck className={cn(base, 'text-violet-500 dark:text-violet-400')} aria-hidden="true" />
+      return <Icon3D icon={UserCheck} size="xs" tone="violet" variant="solid-3d" className={className} />
     case 'Vendor':
-      return <Store className={cn(base, 'text-amber-500 dark:text-amber-400')} aria-hidden="true" />
+      return <Icon3D icon={Store} size="xs" tone="amber" variant="solid-3d" className={className} />
     default:
-      return <AnimatedSearch className={cn(base, 'text-blue-500 dark:text-blue-400')} aria-hidden="true" />
+      return <Icon3D icon={AnimatedSearch} size="xs" tone="blue" variant="solid-3d" className={className} />
   }
 }
 
@@ -161,13 +161,17 @@ export function GlobalSearchBar() {
 
   return (
     <div ref={containerRef} className="relative min-w-0 max-w-md flex-1">
-      <div className="relative">
-        <AnimatedSearch
-          animateOnHover
-          animate={open}
-          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-blue-500 dark:text-blue-400"
-          aria-hidden="true"
-        />
+      <div className="relative flex items-center">
+        <div className="pointer-events-none absolute top-1/2 left-1.5 -translate-y-1/2 z-10">
+          <Icon3D
+            icon={AnimatedSearch}
+            size="xs"
+            tone="blue"
+            variant="solid-3d"
+            animateOnHover
+            tilt={false}
+          />
+        </div>
         <input
           ref={inputRef}
           type="search"
@@ -181,7 +185,7 @@ export function GlobalSearchBar() {
           onKeyDown={handleKeyDown}
           placeholder="Search…"
           className={cn(
-            'h-8.5 sm:h-9 w-full rounded-full border border-border/70 bg-card pr-12 pl-8 text-xs sm:text-[13px] shadow-soft transition-[border-color,box-shadow]',
+            'h-8.5 sm:h-9 w-full rounded-full border border-border/70 bg-card pr-12 pl-8.5 text-xs sm:text-[13px] shadow-soft transition-[border-color,box-shadow]',
             'placeholder:text-muted-foreground hover:border-input focus:border-ring focus:ring-[3px] focus:ring-ring/25 focus:outline-none [&::-webkit-search-cancel-button]:hidden',
           )}
           aria-label="Global search"

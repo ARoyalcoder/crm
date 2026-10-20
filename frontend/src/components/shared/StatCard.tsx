@@ -2,12 +2,21 @@ import type { ReactNode } from 'react'
 import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Sparkline } from '@/components/charts/Sparkline'
-import { toneChip } from '@/components/shared/tones'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPercent } from '@/lib/format'
 import type { Tone } from '@/lib/status'
 import { cn } from '@/lib/utils'
+import { Icon3D, type Icon3DTone } from '@/components/ui/icon-3d'
+
+const TONE_TO_3D: Record<Tone, Icon3DTone> = {
+  neutral: 'neutral',
+  primary: 'primary',
+  success: 'emerald',
+  warning: 'amber',
+  danger: 'rose',
+  info: 'blue',
+}
 
 export type StatTrend = {
   /** Percent change against the comparison period; `null` when there is nothing to compare with (never shown as 0%). */
@@ -77,9 +86,14 @@ export function StatCard({ label, value, hint, icon: Icon, tone = 'primary', loa
       <div className="flex items-start justify-between gap-2">
         <p className="text-[11px] sm:text-[11.5px] font-medium text-muted-foreground">{label}</p>
         {Icon ? (
-          <span className={cn('flex size-6.5 sm:size-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105', toneChip[tone])}>
-            <Icon className="size-3.5" aria-hidden="true" />
-          </span>
+          <Icon3D
+            icon={Icon}
+            size="sm"
+            tone={TONE_TO_3D[tone] ?? 'primary'}
+            variant="solid-3d"
+            animateOnHover
+            tilt
+          />
         ) : null}
       </div>
       <div className="flex items-end justify-between gap-2">

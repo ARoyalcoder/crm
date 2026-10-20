@@ -7,6 +7,7 @@ import { canSee, isActivePath, navigation, type NavSection } from '@/config/navi
 import { useAuth } from '@/features/auth/auth-context'
 import { prefetchRoute } from '@/lib/prefetch'
 import { cn } from '@/lib/utils'
+import { Icon3D, type Icon3DTone } from '@/components/ui/icon-3d'
 
 const OPEN_KEY = 'pp-nav-open-groups'
 
@@ -51,12 +52,14 @@ function Brand({ compact }: { compact?: boolean }) {
       aria-label="Pawan Putra Business OS, home"
       className="flex h-11 shrink-0 items-center gap-2 px-3 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 group"
     >
-      <span
-        aria-hidden="true"
-        className="flex size-7 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#2B66FE] via-[#3872FF] to-[#1E40AF] text-xs font-bold text-white shadow-[0_3px_10px_rgba(43,102,254,0.3)] group-hover:scale-105 transition-transform"
-      >
-        <Sparkles animateOnHover className="size-3.5 xl:size-4 text-white" />
-      </span>
+      <Icon3D
+        icon={Sparkles}
+        size="sm"
+        tone="blue"
+        variant="solid-3d"
+        float
+        className="group-hover:scale-105 transition-transform"
+      />
       {compact ? null : (
         <span className="leading-tight">
           <span className="flex items-center gap-1.5 text-[13.5px] xl:text-[14px] font-bold tracking-tight text-foreground">
@@ -79,98 +82,98 @@ const itemClass = (active: boolean, collapsed?: boolean) =>
     collapsed && 'justify-center px-0 py-1.5',
   )
 
-const NAV_ICON_COLORS: Record<string, string> = {
+const NAV_ICON_TONES: Record<string, Icon3DTone> = {
   // Workspace
-  '/': 'text-blue-500 dark:text-blue-400',
-  '/my-work': 'text-indigo-500 dark:text-indigo-400',
-  '/brief': 'text-amber-500 dark:text-amber-400',
-  '/ask': 'text-violet-500 dark:text-violet-400',
-  '/pulse': 'text-rose-500 dark:text-rose-400',
+  '/': 'blue',
+  '/my-work': 'indigo',
+  '/brief': 'amber',
+  '/ask': 'violet',
+  '/pulse': 'rose',
 
   // CRM
-  '/leads': 'text-orange-500 dark:text-orange-400',
-  '/admin/qualification-questions': 'text-amber-500 dark:text-amber-400',
-  '/customers': 'text-blue-500 dark:text-blue-400',
-  '/intelligence': 'text-purple-500 dark:text-purple-400',
-  '/activities': 'text-emerald-500 dark:text-emerald-400',
+  '/leads': 'orange',
+  '/admin/qualification-questions': 'amber',
+  '/customers': 'blue',
+  '/intelligence': 'purple',
+  '/activities': 'emerald',
 
   // Sales
-  '/opportunities': 'text-emerald-500 dark:text-emerald-400',
-  '/quotations': 'text-sky-500 dark:text-sky-400',
-  '/orders': 'text-indigo-500 dark:text-indigo-400',
+  '/opportunities': 'emerald',
+  '/quotations': 'cyan',
+  '/orders': 'indigo',
 
   // Projects & Field work
-  '/projects': 'text-cyan-500 dark:text-cyan-400',
-  '/project-analytics': 'text-indigo-500 dark:text-indigo-400',
-  '/field-jobs': 'text-blue-500 dark:text-blue-400',
-  '/my-jobs': 'text-amber-500 dark:text-amber-400',
+  '/projects': 'cyan',
+  '/project-analytics': 'indigo',
+  '/field-jobs': 'blue',
+  '/my-jobs': 'amber',
 
   // Finance
-  '/invoices': 'text-emerald-500 dark:text-emerald-400',
-  '/payments': 'text-teal-500 dark:text-teal-400',
-  '/receivables': 'text-amber-500 dark:text-amber-400',
-  '/finance/ageing': 'text-rose-500 dark:text-rose-400',
+  '/invoices': 'emerald',
+  '/payments': 'teal',
+  '/receivables': 'amber',
+  '/finance/ageing': 'rose',
 
   // Service
-  '/support/tickets': 'text-rose-500 dark:text-rose-400',
-  '/amc-contracts': 'text-blue-500 dark:text-blue-400',
-  '/warranties': 'text-teal-500 dark:text-teal-400',
+  '/support/tickets': 'rose',
+  '/amc-contracts': 'blue',
+  '/warranties': 'teal',
 
   // Workforce
-  '/workforce/employees': 'text-violet-500 dark:text-violet-400',
-  '/workforce/attendance': 'text-sky-500 dark:text-sky-400',
-  '/workforce/my-profile': 'text-indigo-500 dark:text-indigo-400',
-  '/performance/dashboard': 'text-amber-500 dark:text-amber-400',
-  '/performance/commissions': 'text-emerald-500 dark:text-emerald-400',
+  '/workforce/employees': 'violet',
+  '/workforce/attendance': 'cyan',
+  '/workforce/my-profile': 'indigo',
+  '/performance/dashboard': 'amber',
+  '/performance/commissions': 'emerald',
 
   // Recruitment
-  '/recruitment/jobs': 'text-blue-500 dark:text-blue-400',
-  '/recruitment/candidates': 'text-purple-500 dark:text-purple-400',
+  '/recruitment/jobs': 'blue',
+  '/recruitment/candidates': 'purple',
 
   // Rewards
-  '/rewards/leaderboard': 'text-amber-500 dark:text-amber-400',
-  '/rewards/customer': 'text-rose-500 dark:text-rose-400',
-  '/rewards/achievement-rules': 'text-indigo-500 dark:text-indigo-400',
+  '/rewards/leaderboard': 'amber',
+  '/rewards/customer': 'rose',
+  '/rewards/achievement-rules': 'indigo',
 
   // Partners
-  '/vendors': 'text-orange-500 dark:text-orange-400',
-  '/partners': 'text-teal-500 dark:text-teal-400',
+  '/vendors': 'orange',
+  '/partners': 'teal',
 
   // Documents
-  '/documents': 'text-sky-500 dark:text-sky-400',
-  '/documents/mine': 'text-indigo-500 dark:text-indigo-400',
+  '/documents': 'cyan',
+  '/documents/mine': 'indigo',
 
   // Analytics
-  '/analytics/sales': 'text-emerald-500 dark:text-emerald-400',
-  '/analytics/projects': 'text-cyan-500 dark:text-cyan-400',
-  '/analytics/finance': 'text-teal-500 dark:text-teal-400',
-  '/analytics/service': 'text-rose-500 dark:text-rose-400',
-  '/analytics/workforce': 'text-violet-500 dark:text-violet-400',
+  '/analytics/sales': 'emerald',
+  '/analytics/projects': 'cyan',
+  '/analytics/finance': 'teal',
+  '/analytics/service': 'rose',
+  '/analytics/workforce': 'violet',
 
   // Administration
-  '/admin': 'text-slate-500 dark:text-slate-400',
-  '/admin/users': 'text-blue-500 dark:text-blue-400',
-  '/admin/roles': 'text-amber-500 dark:text-amber-400',
-  '/admin/branches': 'text-emerald-500 dark:text-emerald-400',
-  '/admin/services': 'text-cyan-500 dark:text-cyan-400',
-  '/admin/workflow-rules': 'text-purple-500 dark:text-purple-400',
-  '/admin/integrations': 'text-indigo-500 dark:text-indigo-400',
-  '/admin/audit': 'text-rose-500 dark:text-rose-400',
+  '/admin': 'slate',
+  '/admin/users': 'blue',
+  '/admin/roles': 'amber',
+  '/admin/branches': 'emerald',
+  '/admin/services': 'cyan',
+  '/admin/workflow-rules': 'purple',
+  '/admin/integrations': 'indigo',
+  '/admin/audit': 'rose',
 }
 
-const SECTION_ICON_COLORS: Record<string, string> = {
-  crm: 'text-orange-500 dark:text-orange-400',
-  sales: 'text-emerald-500 dark:text-emerald-400',
-  projects: 'text-cyan-500 dark:text-cyan-400',
-  finance: 'text-teal-500 dark:text-teal-400',
-  service: 'text-rose-500 dark:text-rose-400',
-  workforce: 'text-violet-500 dark:text-violet-400',
-  recruitment: 'text-blue-500 dark:text-blue-400',
-  rewards: 'text-amber-500 dark:text-amber-400',
-  partners: 'text-orange-500 dark:text-orange-400',
-  documents: 'text-sky-500 dark:text-sky-400',
-  analytics: 'text-indigo-500 dark:text-indigo-400',
-  admin: 'text-purple-500 dark:text-purple-400',
+const SECTION_ICON_TONES: Record<string, Icon3DTone> = {
+  crm: 'orange',
+  sales: 'emerald',
+  projects: 'cyan',
+  finance: 'teal',
+  service: 'rose',
+  workforce: 'violet',
+  recruitment: 'blue',
+  rewards: 'amber',
+  partners: 'orange',
+  documents: 'cyan',
+  analytics: 'indigo',
+  admin: 'purple',
 }
 
 type SidebarNavProps = {
@@ -217,11 +220,17 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                 onClick={() => setGroup(section.id, !open)}
                 aria-expanded={open}
                 aria-controls={listId}
-                className="flex w-full items-center justify-between rounded-lg px-2 py-0.5 text-[9.5px] xl:text-[10px] font-semibold tracking-wider text-muted-foreground uppercase outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                className="flex w-full items-center justify-between rounded-lg px-2 py-0.5 text-[9.5px] xl:text-[10px] font-semibold tracking-wider text-muted-foreground uppercase outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40 group cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
                   {section.icon ? (
-                    <section.icon className={cn('size-3.5 shrink-0', SECTION_ICON_COLORS[section.id] ?? 'text-primary')} aria-hidden="true" />
+                    <Icon3D
+                      icon={section.icon}
+                      size="xs"
+                      tone={SECTION_ICON_TONES[section.id] ?? 'primary'}
+                      variant="solid-3d"
+                      className="shrink-0"
+                    />
                   ) : null}
                   <span>{section.title}</span>
                 </span>
@@ -231,7 +240,7 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
             <ul id={listId} className={cn('flex flex-col gap-0.5', !open && 'hidden')}>
               {section.items.map((item) => {
                 const active = isActivePath(item, pathname)
-                const iconColor = active ? 'text-white' : (NAV_ICON_COLORS[item.to] ?? 'text-primary')
+                const tone = NAV_ICON_TONES[item.to] ?? 'primary'
                 const link = (
                   <NavLink
                     to={item.to}
@@ -243,7 +252,15 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                     aria-current={active ? 'page' : undefined}
                     className={itemClass(active, collapsed)}
                   >
-                    <item.icon className={cn('size-3.5 xl:size-4 shrink-0 transition-colors', iconColor)} aria-hidden="true" />
+                    <Icon3D
+                      icon={item.icon}
+                      size="sm"
+                      tone={tone}
+                      active={active}
+                      variant="solid-3d"
+                      className="shrink-0"
+                      tilt={false}
+                    />
                     {collapsed ? null : <span className="truncate">{item.label}</span>}
                   </NavLink>
                 )
@@ -275,9 +292,15 @@ export function AskPawanPromo({ onNavigate, compact }: { onNavigate?: () => void
           to="/ask"
           onClick={onNavigate}
           aria-label="Ask PAWAN AI Assistant"
-          className="flex size-8 xl:size-8.5 items-center justify-center rounded-xl bg-gradient-to-br from-[#8075ff] to-[#5e56e8] text-white shadow-md shadow-[#5e56e8]/25 hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center justify-center p-0.5"
         >
-          <Sparkles animateOnHover className="size-4 text-white" />
+          <Icon3D
+            icon={Sparkles}
+            size="md"
+            tone="violet"
+            variant="solid-3d"
+            float
+          />
         </Link>
       </Tooltip>
     )
@@ -286,9 +309,13 @@ export function AskPawanPromo({ onNavigate, compact }: { onNavigate?: () => void
   return (
     <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#8075ff] to-[#5e56e8] p-2.5 xl:p-3 text-white shadow-md shadow-[#5e56e8]/25">
       <div className="flex items-center gap-1.5 mb-0.5">
-        <span className="flex size-4.5 xl:size-5 items-center justify-center rounded-md bg-white/20 backdrop-blur-sm">
-          <Sparkles animateOnHover className="size-2.5 xl:size-3 text-white" />
-        </span>
+        <Icon3D
+          icon={Sparkles}
+          size="xs"
+          tone="violet"
+          variant="glass-3d"
+          float
+        />
         <p className="text-[9.5px] xl:text-[10px] font-bold uppercase tracking-wider text-white/90">Ask PAWAN</p>
       </div>
       <p className="text-[11.5px] xl:text-xs font-semibold leading-tight">Need smart assistance?</p>

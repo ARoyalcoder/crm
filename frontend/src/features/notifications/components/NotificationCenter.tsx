@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { entityPath } from '@/lib/entity-links'
 import { cn } from '@/lib/utils'
+import { Icon3D } from '@/components/ui/icon-3d'
 import { notificationsApi, type Notification } from '../api'
 import { NotificationItem } from './NotificationItem'
 
@@ -44,31 +45,31 @@ export function NotificationCenter() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative rounded-full"
+        <button
+          type="button"
+          className="relative inline-flex items-center justify-center rounded-full p-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         >
-          <Bell
+          <Icon3D
+            icon={Bell}
+            size="sm"
+            tone={unreadCount > 0 ? 'amber' : 'blue'}
+            variant="glass-3d"
             animateOnHover
-            loop={unreadCount > 0}
-            loopDelay={4}
-            className={cn('size-4 transition-colors', unreadCount > 0 ? 'text-amber-500 fill-amber-500/20' : 'text-blue-500 dark:text-blue-400')}
-            aria-hidden="true"
+            tilt
           />
           {unreadCount > 0 ? (
             <span
               aria-hidden="true"
               className={cn(
-                'absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive-solid px-1',
-                'text-[10px] leading-none font-semibold text-white ring-2 ring-background',
+                'absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive-solid px-1',
+                'text-[10px] leading-none font-semibold text-white ring-2 ring-background z-20 shadow-xs',
               )}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : null}
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[calc(100vw-1.5rem)] sm:w-[22rem] max-w-[22rem]" align="end" aria-label="Notifications">
         <div className="flex items-center justify-between border-b px-4 py-3">

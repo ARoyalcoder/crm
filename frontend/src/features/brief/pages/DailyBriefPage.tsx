@@ -20,7 +20,6 @@ import { ErrorState } from '@/components/feedback/ErrorState'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
-import { toneChip } from '@/components/shared/tones'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +28,16 @@ import { briefApi, type BriefItem, type BriefSection } from '@/features/brief/ap
 import { formatDate } from '@/lib/format'
 import type { Tone } from '@/lib/status'
 import { cn } from '@/lib/utils'
+import { Icon3D, type Icon3DTone } from '@/components/ui/icon-3d'
+
+const TONE_TO_3D: Record<Tone, Icon3DTone> = {
+  neutral: 'neutral',
+  primary: 'primary',
+  success: 'emerald',
+  warning: 'amber',
+  danger: 'rose',
+  info: 'blue',
+}
 
 /** The icon the server names for a section, and how serious the section is (so warnings read as warnings). */
 const SECTION_LOOK: Record<string, { icon: LucideIcon; tone: Tone }> = {
@@ -84,9 +93,13 @@ function Section({ section }: { section: BriefSection }) {
     <Card className="gap-0 py-0">
       <CardHeader className="border-b px-4 sm:px-6 py-3 sm:py-4">
         <CardTitle className="flex items-center gap-3 text-base">
-          <span className={cn('flex size-8 items-center justify-center rounded-lg', toneChip[look.tone])}>
-            <Icon className="size-4" aria-hidden="true" />
-          </span>
+          <Icon3D
+            icon={look.icon}
+            size="md"
+            tone={TONE_TO_3D[look.tone] ?? 'primary'}
+            variant="solid-3d"
+            tilt
+          />
           <span className="flex-1">{section.title}</span>
           <Badge variant={section.items.length > 0 ? look.tone : 'neutral'}>{section.items.length}</Badge>
         </CardTitle>
@@ -116,6 +129,8 @@ export function DailyBriefPage() {
     <div className="grid gap-4">
       <PageHeader
         title="Daily brief"
+        icon={Sparkles}
+        tone="amber"
         description={
           brief ? (
             <>

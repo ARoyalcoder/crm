@@ -46,6 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Icon3D } from '@/components/ui/icon-3d'
 import {
   activitiesQuery,
   activityCountsQuery,
@@ -241,15 +242,12 @@ export function ActivitiesPage() {
               )}
             >
               <div className="flex items-center justify-between">
-                <Icon
-                  className={cn(
-                    'size-4 transition-transform group-hover:scale-110',
-                    active
-                      ? 'text-primary'
-                      : tab.tone === 'danger'
-                        ? 'text-destructive'
-                        : 'text-muted-foreground',
-                  )}
+                <Icon3D
+                  icon={tab.icon}
+                  size="xs"
+                  tone={tab.tone === 'danger' ? 'rose' : active ? 'blue' : 'slate'}
+                  variant="solid-3d"
+                  active={active}
                 />
                 <span
                   className={cn(

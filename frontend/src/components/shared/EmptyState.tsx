@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Inbox, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Icon3D } from '@/components/ui/icon-3d'
 
 type EmptyStateProps = {
   title: string
@@ -26,9 +27,14 @@ export function EmptyState({ title, description, icon: Icon = Inbox, action, var
         className,
       )}
     >
-      <div className="flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-        <Icon className="size-4.5" aria-hidden="true" />
-      </div>
+      <Icon3D
+        icon={Icon}
+        size="lg"
+        tone="blue"
+        variant="floating-3d"
+        float
+        className="mb-1"
+      />
       <p className="text-[13px] font-semibold">{title}</p>
       {description ? <div className="max-w-sm text-xs text-muted-foreground">{description}</div> : null}
       {action ? <div className="mt-2">{action}</div> : null}

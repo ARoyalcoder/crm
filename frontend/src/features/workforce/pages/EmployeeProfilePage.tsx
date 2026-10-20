@@ -35,6 +35,7 @@ import {
 } from '@/components/animate-ui/icons'
 import { toast } from 'sonner'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { Icon3D } from '@/components/ui/icon-3d'
 import { ChartCard } from '@/components/charts/ChartCard'
 import { DonutChart } from '@/components/charts/DonutChart'
 import { BarsChart } from '@/components/charts/BarsChart'
@@ -509,9 +510,7 @@ export function EmployeeProfilePage() {
         <Card className="border border-border/80 dark:border-slate-800/80 bg-card p-4 shadow-soft hover:shadow-pop transition-all">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">Attendance rate</span>
-            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <CheckCircle2 className="size-4" />
-            </span>
+            <Icon3D icon={CheckCircle2} size="sm" tone="emerald" variant="solid-3d" tilt />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold tracking-tight text-foreground">
@@ -530,9 +529,7 @@ export function EmployeeProfilePage() {
         <Card className="border border-border/80 dark:border-slate-800/80 bg-card p-4 shadow-soft hover:shadow-pop transition-all">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">Hours logged</span>
-            <span className="p-1.5 rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
-              <Clock animateOnHover className="size-4" />
-            </span>
+            <Icon3D icon={Clock} size="sm" tone="cyan" variant="solid-3d" tilt />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold tracking-tight text-foreground">
@@ -551,9 +548,7 @@ export function EmployeeProfilePage() {
         <Card className="border border-border/80 dark:border-slate-800/80 bg-card p-4 shadow-soft hover:shadow-pop transition-all">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">Leave available</span>
-            <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <Palmtree className="size-4" />
-            </span>
+            <Icon3D icon={Palmtree} size="sm" tone="amber" variant="solid-3d" tilt />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold tracking-tight text-foreground">
@@ -572,9 +567,7 @@ export function EmployeeProfilePage() {
         <Card className="border border-border/80 dark:border-slate-800/80 bg-card p-4 shadow-soft hover:shadow-pop transition-all">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">Team</span>
-            <span className="p-1.5 rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
-              <Users animateOnHover className="size-4" />
-            </span>
+            <Icon3D icon={Users} size="sm" tone="violet" variant="solid-3d" tilt />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold tracking-tight text-foreground">
